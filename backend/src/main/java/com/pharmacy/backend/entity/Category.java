@@ -39,9 +39,6 @@ public class Category {
     Category parent;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "categories")
-    @JoinTable(name = "product_categories",
-            joinColumns = @JoinColumn(name = "category_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id"))
     List<Product> products;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "category")

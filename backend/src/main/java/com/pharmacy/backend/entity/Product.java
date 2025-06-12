@@ -53,6 +53,9 @@ public class Product {
     Brand brand;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "product_categories",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
     List<Category> categories;
 
     @CreationTimestamp

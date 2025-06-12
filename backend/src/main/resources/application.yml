@@ -5,8 +5,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
     show-sql: true
+    open-in-view: false
+    defer-datasource-initialization: true
   profiles:
     active: uat
   mail:
@@ -20,13 +21,16 @@ spring:
           auth: true
           starttls:
             enable: true
+  sql:
+    init:
+      mode: never
 jwt:
-  signerKey: +kNjFSE8cVRulovjPXzKK39I+6SqDrdHPoRmd5ShBx2ms4fIT9xIZd8balTZpyxT
-app:
-  base-url: "http://127.0.0.1:8000"
-vnpay:
-  payUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-  returnUrl: "http://localhost:8080/api/vnpay/vnpay_return"
-  tmnCode: "TY24L0SC"
-  secretKey: "OLLNHDCEMOEUUO6KJ12C1F9B9GMX4A3N"
-  apiUrl: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
+  secret: Jm/t4iRHPEvp1fFxY3ft0yRytsrRJrjctdLbRlRD+JjF9MBPcyEFOYZ0tqsLKOJe
+  expiration: 3600
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
