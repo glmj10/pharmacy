@@ -1,18 +1,21 @@
-package com.pharmacy.backend.service.impl;
+package com.pharmacy.backend.security;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.pharmacy.backend.entity.InvalidatedToken;
 import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.repository.InvalidatedTokenRepository;
-import com.pharmacy.backend.service.JWTService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -23,21 +26,24 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class JWTServiceImpl implements JWTService {
+@Slf4j
+@Component
+public class JwtUtils{
     @Value("${jwt.secret}")
     String secret;
 
     @Value("${jwt.expiration}")
     long expiration;
 
+    @Value("${jwt.refresh.expiration}")
+    long refreshExpiration;
+
     static final String ISUER = "Pharmacy-Backend";
     final InvalidatedTokenRepository invalidatedTokenRepository;
 
-    @Override
     public String generateToken(Long userId, String username, List<RoleCodeEnum> roles) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
-        // Chỉ sử dụng tên của role, không thêm tiền tố "ROLE_"
         List<String> authorities = roles.stream()
                 .map(Enum::name).toList();
 
@@ -62,42 +68,19 @@ public class JWTServiceImpl implements JWTService {
         return jwsObject.serialize();
     }
 
-    @Override
-    public String getUserNameFromToken(String token) {
-        try {
-            SignedJWT signedJWT = SignedJWT.parse(token);
-            JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-
-            return claimsSet.getStringClaim("username");
-        } catch (ParseException e) {
-            throw new RuntimeException("Error parsing JWT token", e);
-        }
-    }
-
-    @Override
-    public boolean validateToken(String token) {
-        try {
-            SignedJWT signedJWT = SignedJWT.parse(token);
-            JWSVerifier verifier = new MACVerifier(secret.getBytes());
-
-            verifyToken(token);
-            return signedJWT.verify(verifier) &&
-                    signedJWT.getJWTClaimsSet()
-                            .getExpirationTime()
-                            .after(new java.util.Date());
-
-        } catch (ParseException | JOSEException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void verifyToken(String token) throws JOSEException, ParseException {
-        JWSVerifier verifier = new MACVerifier(token);
+    public SignedJWT verifyToken(String token, boolean isRefreshToken) throws JOSEException, ParseException {
+        JWSVerifier verifier = new MACVerifier(secret.getBytes());
 
         SignedJWT signedJWT = SignedJWT.parse(token);
-        Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        Date expirationTime = isRefreshToken
+                ? new Date(signedJWT.getJWTClaimsSet().getIssueTime().getTime() + refreshExpiration * 1000)
+                : signedJWT.getJWTClaimsSet().getExpirationTime();
         var verified = signedJWT.verify(verifier);
+
+        if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
+            throw new AppException(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập đã bị vô hiệu hóa", "token");
+        }
+
         if(!verified) {
             throw new AppException(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập không hợp lệ", "token");
         }
@@ -105,5 +88,18 @@ public class JWTServiceImpl implements JWTService {
         if(expirationTime == null || expirationTime.before(new Date())) {
             throw new AppException(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập đã hết hạn", "token");
         }
+        return signedJWT;
     }
+
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void cleanUpExpiredTokens() {
+        Date now = new Date();
+        List<InvalidatedToken> expiredTokens = invalidatedTokenRepository.findAllByExpirationTimeBefore(now);
+        if (!expiredTokens.isEmpty()) {
+            invalidatedTokenRepository.deleteAll(expiredTokens);
+        }
+        log.info("Cleaned up {} expired tokens", expiredTokens.size());
+    }
+
 }

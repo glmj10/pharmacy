@@ -1,10 +1,12 @@
 package com.pharmacy.backend.controller;
 
+import com.nimbusds.jose.JOSEException;
 import com.pharmacy.backend.dto.request.AuthRequest;
 import com.pharmacy.backend.dto.request.UserInfoRequest;
 import com.pharmacy.backend.dto.request.UserRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.AuthResponse;
+import com.pharmacy.backend.dto.response.RefreshRequest;
 import com.pharmacy.backend.dto.response.UserResponse;
 import com.pharmacy.backend.service.AuthService;
 import jakarta.validation.Valid;
@@ -45,6 +47,12 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout(@RequestHeader("Authorization") String bearerToken) throws ParseException {
         ApiResponse<String> response = authService.logout(bearerToken);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@RequestBody @Valid RefreshRequest request) throws ParseException, JOSEException {
+        ApiResponse<AuthResponse> response = authService.refreshToken(request);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

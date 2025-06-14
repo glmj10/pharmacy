@@ -6,6 +6,7 @@ import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.repository.RoleRepository;
 import com.pharmacy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,11 +17,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class ApplicationInitConfig {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    @Value("${account.default.email}")
+    private String email;
+    @Value("${account.default.password}")
+    private String password;
+
     @Bean
     ApplicationRunner applicationRunner(UserRepository repository) {
         return args -> {
-            String email = "admin@gmail.com";
-            String password = "admin123";
             if(!repository.existsByEmail(email)) {
                 User user = new User();
                 user.setEmail(email);

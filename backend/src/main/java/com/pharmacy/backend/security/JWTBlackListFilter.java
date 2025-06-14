@@ -1,10 +1,9 @@
-package com.pharmacy.backend.config;
+package com.pharmacy.backend.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.nimbusds.jwt.SignedJWT;
 import com.pharmacy.backend.dto.response.ErrorResponse;
-import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.repository.InvalidatedTokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -41,9 +40,8 @@ public class JWTBlackListFilter extends OncePerRequestFilter {
                 SignedJWT signedJWT = SignedJWT.parse(token);
                 String jti = signedJWT.getJWTClaimsSet().getJWTID();
                 if (jti != null && invalidatedTokenRepository.existsById(jti)) {
-                    // Thay vì ném AppException, trực tiếp trả về phản hồi lỗi
                     handleUnauthorized(response);
-                    return; // Dừng chuỗi filter, không gọi filterChain.doFilter()
+                    return;
                 }
             } catch (ParseException e) {
                 handleUnauthorized(response);
