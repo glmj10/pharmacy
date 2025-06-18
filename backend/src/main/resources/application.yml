@@ -13,6 +13,11 @@ spring:
   sql:
     init:
       mode: never
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+      enabled: true
 jwt:
   secret: Jm/t4iRHPEvp1fFxY3ft0yRytsrRJrjctdLbRlRD+JjF9MBPcyEFOYZ0tqsLKOJe
   expiration: 3600
@@ -20,6 +25,7 @@ jwt:
     expiration: 86400
 server:
   port: 8080
+  base-url: http://localhost:8080
   servlet:
     encoding:
       charset: UTF-8
@@ -29,3 +35,6 @@ account:
   default:
     email: admin@gmail.com
     password: admin123
+file:
+    upload:
+      dir: D:/upload

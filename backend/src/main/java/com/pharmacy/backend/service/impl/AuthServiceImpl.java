@@ -3,6 +3,7 @@ package com.pharmacy.backend.service.impl;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import com.pharmacy.backend.dto.request.AuthRequest;
+import com.pharmacy.backend.dto.request.ChangePasswordRequest;
 import com.pharmacy.backend.dto.request.UserInfoRequest;
 import com.pharmacy.backend.dto.request.UserRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
@@ -19,6 +20,7 @@ import com.pharmacy.backend.repository.InvalidatedTokenRepository;
 import com.pharmacy.backend.repository.RoleRepository;
 import com.pharmacy.backend.repository.UserRepository;
 import com.pharmacy.backend.security.JwtUtils;
+import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -26,8 +28,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ApiResponse<AuthResponse> login(AuthRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Tài khoản hoặc mật khẩu không đúng", "email"));
+                .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Tài khoản hoặc mật khẩu không chính xác", "email"));
 
         if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Tài khoản hoặc mật khẩu không chính xác", "password");
@@ -60,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
         List<RoleCodeEnum> roles = user.getRoles().stream()
                 .map(Role::getCode)
                 .toList();
-        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), roles);
+        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getEmail(), roles);
         AuthResponse authResponse = new AuthResponse(token);
 
         return ApiResponse.<AuthResponse>builder()
@@ -70,8 +70,6 @@ public class AuthServiceImpl implements AuthService {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
-
-
 
     @Transactional
     @Override
@@ -106,9 +104,18 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @Override
     public ApiResponse<UserResponse> changeInfo(UserInfoRequest request) {
-        SecurityContext context = SecurityContextHolder.getContext();
-        log.info("Username : {}", context.getAuthentication().getName());
-        return null;
+        String email = SecurityUtils.getCurrentUserEmail();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", "email"));
+        user.setEmail(request.getEmail());
+        user.setUsername(request.getUsername());
+        UserResponse userResponse = userMapper.toUserResponse(userRepository.save(user));
+        return ApiResponse.<UserResponse>builder()
+                .status(HttpStatus.OK.value())
+                .message("Cập nhật thông tin thành công")
+                .data(userResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 
     @Override
@@ -150,12 +157,35 @@ public class AuthServiceImpl implements AuthService {
                 .map(Role::getCode)
                 .toList();
 
-        String newToken = jwtUtils.generateToken(user.getId(), user.getUsername(), roles);
+        String newToken = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getEmail(), roles);
         AuthResponse authResponse = new AuthResponse(newToken);
         return ApiResponse.<AuthResponse>builder()
                 .status(HttpStatus.OK.value())
                 .message("Làm mới token thành công")
                 .data(authResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<String> changePassword(ChangePasswordRequest request) {
+        User user = userRepository.findByEmail(SecurityUtils.getCurrentUserEmail())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", "email"));
+        if(!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không chính xác", "oldPassword");
+        }
+        String newPassword = request.getPassword();
+        if(!newPassword.equals(request.getConfirmPassword())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Mật khẩu xác nhận không khớp", "confirmPassword");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+
+        return ApiResponse.<String>builder()
+                .status(HttpStatus.OK.value())
+                .message("Đổi mật khẩu thành công")
+                .data("Mật khẩu đã được cập nhật")
                 .timestamp(LocalDateTime.now())
                 .build();
     }

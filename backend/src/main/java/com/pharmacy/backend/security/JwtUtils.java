@@ -41,7 +41,7 @@ public class JwtUtils{
     static final String ISUER = "Pharmacy-Backend";
     final InvalidatedTokenRepository invalidatedTokenRepository;
 
-    public String generateToken(Long userId, String username, List<RoleCodeEnum> roles) {
+    public String generateToken(Long userId, String username, String email, List<RoleCodeEnum> roles) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         List<String> authorities = roles.stream()
@@ -51,6 +51,7 @@ public class JwtUtils{
                 .issuer(ISUER)
                 .subject(username)
                 .claim("authorities", authorities)
+                .claim("email", email)
                 .claim("id", userId)
                 .issueTime(new Date())
                 .jwtID(UUID.randomUUID().toString())

@@ -26,8 +26,15 @@ public class User {
     String username;
     String password;
 
+    @Column(name = "profile_pic_url")
+    String profilePicUrl;
+
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     List<Profile> profiles;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
+    List<FileMetadata> fileMetaDataList = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
