@@ -25,7 +25,7 @@ public class FileController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PostMapping("/download/{uuid}")
+    @GetMapping("/download/{uuid}")
     public ResponseEntity<FileSystemResource> downloadFile(@PathVariable String uuid) {
         FileSystemResource resource = fileMetadataService.downloadFile(uuid);
         return ResponseEntity.ok()

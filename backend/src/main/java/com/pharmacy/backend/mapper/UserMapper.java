@@ -10,10 +10,8 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "password", ignore = true)
     @Mapping(target = "profilePicUrl", ignore = true)
     @Mapping(target = "fileMetaDataList", ignore = true)
-    @Mapping(target = "roles", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "profiles", ignore = true)

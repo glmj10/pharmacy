@@ -29,6 +29,8 @@ public class User {
     @Column(name = "profile_pic_url")
     String profilePicUrl;
 
+    @Column(name = "token_version")
+    Integer tokenVersion = 0;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     List<Profile> profiles;
