@@ -11,6 +11,7 @@ import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.UserMapper;
 import com.pharmacy.backend.repository.RoleRepository;
 import com.pharmacy.backend.repository.UserRepository;
+import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -19,12 +20,12 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,10 +75,32 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    @Transactional
+    @Override
+    public ApiResponse<UserResponse> getCurrentUser() {
+        User currentUser = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", SecurityUtils.getCurrentUserId()));
+        UserResponse userResponse = userMapper.toUserResponse(currentUser);
+        userResponse.setRoles(null);
+        return ApiResponse.<UserResponse>builder()
+                .status(HttpStatus.OK.value())
+                .message("Lấy thông tin người dùng hiện tại thành công")
+                .data(userResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+
+    @Transactional
     @Override
     public ApiResponse<UserResponse> changeUserRole(Long userId, RoleRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Nguời dùng không tồn tại", userId));
+
+        if (request.getRoleCodes() == null) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Danh sách quyền không được để trống", null);
+        }
+
         Set<RoleCodeEnum> codes = request.getRoleCodes().stream()
                 .map(roles -> RoleCodeEnum.valueOf(roles.toUpperCase())).collect(Collectors.toSet());
         if (codes.isEmpty()) {
@@ -88,6 +111,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Quyền không tồn tại", codes));
 
         user.setRoles(roles);
+        user.setTokenVersion(user.getTokenVersion() + 1);
         User savedUser = userRepository.save(user);
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
 

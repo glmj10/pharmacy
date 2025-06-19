@@ -6,6 +6,8 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.pharmacy.backend.entity.InvalidatedToken;
+import com.pharmacy.backend.entity.Role;
+import com.pharmacy.backend.entity.User;
 import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.repository.InvalidatedTokenRepository;
@@ -38,21 +40,26 @@ public class JwtUtils{
     @Value("${jwt.refresh.expiration}")
     long refreshExpiration;
 
-    static final String ISUER = "Pharmacy-Backend";
+    static final String ISUER = "Pharmacy";
     final InvalidatedTokenRepository invalidatedTokenRepository;
 
-    public String generateToken(Long userId, String username, String email, List<RoleCodeEnum> roles) {
+    public String generateToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+
+        List<RoleCodeEnum> roles = user.getRoles().stream()
+                .map(Role::getCode)
+                .toList();
 
         List<String> authorities = roles.stream()
                 .map(Enum::name).toList();
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .issuer(ISUER)
-                .subject(username)
+                .subject(user.getUsername())
                 .claim("authorities", authorities)
-                .claim("email", email)
-                .claim("id", userId)
+                .claim("email", user.getEmail())
+                .claim("id", user.getId())
+                .claim("ver", user.getTokenVersion())
                 .issueTime(new Date())
                 .jwtID(UUID.randomUUID().toString())
                 .expirationTime(new Date(System.currentTimeMillis() + expiration * 1000))

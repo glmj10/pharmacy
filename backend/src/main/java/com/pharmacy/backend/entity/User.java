@@ -26,17 +26,14 @@ public class User {
     String username;
     String password;
 
-    @Column(name = "profile_pic_url")
-    String profilePicUrl;
+    @Column(name = "profile_pic")
+    String profilePic;
 
     @Column(name = "token_version")
     Integer tokenVersion = 0;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     List<Profile> profiles;
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
-    List<FileMetadata> fileMetaDataList = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -46,8 +43,8 @@ public class User {
     )
     Set<Role> roles = new HashSet<>();
 
-    @Column(name = "remember_token")
-    String rememberToken;
+//    @Column(name = "remember_token")
+//    String rememberToken;
 
     @Column(name = "created_at")
     @CreationTimestamp

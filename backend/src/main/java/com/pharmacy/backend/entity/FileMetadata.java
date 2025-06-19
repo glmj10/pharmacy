@@ -39,10 +39,6 @@ public class FileMetadata {
     @Column(name = "file_type", nullable = false)
     String fileType;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    User user;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     LocalDateTime createdAt;

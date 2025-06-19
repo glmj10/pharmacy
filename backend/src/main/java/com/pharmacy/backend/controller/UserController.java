@@ -34,6 +34,7 @@ public class UserController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/role/{userId}")
     public ResponseEntity<ApiResponse<UserResponse>> changeUserRole(
             @PathVariable Long userId,
@@ -52,6 +53,13 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUserRole(@PathVariable Long userId, @RequestBody RoleRequest request) {
-        return null;
+        ApiResponse<UserResponse> response = userService.changeUserRole(userId, request);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
+        ApiResponse<UserResponse> response = userService.getCurrentUser();
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 }

@@ -6,22 +6,23 @@ import com.pharmacy.backend.dto.request.AuthRequest;
 import com.pharmacy.backend.dto.request.ChangePasswordRequest;
 import com.pharmacy.backend.dto.request.UserInfoRequest;
 import com.pharmacy.backend.dto.request.UserRequest;
-import com.pharmacy.backend.dto.response.ApiResponse;
-import com.pharmacy.backend.dto.response.AuthResponse;
-import com.pharmacy.backend.dto.response.RefreshRequest;
-import com.pharmacy.backend.dto.response.UserResponse;
+import com.pharmacy.backend.dto.response.*;
+import com.pharmacy.backend.entity.FileMetadata;
 import com.pharmacy.backend.entity.InvalidatedToken;
 import com.pharmacy.backend.entity.Role;
 import com.pharmacy.backend.entity.User;
+import com.pharmacy.backend.enums.FileCategory;
 import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.UserMapper;
+import com.pharmacy.backend.repository.FileMetadataRepository;
 import com.pharmacy.backend.repository.InvalidatedTokenRepository;
 import com.pharmacy.backend.repository.RoleRepository;
 import com.pharmacy.backend.repository.UserRepository;
 import com.pharmacy.backend.security.JwtUtils;
 import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.AuthService;
+import com.pharmacy.backend.service.FileMetadataService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -46,6 +48,8 @@ public class AuthServiceImpl implements AuthService {
     RoleRepository roleRepository;
     JwtUtils jwtUtils;
     InvalidatedTokenRepository invalidatedTokenRepository;
+    FileMetadataService fileMetadataService;
+    FileMetadataRepository fileMetadataRepository;
 
     @Transactional
     @Override
@@ -57,10 +61,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(HttpStatus.BAD_REQUEST, "Tài khoản hoặc mật khẩu không chính xác", "password");
         }
 
-        List<RoleCodeEnum> roles = user.getRoles().stream()
-                .map(Role::getCode)
-                .toList();
-        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getEmail(), roles);
+        String token = jwtUtils.generateToken(user);
         AuthResponse authResponse = new AuthResponse(token);
 
         return ApiResponse.<AuthResponse>builder()
@@ -90,9 +91,21 @@ public class AuthServiceImpl implements AuthService {
 
         user.getRoles().add(role);
 
+        FileMetadata fileMetadata = FileMetadata.builder()
+                .originalFileName("default-avatar.jpg")
+                .storedFileName("default-avatar.jpg")
+                .fileExtension("jpg")
+                .fileSize(0L)
+                .contentType("image/jpeg")
+                .fileType(FileCategory.AVATAR.name())
+                .build();
+
+        fileMetadata = fileMetadataRepository.save(fileMetadata);
+        user.setProfilePic(fileMetadata.getUuid().toString());
         User savedUser = userRepository.save(user);
 
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
+        userResponse.setRoles(null);
         return ApiResponse.<UserResponse>builder()
                 .status(HttpStatus.CREATED.value())
                 .message("Đăng ký thành công")
@@ -103,13 +116,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Transactional
     @Override
-    public ApiResponse<UserResponse> changeInfo(UserInfoRequest request) {
-        String email = SecurityUtils.getCurrentUserEmail();
-        User user = userRepository.findByEmail(email)
+    public ApiResponse<UserResponse> changeInfo(UserInfoRequest request, MultipartFile profilePic) {
+        Long id = SecurityUtils.getCurrentUserId();
+        assert id != null;
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", "email"));
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
+        if(profilePic != null) {
+            fileMetadataService.deleteFile(user.getProfilePic());
+            ApiResponse<FileMetadataResponse> fileResponse = fileMetadataService.storeFile(profilePic, FileCategory.AVATAR.name());
+            if(fileResponse.getStatus() != HttpStatus.OK.value() && fileResponse.getStatus() != HttpStatus.CREATED.value()) {
+                throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Lưu ảnh đại diện thất bại", "profilePic");
+            }
+            user.setProfilePic(fileResponse.getData().getId().toString());
+        }
         UserResponse userResponse = userMapper.toUserResponse(userRepository.save(user));
+        userResponse.setRoles(null);
         return ApiResponse.<UserResponse>builder()
                 .status(HttpStatus.OK.value())
                 .message("Cập nhật thông tin thành công")
@@ -153,11 +176,7 @@ public class AuthServiceImpl implements AuthService {
                 signedJWT.getJWTClaimsSet().getExpirationTime());
         invalidatedTokenRepository.save(invalidatedToken);
 
-        List<RoleCodeEnum> roles = user.getRoles().stream()
-                .map(Role::getCode)
-                .toList();
-
-        String newToken = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getEmail(), roles);
+        String newToken = jwtUtils.generateToken(user);
         AuthResponse authResponse = new AuthResponse(newToken);
         return ApiResponse.<AuthResponse>builder()
                 .status(HttpStatus.OK.value())
@@ -190,4 +209,3 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 }
-

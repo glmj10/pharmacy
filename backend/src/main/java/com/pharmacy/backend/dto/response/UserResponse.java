@@ -1,15 +1,19 @@
 package com.pharmacy.backend.dto.response;
 
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
 @Data
 @Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserResponse {
-    private Long id;
-    private String username;
-    private String email;
-    private List<RoleResponse> roles;
+    Long id;
+    String profilePic;
+    String username;
+    String email;
+    List<RoleResponse> roles;
 }

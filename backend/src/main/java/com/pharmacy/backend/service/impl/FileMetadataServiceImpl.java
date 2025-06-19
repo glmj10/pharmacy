@@ -13,6 +13,7 @@ import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.FileMetadataService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class FileMetadataServiceImpl implements FileMetadataService {
@@ -36,7 +38,7 @@ public class FileMetadataServiceImpl implements FileMetadataService {
 
     @Transactional
     @Override
-    public ApiResponse<FileMetadataResponse> storeFile(MultipartFile file, String category) {
+    public ApiResponse<FileMetadataResponse> storeFile(MultipartFile file, String category){
         FileCategory fileCategory = FileCategory.valueOf(category.toUpperCase());
         String originalFileName = file.getOriginalFilename();
         String extension = Optional.ofNullable(originalFileName)
@@ -52,14 +54,15 @@ public class FileMetadataServiceImpl implements FileMetadataService {
             Files.createDirectories(targetDir);
             Path targetFile = targetDir.resolve(storedName);
             Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file: " + originalFileName, e);
+        } catch (Exception e) {
+            deleteFile(storedName);
+            log.error(e.getMessage());
+            throw new AppException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Không thể lưu tệp tin",
+                    "Failed to store file: " + e.getMessage(
+            ));
         }
-
-        Long userId = SecurityUtils.getCurrentUserId();
-        assert userId != null;
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng", "User not found"));
 
         FileMetadata fileMetadata = FileMetadata.builder()
                 .originalFileName(originalFileName)
@@ -68,7 +71,6 @@ public class FileMetadataServiceImpl implements FileMetadataService {
                 .fileSize(file.getSize())
                 .contentType(file.getContentType())
                 .fileType(fileCategory.getSubDirectory())
-                .user(user)
                 .build();
         fileMetadata = fileMetadataRepository.save(fileMetadata);
 
@@ -108,17 +110,26 @@ public class FileMetadataServiceImpl implements FileMetadataService {
 
     @Transactional
     @Override
-    public ApiResponse<Void> deleteFile(String uuidStr) {
+    public void deleteFile(String uuidStr) {
+        if (uuidStr == null || uuidStr.isEmpty()) {
+            return;
+        }
         FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(uuidStr))
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy tệp tin", "File not found"));
 
+        String storedFileName = fileMetadata.getStoredFileName();
+        if(fileMetadata.getOriginalFileName().equals("default-avatar.jpg")) {
+            return;
+        }
+
         Path filePath = Paths.get(properties.getUploadDir())
-                .resolve(fileMetadata.getStoredFileName())
+                .resolve(fileMetadata.getFileType())
+                .resolve(storedFileName)
                 .normalize();
         try {
             Files.deleteIfExists(filePath);
             fileMetadataRepository.delete(fileMetadata);
-            return ApiResponse.<Void>builder()
+            ApiResponse.<Void>builder()
                     .status(HttpStatus.OK.value())
                     .message("Xóa tệp tin thành công")
                     .timestamp(LocalDateTime.now())

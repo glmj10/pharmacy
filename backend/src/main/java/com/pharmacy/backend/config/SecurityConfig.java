@@ -1,7 +1,8 @@
 package com.pharmacy.backend.config;
 
 
-import com.pharmacy.backend.security.JWTBlackListFilter;
+import com.pharmacy.backend.security.CustomAuthenticationEntryPoint;
+import com.pharmacy.backend.security.JWTAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -44,7 +45,8 @@ public class SecurityConfig {
     @Value("${jwt.secret}")
     String secretKey;
 
-    private final JWTBlackListFilter jwtBlackListFilter;
+    private final JWTAuthenticationFilter jwtBlackListFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -55,6 +57,9 @@ public class SecurityConfig {
                 .anyRequest().authenticated());
 
         http.csrf(AbstractHttpConfigurer::disable);
+        http.exceptionHandling(exceptionHandling ->
+                exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint)
+        );
 
         http.oauth2ResourceServer(oauth2ResourceServer ->
                 oauth2ResourceServer.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())

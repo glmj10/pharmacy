@@ -12,4 +12,5 @@ import java.util.UUID;
 @Repository
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, Long> {
     Optional<FileMetadata> findByUuid(UUID uuid);
+    Optional<FileMetadata> findTopByOriginalFileName(String fileName);
 }

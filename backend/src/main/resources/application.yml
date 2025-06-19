@@ -25,7 +25,6 @@ jwt:
     expiration: 86400
 server:
   port: 8080
-  base-url: http://localhost:8080
   servlet:
     encoding:
       charset: UTF-8
@@ -38,3 +37,5 @@ account:
 file:
     upload:
       dir: D:/upload
+app:
+  base-url: http://localhost:8080

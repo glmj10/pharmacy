@@ -33,12 +33,6 @@ public class FileController {
                 .body(resource);
     }
 
-    @DeleteMapping("/delete/{uuid}")
-    public ResponseEntity<ApiResponse<Void>> deleteFile(@PathVariable String uuid) {
-        ApiResponse<Void> response = fileMetadataService.deleteFile(uuid);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
-
     @GetMapping("/load/{uuid}")
     public ResponseEntity<FileSystemResource> loadFile(@PathVariable String uuid) {
         FileSystemResource resource = fileMetadataService.loadFile(uuid);

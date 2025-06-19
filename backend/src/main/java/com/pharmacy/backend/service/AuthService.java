@@ -9,13 +9,14 @@ import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.AuthResponse;
 import com.pharmacy.backend.dto.response.RefreshRequest;
 import com.pharmacy.backend.dto.response.UserResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.ParseException;
 
 public interface AuthService {
     ApiResponse<AuthResponse> login(AuthRequest request);
     ApiResponse<UserResponse> register(UserRequest request);
-    ApiResponse<UserResponse> changeInfo(UserInfoRequest request);
+    ApiResponse<UserResponse> changeInfo(UserInfoRequest request, MultipartFile avatar);
     ApiResponse<String> logout(String token) throws ParseException;
     ApiResponse<AuthResponse> refreshToken(RefreshRequest request) throws ParseException, JOSEException;
     ApiResponse<String> changePassword(ChangePasswordRequest request);

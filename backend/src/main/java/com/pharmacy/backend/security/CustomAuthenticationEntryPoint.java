@@ -29,7 +29,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error(HttpStatus.UNAUTHORIZED.getReasonPhrase())
-                .message(authException.getMessage())
+                .message("Truy cập trái phép - vui lòng đăng nhập hoặc cung cấp thông tin đăng nhập hợp lệ.")
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();

@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.ParseException;
 
@@ -40,8 +41,9 @@ public class AuthController {
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/info")
-    public ResponseEntity<ApiResponse<UserResponse>> changeInfo(@RequestBody @Valid UserInfoRequest request) {
-        ApiResponse<UserResponse> response = authService.changeInfo(request);
+    public ResponseEntity<ApiResponse<UserResponse>> changeInfo(@RequestPart(value = "info") @Valid UserInfoRequest request,
+                                                                @RequestPart(value = "profilePic", required = false) MultipartFile avatar) {
+        ApiResponse<UserResponse> response = authService.changeInfo(request, avatar);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
