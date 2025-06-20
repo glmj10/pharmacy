@@ -26,15 +26,14 @@ public class Category {
     String name;
     String thumbnail;
     String slug;
-    Long priority;
 
     @Enumerated(EnumType.STRING)
     CategoryTypeEnum type;
 
-    @OneToMany(mappedBy = "parent")
+    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     List<Category> children;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "parent_id")
     Category parent;
 

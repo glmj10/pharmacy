@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 public enum FileCategory {
     AVATAR("avatar"),
     BLOG("blog"),
-    PRODUCT("product");
+    PRODUCT("product"),
+    CATEGORY("category");
 
     private final String subDirectory;
 

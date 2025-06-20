@@ -37,9 +37,13 @@ public class SecurityConfig {
 
     public final String[] GET_ENDPOINTS = {
             "/api/v1/products",
-            "/api/v1/categories",
+            "/api/v1/categories/**",
             "/api/v1/products/{id}",
-            "/api/v1/files/download/**",
+            "/api/v1/blogs",
+            "/api/v1/blogs/{slug}",
+            "/api/v1/categories/parent/{parentSlug}",
+            "/api/v1/categories",
+            "/api/v1/files/download/{uuid}",
     };
 
     @Value("${jwt.secret}")
@@ -55,7 +59,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, POST_ENDPOINTS).permitAll()
                 .requestMatchers(HttpMethod.GET, GET_ENDPOINTS).permitAll()
                 .anyRequest().authenticated());
-
         http.csrf(AbstractHttpConfigurer::disable);
         http.exceptionHandling(exceptionHandling ->
                 exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint)
