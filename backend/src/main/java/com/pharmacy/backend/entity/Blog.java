@@ -21,7 +21,6 @@ public class Blog {
     String slug;
     String thumbnail;
     String title;
-    Integer priority;
 
     @Column(columnDefinition = "LONGTEXT")
     String content;

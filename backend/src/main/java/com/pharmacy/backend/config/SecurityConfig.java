@@ -44,6 +44,8 @@ public class SecurityConfig {
             "/api/v1/categories/parent/{parentSlug}",
             "/api/v1/categories",
             "/api/v1/files/download/{uuid}",
+            "/api/v1/blogs",
+            "/api/v1/blogs/slug/{slug}",
     };
 
     @Value("${jwt.secret}")

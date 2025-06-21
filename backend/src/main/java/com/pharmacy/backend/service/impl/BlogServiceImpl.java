@@ -1,0 +1,174 @@
+package com.pharmacy.backend.service.impl;
+
+import com.pharmacy.backend.dto.request.BlogRequest;
+import com.pharmacy.backend.dto.response.ApiResponse;
+import com.pharmacy.backend.dto.response.BlogResponse;
+import com.pharmacy.backend.dto.response.PageResponse;
+import com.pharmacy.backend.entity.Blog;
+import com.pharmacy.backend.exception.AppException;
+import com.pharmacy.backend.mapper.BlogMapper;
+import com.pharmacy.backend.repository.BlogRepository;
+import com.pharmacy.backend.service.BlogService;
+import com.pharmacy.backend.service.FileMetadataService;
+import com.pharmacy.backend.utils.SlugUtils;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class BlogServiceImpl implements BlogService {
+    private final BlogRepository blogRepository;
+    private final BlogMapper blogMapper;
+    private final FileMetadataService fileMetadataService;
+    @Override
+    public ApiResponse<PageResponse<List<BlogResponse>>> getAllBlogs(int pageIndex, int pageSize, String title) {
+        if(pageIndex <= 0) {
+            pageIndex = 1;
+        }
+
+        if(pageSize <= 0) {
+            pageSize = 10;
+        }
+
+        Pageable pageable = PageRequest.of(pageIndex - 1, pageSize,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Blog> blogPage;
+        if(title != null && !title.isEmpty()) {
+            blogPage = blogRepository.findByTitleContainingIgnoreCase(title, pageable);
+        } else {
+            blogPage = blogRepository.findAll(pageable);
+        }
+        List<BlogResponse> blogResponses = blogPage.getContent().stream().map(
+                blogMapper::toBlogResponse
+        ).toList();
+        PageResponse<List<BlogResponse>> pageResponse = PageResponse.<List<BlogResponse>>builder()
+                .content(blogResponses)
+                .currentPage(pageIndex)
+                .totalPages(blogPage.getTotalPages())
+                .totalElements(blogPage.getTotalElements())
+                .hasNext(blogPage.hasNext())
+                .hasPrevious(blogPage.hasPrevious())
+                .build();
+
+        return ApiResponse.<PageResponse<List<BlogResponse>>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Lấy danh sách bài viết thành công")
+                .data(pageResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<BlogResponse> getBlogBySlug(String slug) {
+        Blog blog = blogRepository.findBySlug(slug)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy bài viết với slug: " + slug, "Blog not found"));
+        BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
+        return ApiResponse.<BlogResponse>builder()
+                .status(HttpStatus.OK.value())
+                .message("Lấy bài viết thành công")
+                .data(blogResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<BlogResponse> getBlogById(Long id) {
+        Blog blog = blogRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy bài viết với ID: " + id, "Blog not found"));
+        BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
+        return ApiResponse.<BlogResponse>builder()
+                .status(HttpStatus.OK.value())
+                .message("Lấy bài viết thành công")
+                .data(blogResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public ApiResponse<BlogResponse> createBlog(BlogRequest request, MultipartFile thumbnail) {
+        Blog blog = blogMapper.toBlog(request);
+        blog.setSlug(createSlug(blog.getTitle()));
+
+        var fileMetadata = fileMetadataService.storeFile(thumbnail, "BLOG");
+        blog.setThumbnail(fileMetadata.getData().getId().toString());
+
+        Blog savedBlog = blogRepository.save(blog);
+
+        BlogResponse blogResponse = blogMapper.toBlogResponse(savedBlog);
+        return ApiResponse.<BlogResponse>builder()
+                .status(HttpStatus.CREATED.value())
+                .message("Tạo bài viết thành công")
+                .data(blogResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public ApiResponse<BlogResponse> updateBlog(Long id, BlogRequest request, MultipartFile thumbnail) {
+        Blog existingBlog = blogRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy bài viết với ID: " + id, "Blog not found"));
+
+        Blog blogUpdateFromRequest = blogMapper.toBlogUpdateFromRequest(request, existingBlog);
+
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            fileMetadataService.deleteFile(existingBlog.getThumbnail());
+            var fileMetadata = fileMetadataService.storeFile(thumbnail, "BLOG");
+            blogUpdateFromRequest.setThumbnail(fileMetadata.getData().getId().toString());
+        } else {
+            blogUpdateFromRequest.setThumbnail(existingBlog.getThumbnail());
+        }
+
+        blogUpdateFromRequest.setSlug(createSlug(blogUpdateFromRequest.getTitle()));
+        blogUpdateFromRequest.setUpdatedAt(LocalDateTime.now());
+
+        Blog updatedBlog = blogRepository.save(blogUpdateFromRequest);
+        BlogResponse blogResponse = blogMapper.toBlogResponse(updatedBlog);
+
+        return ApiResponse.<BlogResponse>builder()
+                .status(HttpStatus.OK.value())
+                .message("Cập nhật bài viết thành công")
+                .data(blogResponse)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public ApiResponse<Void> deleteBlog(Long id) {
+        Blog blog = blogRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy bài viết với ID: " + id, "Blog not found"));
+
+        blogRepository.delete(blog);
+        return ApiResponse.<Void>builder()
+                .status(HttpStatus.OK.value())
+                .message("Xóa bài viết thành công")
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    private String createSlug(String name) {
+        String baseSlug = SlugUtils.generateSlug(name);
+        int cnt = 1;
+        String slug = baseSlug;
+        while(blogRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + cnt++;
+        }
+        return slug;
+    }
+}

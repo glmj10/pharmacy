@@ -30,7 +30,7 @@ public class Product {
     String noted;
     String indication;
     String slug;
-    Long priority;
+    Long priority = 1L;
     Boolean active;
 
     @Column(columnDefinition = "TEXT")
