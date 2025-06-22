@@ -23,7 +23,8 @@ public class Product {
 
     String thumbnail;
     String title;
-    Long price;
+    Long priceOld;
+    Long priceNew;
     Long quantity;
     String manufacturer;
     String type;
@@ -31,7 +32,7 @@ public class Product {
     String indication;
     String slug;
     Long priority = 1L;
-    Boolean active;
+    Boolean active = true;
 
     @Column(columnDefinition = "TEXT")
     String description;
@@ -45,7 +46,7 @@ public class Product {
     @Column(name = "dosage_form")
     String dosageForm;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<ProductImage> images;
 
     @ManyToOne

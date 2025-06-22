@@ -37,8 +37,8 @@ public class SecurityConfig {
 
     public final String[] GET_ENDPOINTS = {
             "/api/v1/products",
+            "/api/v1/products/slug/{slug}",
             "/api/v1/categories/**",
-            "/api/v1/products/{id}",
             "/api/v1/blogs",
             "/api/v1/blogs/{slug}",
             "/api/v1/categories/parent/{parentSlug}",

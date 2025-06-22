@@ -2,6 +2,7 @@ package com.pharmacy.backend.dto.request;
 
 import com.pharmacy.backend.entity.Category;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -14,10 +15,13 @@ public class ProductRequest {
     @NotEmpty(message = "Tên sản phẩm không được để trống")
     String title;
 
-    @NotEmpty(message = "Giá sản phẩm không được để trống")
-    Long price;
+    @NotNull(message = "Giá cũ không được để trống")
+    Long priceOld;
 
-    @NotEmpty(message = "Số lượng sản phẩm không được để trống")
+    @NotNull(message = "Giá mới không được để trống")
+    Long priceNew;
+
+    @NotNull(message = "Số lượng không được để trống")
     Long quantity;
 
     @NotEmpty(message = "Nhà sản xuất không được để trống")
@@ -45,6 +49,9 @@ public class ProductRequest {
 
     @NotEmpty(message = "Dạng bào chế không được để trống")
     String dosageForm;
+
+    @NotNull(message = "Nhãn hiệu không được để trống")
+    Long brandId;
 
     @NotEmpty(message = "Danh sách danh mục không được để trống")
     Set<Long> categoryIds;
