@@ -22,10 +22,10 @@ public class CartItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    Integer quantity;
+    Long quantity;
 
     @Column(name = "price_at_addition")
-    Integer priceAtAddition;
+    Long priceAtAddition;
 
     @ManyToOne
     @JoinColumn(name = "cart_id", referencedColumnName = "id")

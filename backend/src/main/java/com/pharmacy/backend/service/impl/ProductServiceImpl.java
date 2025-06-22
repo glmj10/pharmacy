@@ -226,6 +226,20 @@ public class ProductServiceImpl implements ProductService {
                 .build();
     }
 
+    @Override
+    public void updateProductQuantity(Product product) {
+        Product existingProduct = productRepository.findById(product.getId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm với ID: " + product.getId(), "PRODUCT_NOT_FOUND"));
+
+        if (product.getQuantity() < 0) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Số lượng sản phẩm không thể nhỏ hơn 0", "INVALID_PRODUCT_QUANTITY");
+        }
+
+        existingProduct.setQuantity(product.getQuantity());
+        productRepository.save(existingProduct);
+
+    }
+
     private String createSlug(String name) {
         String baseSlug = SlugUtils.generateSlug(name);
         int cnt = 1;

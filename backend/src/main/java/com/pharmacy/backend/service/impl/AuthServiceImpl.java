@@ -22,6 +22,7 @@ import com.pharmacy.backend.repository.UserRepository;
 import com.pharmacy.backend.security.JwtUtils;
 import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.AuthService;
+import com.pharmacy.backend.service.CartService;
 import com.pharmacy.backend.service.FileMetadataService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -50,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
     InvalidatedTokenRepository invalidatedTokenRepository;
     FileMetadataService fileMetadataService;
     FileMetadataRepository fileMetadataRepository;
+    CartService cartService;
 
     @Transactional
     @Override
@@ -102,7 +104,9 @@ public class AuthServiceImpl implements AuthService {
 
         fileMetadata = fileMetadataRepository.save(fileMetadata);
         user.setProfilePic(fileMetadata.getUuid().toString());
+
         User savedUser = userRepository.save(user);
+        cartService.createCart(savedUser);
 
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
         userResponse.setRoles(null);

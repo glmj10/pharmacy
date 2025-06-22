@@ -6,6 +6,7 @@ import com.pharmacy.backend.dto.request.ProductRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.PageResponse;
 import com.pharmacy.backend.dto.response.ProductResponse;
+import com.pharmacy.backend.entity.Product;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -19,4 +20,5 @@ public interface ProductService {
     ApiResponse<ProductResponse> updateProduct(Long id, ProductRequest request, MultipartFile thumbnail, List<MultipartFile> images);
     ApiResponse<ProductResponse> changeProductStatus(Long id, Boolean active);
     ApiResponse<Void> deleteProduct(Long id);
+    void updateProductQuantity(Product product);
 }

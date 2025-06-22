@@ -17,7 +17,7 @@ import org.hibernate.annotations.CreationTimestamp;
 public class Contact {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     String address;
 
@@ -31,6 +31,8 @@ public class Contact {
 
     @Column(name = "phone_number")
     String phoneNumber;
+
+    Boolean active = true;
 
     @CreationTimestamp
     @Column(name = "created_at")
