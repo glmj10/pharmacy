@@ -15,5 +15,6 @@ public class ContactResponse {
     String phoneNumber;
     String address;
     String content;
+    Boolean active;
     String createdAt;
 }

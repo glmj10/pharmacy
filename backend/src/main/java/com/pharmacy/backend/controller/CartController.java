@@ -4,7 +4,6 @@ import com.pharmacy.backend.dto.request.CartItemRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.CartItemResponse;
 import com.pharmacy.backend.service.CartService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
