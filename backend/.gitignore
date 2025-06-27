@@ -4,10 +4,6 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### Resources files ###
-src/main/resources/*
-src/main/resources/application.yml
-
 ### STS ###
 .apt_generated
 .classpath
