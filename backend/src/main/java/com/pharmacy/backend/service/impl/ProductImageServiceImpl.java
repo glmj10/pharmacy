@@ -3,7 +3,7 @@ package com.pharmacy.backend.service.impl;
 import com.pharmacy.backend.dto.response.ProductImageResponse;
 import com.pharmacy.backend.entity.Product;
 import com.pharmacy.backend.entity.ProductImage;
-import com.pharmacy.backend.enums.FileCategory;
+import com.pharmacy.backend.enums.FileCategoryEnum;
 import com.pharmacy.backend.mapper.ProductImageMapper;
 import com.pharmacy.backend.repository.ProductImageRepository;
 import com.pharmacy.backend.service.FileMetadataService;
@@ -38,7 +38,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         }
         return images.stream()
                 .map(image -> {
-                    var fileMetadata = fileMetadataService.storeFile(image, FileCategory.PRODUCT.name());
+                    var fileMetadata = fileMetadataService.storeFile(image, FileCategoryEnum.PRODUCT.name());
                     ProductImage productImage = new ProductImage();
                     productImage.setProduct(product);
                     productImage.setImageUuid(fileMetadata.getData().getId().toString());

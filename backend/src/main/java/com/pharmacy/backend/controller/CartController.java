@@ -3,6 +3,7 @@ package com.pharmacy.backend.controller;
 import com.pharmacy.backend.dto.request.CartItemRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.CartItemResponse;
+import com.pharmacy.backend.dto.response.CartResponse;
 import com.pharmacy.backend.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,8 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CartItemResponse>>> getCartItems() {
-        ApiResponse<List<CartItemResponse>> response = cartService.getItemsInCart();
+    public ResponseEntity<ApiResponse<CartResponse>> getCartItems() {
+        ApiResponse<CartResponse> response = cartService.getCart();
 
         return ResponseEntity.status(response.getStatus()).body(response);
     }
@@ -41,6 +42,14 @@ public class CartController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @PatchMapping("/item/status/{itemId}")
+    public ResponseEntity<ApiResponse<CartItemResponse>> updateItemStatus(@PathVariable Long itemId,
+                                                                           @RequestParam("selected") Boolean status) {
+        ApiResponse<CartItemResponse> response = cartService.changeItemSelection(itemId, status);
+
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     @DeleteMapping("/item/{itemId}")
     public ResponseEntity<ApiResponse<Void>> removeItemFromCart(@PathVariable Long itemId) {
         ApiResponse<Void> response = cartService.removeItemFromCart(itemId);
@@ -51,6 +60,13 @@ public class CartController {
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> clearCart() {
         ApiResponse<Void> response = cartService.clearCart();
+
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PutMapping("/item/status/all")
+    public ResponseEntity<ApiResponse<List<CartItemResponse>>> selectAllItems(@RequestParam("selected") Boolean status) {
+        ApiResponse<List<CartItemResponse>> response = cartService.selectAllItems(status);
 
         return ResponseEntity.status(response.getStatus()).body(response);
     }

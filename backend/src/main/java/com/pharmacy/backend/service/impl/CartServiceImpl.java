@@ -3,6 +3,7 @@ package com.pharmacy.backend.service.impl;
 import com.pharmacy.backend.dto.request.CartItemRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.CartItemResponse;
+import com.pharmacy.backend.dto.response.CartResponse;
 import com.pharmacy.backend.entity.Cart;
 import com.pharmacy.backend.entity.CartItem;
 import com.pharmacy.backend.entity.Product;
@@ -15,6 +16,7 @@ import com.pharmacy.backend.repository.ProductRepository;
 import com.pharmacy.backend.repository.UserRepository;
 import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.CartService;
+import com.pharmacy.backend.utils.NumberUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -46,13 +48,16 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public ApiResponse<List<CartItemResponse>> getItemsInCart() {
+    public ApiResponse<CartResponse> getCart() {
         User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
-                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "Invalid user"));
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED,
+                        "Người dùng không hợp lệ", "Invalid user"));
         Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Giỏ hàng không tồn tại", "Cart not found for this user"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Giỏ hàng không tồn tại", "Cart not found for this user"));
 
-        List<CartItem> items = cartItemRepository.findByCart(cart, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<CartItem> items = cartItemRepository.findByCart(cart,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
 
         List<CartItemResponse> itemResponses = items.stream()
                 .map(item -> CartItemResponse.builder()
@@ -60,13 +65,18 @@ public class CartServiceImpl implements CartService {
                         .product(productMapper.toProductResponse(item.getProduct()))
                         .quantity(item.getQuantity())
                         .priceAtAddition(item.getPriceAtAddition())
+                        .priceDifferent(Math.abs(item.getPriceAtAddition() - item.getProduct().getPriceNew()))
+                        .priceChangeType(NumberUtils.toPriceChangeType(item.getProduct().getPriceNew() - item.getPriceAtAddition()))
+                        .isOutOfStock(item.isOutOfStock())
+                        .selected(item.getSelected())
                         .build())
                 .toList();
 
-        return ApiResponse.<List<CartItemResponse>>builder()
+        CartResponse response = new CartResponse(cart.getId(), cart.getTotalPrice(), itemResponses);
+        return ApiResponse.<CartResponse>builder()
                 .status(HttpStatus.OK.value())
                 .message("Lấy danh sách sản phẩm trong giỏ hàng thành công")
-                .data(itemResponses)
+                .data(response)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -75,20 +85,25 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public ApiResponse<CartItemResponse> addItemToCart(CartItemRequest request) {
         User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
-                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "Invalid user"));
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED,
+                        "Người dùng không hợp lệ", "Invalid user"));
         if(request.getQuantity() <= 0) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Số lượng sản phẩm phải lớn hơn 0", "Invalid product quantity");
+            throw new AppException(HttpStatus.BAD_REQUEST,
+                    "Số lượng sản phẩm phải lớn hơn 0", "Invalid product quantity");
         }
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Sản phẩm không tồn tại", "Product not found"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Sản phẩm không tồn tại", "Product not found"));
 
         if (product.getQuantity() < request.getQuantity()) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Số lượng sản phẩm không đủ", "Insufficient product quantity");
+            throw new AppException(HttpStatus.BAD_REQUEST,
+                    "Số lượng sản phẩm không đủ", "Insufficient product quantity");
         }
 
         Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Giỏ hàng không tồn tại", "Cart not found for this user"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Giỏ hàng không tồn tại", "Cart not found for this user"));
 
         CartItem existingItem = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElse(null);
@@ -130,15 +145,19 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public ApiResponse<CartItemResponse> updateItemQuantity(Long itemId, Long quantity) {
         User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
-                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "Invalid user"));
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED,
+                        "Người dùng không hợp lệ", "Invalid user"));
         Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Giỏ hàng không tồn tại", "Cart not found for this user"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Giỏ hàng không tồn tại", "Cart not found for this user"));
 
         CartItem item = cartItemRepository.findByCartAndId(cart, itemId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Sản phẩm trong giỏ hàng không tồn tại", "Cart item not found"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Sản phẩm trong giỏ hàng không tồn tại", "Cart item not found"));
 
         if (item.getProduct().getQuantity() < quantity) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Số lượng sản phẩm không đủ", "Insufficient product quantity");
+            throw new AppException(HttpStatus.BAD_REQUEST,
+                    "Số lượng sản phẩm không đủ", "Insufficient product quantity");
         }
 
         item.setQuantity(quantity);
@@ -159,17 +178,23 @@ public class CartServiceImpl implements CartService {
                 .build();
     }
 
+    @Transactional
     @Override
     public ApiResponse<Void> removeItemFromCart(Long itemId) {
         User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
-                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "Invalid user"));
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED,
+                        "Người dùng không hợp lệ", "Invalid user"));
         Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Giỏ hàng không tồn tại", "Cart not found for this user"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Giỏ hàng không tồn tại", "Cart not found for this user"));
 
         CartItem item = cartItemRepository.findByCartAndId(cart, itemId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Sản phẩm trong giỏ hàng không tồn tại", "Cart item not found"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Sản phẩm trong giỏ hàng không tồn tại", "Cart item not found"));
 
         cartItemRepository.delete(item);
+        cart.setTotalPrice(cart.getTotalPrice() - item.getProduct().getPriceNew());
+        cartRepository.save(cart);
 
         return ApiResponse.<Void>builder()
                 .status(HttpStatus.OK.value())
@@ -183,9 +208,17 @@ public class CartServiceImpl implements CartService {
     @Override
     public ApiResponse<Void> clearCart() {
         User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
-                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "Invalid user"));
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED,
+                        "Người dùng không hợp lệ", "Invalid user"));
         Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Giỏ hàng không tồn tại", "Cart not found for this user"));
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Giỏ hàng không tồn tại", "Cart not found for this user"));
+
+        cart.getCartItems().forEach(item -> {
+            if (item.getSelected()) {
+                cart.setTotalPrice(cart.getTotalPrice() - item.getProduct().getPriceNew());
+            }
+        });
 
         cartItemRepository.deleteAll(cart.getCartItems());
         cart.getCartItems().clear();
@@ -195,6 +228,82 @@ public class CartServiceImpl implements CartService {
                 .status(HttpStatus.OK.value())
                 .message("Đã xóa tất cả sản phẩm trong giỏ hàng")
                 .data(null)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public ApiResponse<CartItemResponse> changeItemSelection(Long itemId, Boolean status) {
+        User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED,
+                        "Người dùng không hợp lệ", "Invalid user"));
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Giỏ hàng không tồn tại", "Cart not found for this user"));
+
+        CartItem item = cartItemRepository.findByCartAndId(cart, itemId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Sản phẩm trong giỏ hàng không tồn tại", "Cart item not found"));
+
+        item.setSelected(status);
+        cart.setTotalPrice(cart.getTotalPrice() + (item.getSelected() ? item.getProduct().getPriceNew() : -item.getProduct().getPriceNew()));
+        cartItemRepository.save(item);
+        cartRepository.save(cart);
+
+        CartItemResponse response = CartItemResponse.builder()
+                .id(item.getId())
+                .product(productMapper.toProductResponse(item.getProduct()))
+                .quantity(item.getQuantity())
+                .priceAtAddition(item.getPriceAtAddition())
+                .selected(item.getSelected())
+                .isOutOfStock(item.isOutOfStock())
+                .priceDifferent(Math.abs(item.getPriceAtAddition() - item.getProduct().getPriceNew()))
+                .build();
+
+        return ApiResponse.<CartItemResponse>builder()
+                .status(HttpStatus.OK.value())
+                .message("Cập nhật trạng thái sản phẩm trong giỏ hàng thành công")
+                .data(response)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<List<CartItemResponse>> selectAllItems(Boolean status) {
+        User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED,
+                        "Người dùng không hợp lệ", "Invalid user"));
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Giỏ hàng không tồn tại", "Cart not found for this user"));
+
+        List<CartItem> items = cartItemRepository.findAllByCartAndSelected(cart, !status);
+
+        items.forEach(item -> {
+            item.setSelected(status);
+            cart.setTotalPrice(cart.getTotalPrice() + (item.getSelected() ? item.getProduct().getPriceNew() : -item.getProduct().getPriceNew()));
+            cartItemRepository.save(item);
+        });
+
+        cartRepository.save(cart);
+
+        List<CartItemResponse> responses = items.stream()
+                .map(item -> CartItemResponse.builder()
+                        .id(item.getId())
+                        .product(productMapper.toProductResponse(item.getProduct()))
+                        .quantity(item.getQuantity())
+                        .priceAtAddition(item.getPriceAtAddition())
+                        .selected(item.getSelected())
+                        .isOutOfStock(item.isOutOfStock())
+                        .priceDifferent(Math.abs(item.getPriceAtAddition() - item.getProduct().getPriceNew()))
+                        .build())
+                .toList();
+
+        return ApiResponse.<List<CartItemResponse>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Cập nhật trạng thái sản phẩm trong giỏ hàng thành công")
+                .data(responses)
                 .timestamp(LocalDateTime.now())
                 .build();
     }

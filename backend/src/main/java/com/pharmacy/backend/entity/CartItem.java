@@ -2,17 +2,15 @@ package com.pharmacy.backend.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "cart_items")
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,6 +24,16 @@ public class CartItem {
 
     @Column(name = "price_at_addition")
     Long priceAtAddition;
+
+    Boolean selected = false;
+
+    public boolean isOutOfStock() {
+        return product.getQuantity() <= 0;
+    }
+
+    public boolean isProductAvailable() {
+        return product.getQuantity() >= quantity;
+    }
 
     @ManyToOne
     @JoinColumn(name = "cart_id", referencedColumnName = "id")

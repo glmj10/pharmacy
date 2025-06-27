@@ -1,27 +1,26 @@
 package com.pharmacy.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @Table(name = "order_details")
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class OrderDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    Integer quantity;
+    Long quantity;
 
     @Column(name = "price_at_order")
-    Integer priceAtOrder;
+    Long priceAtOrder;
 
     @ManyToOne
     @JoinColumn(name = "order_id", referencedColumnName = "id")
@@ -30,7 +29,5 @@ public class OrderDetail {
     @ManyToOne
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     Product product;
-
-
 
 }

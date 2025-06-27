@@ -11,7 +11,7 @@ import com.pharmacy.backend.entity.FileMetadata;
 import com.pharmacy.backend.entity.InvalidatedToken;
 import com.pharmacy.backend.entity.Role;
 import com.pharmacy.backend.entity.User;
-import com.pharmacy.backend.enums.FileCategory;
+import com.pharmacy.backend.enums.FileCategoryEnum;
 import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.UserMapper;
@@ -36,7 +36,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -99,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
                 .fileExtension("jpg")
                 .fileSize(0L)
                 .contentType("image/jpeg")
-                .fileType(FileCategory.AVATAR.name())
+                .fileType(FileCategoryEnum.AVATAR.name())
                 .build();
 
         fileMetadata = fileMetadataRepository.save(fileMetadata);
@@ -129,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(request.getUsername());
         if(profilePic != null) {
             fileMetadataService.deleteFile(user.getProfilePic());
-            ApiResponse<FileMetadataResponse> fileResponse = fileMetadataService.storeFile(profilePic, FileCategory.AVATAR.name());
+            ApiResponse<FileMetadataResponse> fileResponse = fileMetadataService.storeFile(profilePic, FileCategoryEnum.AVATAR.name());
             if(fileResponse.getStatus() != HttpStatus.OK.value() && fileResponse.getStatus() != HttpStatus.CREATED.value()) {
                 throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Lưu ảnh đại diện thất bại", "profilePic");
             }

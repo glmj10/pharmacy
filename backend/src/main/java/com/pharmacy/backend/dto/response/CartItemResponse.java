@@ -13,4 +13,8 @@ public class CartItemResponse {
     ProductResponse product;
     Long quantity;
     Long priceAtAddition;
+    Long priceDifferent;
+    String priceChangeType;
+    Boolean selected;
+    Boolean isOutOfStock;
 }

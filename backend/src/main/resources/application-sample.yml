@@ -1,6 +1,7 @@
 spring:
   jpa:
     hibernate:
+      # This setting controls the schema generation strategy. Can change to 'create', 'create-drop', or 'validate' as needed.
       ddl-auto: update
     properties:
       hibernate:
@@ -12,7 +13,26 @@ spring:
     active: uat
   sql:
     init:
+        # Executing any SQL scripts at startup. Can change to 'always' or 'embedded' as needed.
       mode: never
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+      enabled: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: youremail@gmail.com
+    password: yourAppPassword
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        default:
+          encoding: UTF-8
 jwt:
   secret: Jm/t4iRHPEvp1fFxY3ft0yRytsrRJrjctdLbRlRD+JjF9MBPcyEFOYZ0tqsLKOJe
   expiration: 3600
@@ -29,3 +49,7 @@ account:
   default:
     email: admin@gmail.com
     password: admin123
+file:
+  upload:
+    dir: D:/upload
+

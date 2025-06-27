@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum FileCategory {
+public enum FileCategoryEnum {
     AVATAR("avatar"),
     BLOG("blog"),
     PRODUCT("product"),

@@ -4,12 +4,10 @@ import com.pharmacy.backend.config.FileStorageProperties;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.FileMetadataResponse;
 import com.pharmacy.backend.entity.FileMetadata;
-import com.pharmacy.backend.entity.User;
-import com.pharmacy.backend.enums.FileCategory;
+import com.pharmacy.backend.enums.FileCategoryEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.repository.FileMetadataRepository;
 import com.pharmacy.backend.repository.UserRepository;
-import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.FileMetadataService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +37,7 @@ public class FileMetadataServiceImpl implements FileMetadataService {
     @Transactional
     @Override
     public ApiResponse<FileMetadataResponse> storeFile(MultipartFile file, String category){
-        FileCategory fileCategory = FileCategory.valueOf(category.toUpperCase());
+        FileCategoryEnum fileCategoryEnum = FileCategoryEnum.valueOf(category.toUpperCase());
         String originalFileName = file.getOriginalFilename();
         String extension = Optional.ofNullable(originalFileName)
                 .filter(f -> f.contains("."))
@@ -48,7 +46,7 @@ public class FileMetadataServiceImpl implements FileMetadataService {
 
         String storedName = UUID.randomUUID() + "_" + originalFileName;
         Path baseDir = Paths.get(properties.getUploadDir()).toAbsolutePath().normalize();
-        Path targetDir = baseDir.resolve(fileCategory.getSubDirectory());
+        Path targetDir = baseDir.resolve(fileCategoryEnum.getSubDirectory());
 
         try {
             Files.createDirectories(targetDir);
@@ -70,7 +68,7 @@ public class FileMetadataServiceImpl implements FileMetadataService {
                 .fileExtension(extension)
                 .fileSize(file.getSize())
                 .contentType(file.getContentType())
-                .fileType(fileCategory.getSubDirectory())
+                .fileType(fileCategoryEnum.getSubDirectory())
                 .build();
         fileMetadata = fileMetadataRepository.save(fileMetadata);
 

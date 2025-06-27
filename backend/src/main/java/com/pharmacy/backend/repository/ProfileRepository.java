@@ -2,6 +2,7 @@ package com.pharmacy.backend.repository;
 
 
 import com.pharmacy.backend.entity.Profile;
+import com.pharmacy.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,4 +14,6 @@ import java.util.Optional;
 @Repository
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     List<Profile> findByUser_Id(Long userId);
+
+    Optional<Profile> findByUserAndId(User user, Long id);
 }

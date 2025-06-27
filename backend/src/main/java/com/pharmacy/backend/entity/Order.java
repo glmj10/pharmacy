@@ -26,7 +26,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    Integer totalPrice;
+    Long totalPrice;
 
     @Column(columnDefinition = "TEXT")
     String note;
