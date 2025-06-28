@@ -193,7 +193,7 @@ public class CartServiceImpl implements CartService {
                         "Sản phẩm trong giỏ hàng không tồn tại", "Cart item not found"));
 
         cartItemRepository.delete(item);
-        cart.setTotalPrice(cart.getTotalPrice() - item.getProduct().getPriceNew());
+        cart.setTotalPrice(cart.getTotalPrice() - item.getProduct().getPriceNew() * item.getQuantity());
         cartRepository.save(cart);
 
         return ApiResponse.<Void>builder()
@@ -216,7 +216,7 @@ public class CartServiceImpl implements CartService {
 
         cart.getCartItems().forEach(item -> {
             if (item.getSelected()) {
-                cart.setTotalPrice(cart.getTotalPrice() - item.getProduct().getPriceNew());
+                cart.setTotalPrice(cart.getTotalPrice() - item.getProduct().getPriceNew() * item.getQuantity());
             }
         });
 
@@ -247,7 +247,8 @@ public class CartServiceImpl implements CartService {
                         "Sản phẩm trong giỏ hàng không tồn tại", "Cart item not found"));
 
         item.setSelected(status);
-        cart.setTotalPrice(cart.getTotalPrice() + (item.getSelected() ? item.getProduct().getPriceNew() : -item.getProduct().getPriceNew()));
+        cart.setTotalPrice(cart.getTotalPrice() + (item.getSelected() ? item.getProduct().getPriceNew() * item.getQuantity()
+                : -item.getProduct().getPriceNew() * item.getQuantity()));
         cartItemRepository.save(item);
         cartRepository.save(cart);
 
@@ -282,7 +283,8 @@ public class CartServiceImpl implements CartService {
 
         items.forEach(item -> {
             item.setSelected(status);
-            cart.setTotalPrice(cart.getTotalPrice() + (item.getSelected() ? item.getProduct().getPriceNew() : -item.getProduct().getPriceNew()));
+            cart.setTotalPrice(cart.getTotalPrice() + (item.getSelected() ? item.getProduct().getPriceNew() * item.getQuantity()
+                    : -item.getProduct().getPriceNew() * item.getQuantity()));
             cartItemRepository.save(item);
         });
 

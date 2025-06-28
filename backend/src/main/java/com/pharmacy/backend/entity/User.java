@@ -33,6 +33,7 @@ public class User {
     Integer tokenVersion = 0;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
+    @ToString.Exclude
     List<Profile> profiles;
 
     @ManyToMany(fetch = FetchType.LAZY)

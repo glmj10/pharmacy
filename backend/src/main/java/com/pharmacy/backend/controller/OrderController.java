@@ -6,8 +6,10 @@ import com.pharmacy.backend.dto.response.OrderDetailResponse;
 import com.pharmacy.backend.dto.response.OrderResponse;
 import com.pharmacy.backend.dto.response.PageResponse;
 import com.pharmacy.backend.service.OrderService;
+import com.pharmacy.backend.service.impl.VnPayService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -20,6 +22,7 @@ import java.util.List;
 @RequestMapping("/api/v1/orders")
 public class OrderController {
     private final OrderService orderService;
+    private final VnPayService vnPayService;
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my-orders")
@@ -44,8 +47,8 @@ public class OrderController {
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public ResponseEntity<ApiResponse<OrderResponse>> createOrder(@RequestBody @Valid OrderRequest request) {
-        ApiResponse<OrderResponse> response = orderService.createOrder(request);
+    public ResponseEntity<ApiResponse<?>> createOrder(@RequestBody @Valid OrderRequest request) {
+        ApiResponse<?> response = orderService.createOrder(request);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
@@ -64,5 +67,4 @@ public class OrderController {
         ApiResponse<OrderResponse> response = orderService.changePaymentStatus(id, paymentStatus);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
-
 }

@@ -14,6 +14,7 @@ import com.pharmacy.backend.repository.*;
 import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.EmailService;
 import com.pharmacy.backend.service.OrderService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class OrderServiceImpl implements OrderService {
     final ProfileMapper profileMapper;
     final ProductMapper productMapper;
     final EmailService emailService;
+    final VnPayService vnPayService;
 
     @Transactional
     @Override
@@ -150,7 +152,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public ApiResponse<OrderResponse> createOrder(OrderRequest request) {
+    public ApiResponse<?> createOrder(OrderRequest request) {
         User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng", "User not found"));
         Profile profile = profileRepository.findByUserAndId(user, request.getProfileId())
@@ -162,19 +164,38 @@ public class OrderServiceImpl implements OrderService {
         order.setProfile(profile);
         order.setCart(cart);
         order.setTotalPrice(cart.getTotalPrice());
-        if(request.getPaymentMethod().equalsIgnoreCase(PaymentMethodEnum.ONLINE.name())) {
-            return null;
-        } else if (request.getPaymentMethod().equalsIgnoreCase(PaymentMethodEnum.OFFLINE.name())) {
-            order = orderRepository.save(order);
-            createOrderDetails(order, cart);
-        } else {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Phương thức thanh toán không hợp lệ: "
-                    + request.getPaymentMethod(), "Invalid payment method");
+
+        switch (PaymentMethodEnum.valueOf(request.getPaymentMethod().toUpperCase())) {
+            case VNPAY -> {
+                order = orderRepository.save(order);
+                createOrderDetails(order, cart);
+                HttpServletRequest servletRequest = SecurityUtils.getCurrentHttpServletRequest();
+                String paymentUrl = vnPayService.createPaymentUrl(order, servletRequest);
+                return ApiResponse.<String>builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Chuyển hướng đến VNPay")
+                        .data(paymentUrl)
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            }
+            case MOMO -> {
+                // Gọi MoMoService nếu có
+                return ApiResponse.<String>builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Chuyển hướng đến MoMo")
+                        .data("https://momo.vn")
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            }
+            case OFFLINE -> {
+                order = orderRepository.save(order);
+                createOrderDetails(order, cart);
+            }
+            default -> throw new AppException(HttpStatus.BAD_REQUEST, "Phương thức thanh toán không hợp lệ", "Invalid payment method");
         }
 
         try {
-            String orderDetailsHtml = buildOrderDetailRow(order.getOrderDetails());
-            emailService.sendOrderConfirmationEmail(user.getEmail(), profile, order, orderDetailsHtml);
+            emailService.sendOrderConfirmationEmail(order);
         } catch (Exception e) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Gửi email xác nhận đơn hàng thất bại", "Email sending failed");
         }
@@ -190,12 +211,12 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+    @Transactional
     @Override
     public ApiResponse<OrderResponse> changeOrderStatus(Long id, String status) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng với ID: " + id, "Order not found"));
 
-        // Assuming status is a valid enum or string that can be set directly
         order.setStatus(OrderStatusEnum.valueOf(status.toUpperCase()));
         orderRepository.save(order);
 
@@ -241,9 +262,8 @@ public class OrderServiceImpl implements OrderService {
                         .quantity(cartItem.getQuantity())
                         .priceAtOrder(cartItem.getProduct().getPriceNew())
                         .build();
-                orderDetailRepository.save(orderDetail);
 
-                // Update product quantity
+                order.getOrderDetails().add(orderDetail);
                 Product product = cartItem.getProduct();
                 product.setQuantity(product.getQuantity() - cartItem.getQuantity());
             } else {
@@ -251,30 +271,10 @@ public class OrderServiceImpl implements OrderService {
                         + " không đủ số lượng", "Insufficient product quantity");
             }
         }
-    }
-
-    @Transactional
-    public String buildOrderDetailRow(List<OrderDetail> orderDetails) {
-        StringBuilder rows = new StringBuilder();
-        int i = 1;
-        for( OrderDetail detail : orderDetails) {
-            Product p = detail.getProduct();
-            long quantity = detail.getQuantity();
-            long price = detail.getPriceAtOrder();
-            long totalPrice = quantity * price;
-
-            rows.append(String.format("""
-            <tr>
-              <td style="text-align:center;">%d</td>
-              <td>%s</td>
-              <td style="text-align:right;">%,.0f₫</td>
-              <td style="text-align:center;">%d</td>
-              <td style="text-align:right;">%,.0f₫</td>
-            </tr>
-        """, i++, p.getTitle(), (double) price, quantity, (double) totalPrice));
-        }
-
-        return rows.toString();
+        cartItemRepository.deleteAll(cartItems);
+        cart.setTotalPrice(cart.getTotalPrice() - cartItems.stream()
+                .mapToLong(cartItem -> cartItem.getQuantity() * cartItem.getProduct().getPriceNew())
+                .sum());
     }
 
 }

@@ -7,6 +7,6 @@ import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 
 public interface EmailService {
-    void sendOrderConfirmationEmail(String to, Profile profile, Order order, String orderDetails)
+    void sendOrderConfirmationEmail(Order order)
             throws MessagingException, UnsupportedEncodingException;
 }

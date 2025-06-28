@@ -1,7 +1,12 @@
 package com.pharmacy.backend.utils;
 
 import com.pharmacy.backend.entity.Order;
+import com.pharmacy.backend.entity.OrderDetail;
+import com.pharmacy.backend.entity.Product;
 import com.pharmacy.backend.entity.Profile;
+import jakarta.transaction.Transactional;
+
+import java.util.List;
 
 
 public class EmailUtils {
@@ -41,5 +46,29 @@ public class EmailUtils {
             </html>
         """.formatted(profile.getFullName(), profile.getPhone(), profile.getAddress(),
                 order.getId(), order.getCreatedAt(), orderDetails, (double) order.getTotalPrice());
+    }
+
+
+    public static String buildOrderDetailRow(List<OrderDetail> orderDetails) {
+        StringBuilder rows = new StringBuilder();
+        int i = 1;
+        for( OrderDetail detail : orderDetails) {
+            Product p = detail.getProduct();
+            long quantity = detail.getQuantity();
+            long price = detail.getPriceAtOrder();
+            long totalPrice = quantity * price;
+
+            rows.append(String.format("""
+            <tr>
+              <td style="text-align:center;">%d</td>
+              <td>%s</td>
+              <td style="text-align:right;">%,.0f₫</td>
+              <td style="text-align:center;">%d</td>
+              <td style="text-align:right;">%,.0f₫</td>
+            </tr>
+        """, i++, p.getTitle(), (double) price, quantity, (double) totalPrice));
+        }
+
+        return rows.toString();
     }
 }
