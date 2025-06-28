@@ -17,4 +17,13 @@ public class ApiResponse<T> {
     String message;
     T data;
     LocalDateTime timestamp;
+
+    public static <T> ApiResponse <T> buildResponse(int status, String message, T data) {
+        return ApiResponse.<T>builder()
+                .status(status)
+                .message(message)
+                .data(data)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
 }
