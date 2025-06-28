@@ -8,7 +8,6 @@ import com.pharmacy.backend.enums.PaymentStatusEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.repository.OrderRepository;
 import com.pharmacy.backend.service.EmailService;
-import com.pharmacy.backend.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

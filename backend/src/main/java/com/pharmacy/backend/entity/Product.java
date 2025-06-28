@@ -49,6 +49,9 @@ public class Product {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<ProductImage> images;
 
+    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    List<Wishlist> wishlists;
+
     @ManyToOne
     @JoinColumn(name = "brand_id")
     Brand brand;

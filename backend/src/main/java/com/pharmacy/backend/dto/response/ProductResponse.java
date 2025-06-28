@@ -26,6 +26,8 @@ public class ProductResponse {
     String registrationNumber;
     String activeIngredient;
     String dosageForm;
+    Boolean inWishlist;
+    Long numberOfLikes;
 
     List<ProductImageResponse> images;
 }

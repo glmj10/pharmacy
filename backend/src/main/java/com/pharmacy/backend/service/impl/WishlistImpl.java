@@ -50,6 +50,9 @@ public class WishlistImpl implements WishlistService {
         wishlist.setUser(user);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Sản phẩm không tồn tại", "Product not found"));
+        if(product.getActive() == null || !product.getActive()) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Sản phẩm không khả dụng", "Product not available");
+        }
         wishlist.setProduct(product);
 
         wishlistRepository.save(wishlist);
