@@ -87,16 +87,19 @@ public class WishlistImpl implements WishlistService {
         List<Wishlist> wishlists = wishlistRepository.findAllByUser(user);
 
         if (wishlists.isEmpty()) {
-            return ApiResponse.<Void>builder()
-                    .status(HttpStatus.NO_CONTENT.value())
-                    .message("Danh sách yêu thích trống")
-                    .timestamp(LocalDateTime.now())
-                    .build();
+            return ApiResponse.buildResponse(
+                    HttpStatus.NO_CONTENT.value(),
+                    "Danh sách yêu thích trống",
+                    null
+            );
         }
 
         wishlistRepository.deleteAll(wishlists);
 
-        return ApiResponse.buildResponse(HttpStatus.OK.value(),
-                "Xóa tất cả sản phẩm khỏi danh sách yêu thích thành công", null);
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Xóa tất cả sản phẩm khỏi danh sách yêu thích thành công",
+                null
+        );
     }
 }

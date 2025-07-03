@@ -18,7 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Service
@@ -55,12 +55,11 @@ public class BrandServiceImpl implements BrandService {
                 .hasPrevious(brandPage.hasPrevious())
                 .build();
 
-        return ApiResponse.<PageResponse<List<BrandResponse>>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh sách thương hiệu thành công")
-                .data(pageResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách thương hiệu thành công",
+                pageResponse
+        );
     }
 
 
@@ -73,12 +72,11 @@ public class BrandServiceImpl implements BrandService {
 
         BrandResponse brandResponse = brandMapper.toBrandResponse(brand);
 
-        return ApiResponse.<BrandResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin thương hiệu thành công")
-                .data(brandResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin thương hiệu thành công",
+                brandResponse
+        );
     }
 
     @Transactional
@@ -91,12 +89,11 @@ public class BrandServiceImpl implements BrandService {
 
         BrandResponse brandResponse = brandMapper.toBrandResponse(brand);
 
-        return ApiResponse.<BrandResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Tạo thương hiệu thành công")
-                .data(brandResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Tạo thương hiệu thành công",
+                brandResponse
+        );
     }
 
     @Transactional
@@ -113,12 +110,11 @@ public class BrandServiceImpl implements BrandService {
 
         BrandResponse brandResponse = brandMapper.toBrandResponse(brand);
 
-        return ApiResponse.<BrandResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật thương hiệu thành công")
-                .data(brandResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật thương hiệu thành công",
+                brandResponse
+        );
     }
 
 
@@ -131,11 +127,11 @@ public class BrandServiceImpl implements BrandService {
 
         brandRepository.delete(brand);
 
-        return ApiResponse.<Void>builder()
-                .status(HttpStatus.OK.value())
-                .message("Xoá thương hiệu thành công")
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Xóa thương hiệu thành công",
+                null
+        );
     }
 
     private String createSlug(String name) {

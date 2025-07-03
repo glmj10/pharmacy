@@ -124,8 +124,10 @@ public class AuthServiceImpl implements AuthService {
         assert id != null;
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", "email"));
-        user.setEmail(request.getEmail());
-        user.setUsername(request.getUsername());
+        if(request != null) {
+            user.setEmail(request.getEmail());
+            user.setUsername(request.getUsername());
+        }
         if(profilePic != null) {
             fileMetadataService.deleteFile(user.getProfilePic());
             ApiResponse<FileMetadataResponse> fileResponse = fileMetadataService.storeFile(profilePic, FileCategoryEnum.AVATAR.name());

@@ -23,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -42,10 +41,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public ApiResponse<PageResponse<List<UserResponse>>> getAllUsers(Integer pageIndex, Integer pageSize, String email) {
-        if(pageIndex < 0 || pageSize <= 0) {
-            pageIndex = 0;
+        if(pageIndex <= 0) {
+            pageIndex = 1;
+        }
+
+        if(pageSize <= 0) {
             pageSize = 10;
         }
+
         Pageable pageable = PageRequest.of(pageIndex - 1, pageSize);
         Page<User> userPage;
         if(email != null && !email.isEmpty()) {
@@ -67,12 +70,11 @@ public class UserServiceImpl implements UserService {
                 .content(userResponses)
                 .build();
 
-        return ApiResponse.<PageResponse<List<UserResponse>>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh sách người dùng thành công")
-                .data(pageResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách người dùng thành công",
+                pageResponse
+        );
     }
 
     @Transactional
@@ -82,12 +84,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", SecurityUtils.getCurrentUserId()));
         UserResponse userResponse = userMapper.toUserResponse(currentUser);
         userResponse.setRoles(null);
-        return ApiResponse.<UserResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin người dùng hiện tại thành công")
-                .data(userResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin người dùng hiện tại thành công",
+                userResponse
+        );
     }
 
 
@@ -115,12 +116,11 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
         UserResponse userResponse = userMapper.toUserResponse(savedUser);
 
-        return ApiResponse.<UserResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật quyền người dùng thành công")
-                .data(userResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật quyền người dùng thành công",
+                userResponse
+        );
     }
 
 
@@ -132,12 +132,11 @@ public class UserServiceImpl implements UserService {
 
         UserResponse userResponse = userMapper.toUserResponse(user);
 
-        return ApiResponse.<UserResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin người dùng thành công")
-                .data(userResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin người dùng thành công",
+                userResponse
+        );
     }
 
 }

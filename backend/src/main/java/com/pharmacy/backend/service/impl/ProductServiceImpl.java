@@ -62,12 +62,11 @@ public class ProductServiceImpl implements ProductService {
                 .hasPrevious(productPage.hasPrevious())
                 .build();
 
-        return ApiResponse.<PageResponse<List<ProductResponse>>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh sách sản phẩm thành công")
-                .data(pageResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách sản phẩm thành công",
+                pageResponse
+        );
     }
 
     @Override
@@ -100,12 +99,11 @@ public class ProductServiceImpl implements ProductService {
                 .hasPrevious(productPage.hasPrevious())
                 .build();
 
-        return ApiResponse.<PageResponse<List<ProductResponse>>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh sách sản phẩm thành công")
-                .data(pageResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách sản phẩm thành công",
+                pageResponse
+        );
     }
 
     @Transactional
@@ -115,12 +113,11 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm với ID: " + id, "PRODUCT_NOT_FOUND"));
         ProductResponse productResponse = productMapper.toProductResponse(product);
         productResponse.setImages(productImageService.getProductImagesByProduct(product));
-        return ApiResponse.<ProductResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin sản phẩm thành công")
-                .data(productResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin sản phẩm thành công",
+                productResponse
+        );
     }
 
     @Transactional
@@ -133,12 +130,11 @@ public class ProductServiceImpl implements ProductService {
         }
         ProductResponse productResponse = productMapper.toProductResponse(product);
         productResponse.setImages(productImageService.getProductImagesByProduct(product));
-        return ApiResponse.<ProductResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin sản phẩm thành công")
-                .data(productResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin sản phẩm thành công",
+                productResponse
+        );
     }
 
     @Override
@@ -161,12 +157,11 @@ public class ProductServiceImpl implements ProductService {
         ProductResponse productResponse = productMapper.toProductResponse(product);
         productResponse.setImages(productImages);
 
-        return ApiResponse.<ProductResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Tạo sản phẩm thành công")
-                .data(productResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Tạo sản phẩm thành công",
+                productResponse
+        );
     }
 
     @Override
@@ -187,12 +182,11 @@ public class ProductServiceImpl implements ProductService {
         ProductResponse productResponse = productMapper.toProductResponse(product);
         productResponse.setImages(productImages);
 
-        return ApiResponse.<ProductResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật sản phẩm thành công")
-                .data(productResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật sản phẩm thành công",
+                productResponse
+        );
     }
 
     @Transactional
@@ -207,12 +201,11 @@ public class ProductServiceImpl implements ProductService {
         ProductResponse productResponse = productMapper.toProductResponse(product);
         productResponse.setImages(productImageService.getProductImagesByProduct(product));
 
-        return ApiResponse.<ProductResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật trạng thái sản phẩm thành công")
-                .data(productResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật trạng thái sản phẩm thành công",
+                productResponse
+        );
     }
 
     @Override
@@ -223,11 +216,11 @@ public class ProductServiceImpl implements ProductService {
         productImageService.deleteProductImagesByProduct(product);
         productRepository.delete(product);
 
-        return ApiResponse.<Void>builder()
-                .status(HttpStatus.OK.value())
-                .message("Xóa sản phẩm thành công")
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Xóa sản phẩm thành công",
+                null
+        );
     }
 
 

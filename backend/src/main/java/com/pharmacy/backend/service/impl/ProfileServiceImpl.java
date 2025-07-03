@@ -37,12 +37,11 @@ public class ProfileServiceImpl implements ProfileService {
             profileMapper::toProfileResponse
         ).toList();
 
-        return ApiResponse.<List<ProfileResponse>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin địa chỉ thành công")
-                .data(responses)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin địa chỉ thành công",
+                responses
+        );
     }
 
     @Transactional
@@ -56,12 +55,12 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setUser(user);
         profile = profileRepository.save(profile);
         ProfileResponse response = profileMapper.toProfileResponse(profile);
-        return ApiResponse.<ProfileResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Thêm mới địa chỉ thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Thêm mới địa chỉ thành công",
+                response
+        );
     }
 
     @Transactional
@@ -78,12 +77,11 @@ public class ProfileServiceImpl implements ProfileService {
         profile = profileRepository.save(updatedProfile);
         ProfileResponse response = profileMapper.toProfileResponse(profile);
 
-        return ApiResponse.<ProfileResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật địa chỉ thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật địa chỉ thành công",
+                response
+        );
     }
 
     @Transactional
@@ -98,11 +96,11 @@ public class ProfileServiceImpl implements ProfileService {
 
         profileRepository.delete(profile);
 
-        return ApiResponse.<Void>builder()
-                .status(HttpStatus.OK.value())
-                .message("Xóa địa chỉ thành công")
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Xóa địa chỉ thành công",
+                null
+        );
     }
 
     @Override
@@ -116,11 +114,10 @@ public class ProfileServiceImpl implements ProfileService {
 
         ProfileResponse response = profileMapper.toProfileResponse(profile);
 
-        return ApiResponse.<ProfileResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin địa chỉ thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin địa chỉ thành công",
+                response
+        );
     }
 }

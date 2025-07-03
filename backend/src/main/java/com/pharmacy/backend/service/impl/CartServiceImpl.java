@@ -133,12 +133,11 @@ public class CartServiceImpl implements CartService {
                 .priceAtAddition(product.getPriceNew())
                 .build();
 
-        return ApiResponse.<CartItemResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Thêm sản phẩm vào giỏ hàng thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Thêm sản phẩm vào giỏ hàng thành công",
+                response
+        );
     }
 
     @Override
@@ -170,12 +169,11 @@ public class CartServiceImpl implements CartService {
                 .priceAtAddition(item.getPriceAtAddition())
                 .build();
 
-        return ApiResponse.<CartItemResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật số lượng sản phẩm trong giỏ hàng thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật số lượng sản phẩm trong giỏ hàng thành công",
+                response
+        );
     }
 
     @Transactional
@@ -196,12 +194,11 @@ public class CartServiceImpl implements CartService {
         cart.setTotalPrice(cart.getTotalPrice() - item.getProduct().getPriceNew() * item.getQuantity());
         cartRepository.save(cart);
 
-        return ApiResponse.<Void>builder()
-                .status(HttpStatus.OK.value())
-                .message("Xóa sản phẩm khỏi giỏ hàng thành công")
-                .data(null)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Đã xóa sản phẩm khỏi giỏ hàng",
+                null
+        );
     }
 
     @Transactional
@@ -224,12 +221,11 @@ public class CartServiceImpl implements CartService {
         cart.getCartItems().clear();
         cartRepository.save(cart);
 
-        return ApiResponse.<Void>builder()
-                .status(HttpStatus.OK.value())
-                .message("Đã xóa tất cả sản phẩm trong giỏ hàng")
-                .data(null)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Đã xóa tất cả sản phẩm khỏi giỏ hàng",
+                null
+        );
     }
 
     @Transactional
@@ -262,12 +258,11 @@ public class CartServiceImpl implements CartService {
                 .priceDifferent(Math.abs(item.getPriceAtAddition() - item.getProduct().getPriceNew()))
                 .build();
 
-        return ApiResponse.<CartItemResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật trạng thái sản phẩm trong giỏ hàng thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật trạng thái sản phẩm trong giỏ hàng thành công",
+                response
+        );
     }
 
     @Override
@@ -302,11 +297,10 @@ public class CartServiceImpl implements CartService {
                         .build())
                 .toList();
 
-        return ApiResponse.<List<CartItemResponse>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật trạng thái sản phẩm trong giỏ hàng thành công")
-                .data(responses)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật trạng thái tất cả sản phẩm trong giỏ hàng thành công",
+                responses
+        );
     }
 }

@@ -35,12 +35,11 @@ public class CategoryServiceImpl implements CategoryService {
     public ApiResponse<List<CategoryResponse>> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         List<CategoryResponse> response = buildTree(categories);
-        return ApiResponse.<List<CategoryResponse>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh mục thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh mục thành công",
+                response
+        );
     }
 
     @Transactional
@@ -58,11 +57,11 @@ public class CategoryServiceImpl implements CategoryService {
         response.setChildren(childCategories.stream()
                 .map(categoryMapper::toCategoryResponse)
                 .toList());
-        return ApiResponse.<List<CategoryParentAndChildResponse>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh mục con thành công")
-                .data(List.of(response))
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh mục con thành công",
+                List.of(response)
+        );
     }
 
     @Transactional
@@ -72,12 +71,11 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục với ID: " + id, "Category not found"));
 
         CategoryResponse response = categoryMapper.toCategoryResponse(category);
-        return ApiResponse.<CategoryResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh mục thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh mục thành công",
+                response
+        );
     }
 
     @Transactional
@@ -102,12 +100,11 @@ public class CategoryServiceImpl implements CategoryService {
         Category savedCategory = categoryRepository.save(category);
 
         CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
-        return ApiResponse.<CategoryResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Tạo danh mục thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Tạo danh mục thành công",
+                response
+        );
     }
 
     @Transactional
@@ -137,12 +134,11 @@ public class CategoryServiceImpl implements CategoryService {
         Category savedCategory = categoryRepository.save(updatedCategory);
 
         CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
-        return ApiResponse.<CategoryResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật danh mục thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật danh mục thành công",
+                response
+        );
     }
 
     @Transactional
@@ -158,11 +154,11 @@ public class CategoryServiceImpl implements CategoryService {
         fileMetadataService.deleteFile(category.getThumbnail());
         categoryRepository.delete(category);
 
-        return ApiResponse.<Void>builder()
-                .status(HttpStatus.OK.value())
-                .message("Xóa danh mục thành công")
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Xóa danh mục thành công",
+                null
+        );
     }
 
     private String createSlug(String name) {

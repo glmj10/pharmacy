@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -43,15 +44,13 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     Set<Role> roles = new HashSet<>();
-
-//    @Column(name = "remember_token")
-//    String rememberToken;
+    
 
     @Column(name = "created_at")
     @CreationTimestamp
-    LocalDate createdAt;
+    LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     @CreationTimestamp
-    String updatedAt;
+    LocalDateTime updatedAt;
 }

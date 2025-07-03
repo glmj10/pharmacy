@@ -48,7 +48,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @Override
     public ApiResponse<PageResponse<List<OrderResponse>>> getAllOrders(int pageIndex, int pageSize) {
-        if(pageIndex < 0) {
+        if(pageIndex <= 0) {
             pageIndex = 1;
         }
         if(pageSize <= 0) {
@@ -76,12 +76,11 @@ public class OrderServiceImpl implements OrderService {
                 .content(orderResponses)
                 .build();
 
-        return ApiResponse.<PageResponse<List<OrderResponse>>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh sách đơn hàng thành công")
-                .data(pageResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách đơn hàng thành công",
+                pageResponse
+        );
     }
 
     @Override
@@ -103,12 +102,11 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .toList();
 
-        return ApiResponse.<List<OrderResponse>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh sách đơn hàng người dùng thành công")
-                .data(orderResponses)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách đơn hàng người dùng thành công",
+                orderResponses
+        );
     }
 
     @Transactional
@@ -128,12 +126,12 @@ public class OrderServiceImpl implements OrderService {
                     return response;
                 })
                 .toList();
-        return ApiResponse.<List<OrderDetailResponse>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy chi tiết đơn hàng thành công")
-                .data(orderDetailResponses) // Assuming we want the first detail
-                .timestamp(LocalDateTime.now())
-                .build();
+
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy chi tiết đơn hàng thành công",
+                orderDetailResponses
+        );
     }
 
     @Override
@@ -142,12 +140,11 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng với ID: " + id, "Order not found"));
 
         OrderResponse orderResponse = orderMapper.toOrderResponse(order);
-        return ApiResponse.<OrderResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin đơn hàng thành công")
-                .data(orderResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin đơn hàng thành công",
+                orderResponse
+        );
     }
 
     @Transactional
@@ -171,21 +168,19 @@ public class OrderServiceImpl implements OrderService {
                 createOrderDetails(order, cart);
                 HttpServletRequest servletRequest = SecurityUtils.getCurrentHttpServletRequest();
                 String paymentUrl = vnPayService.createPaymentUrl(order, servletRequest);
-                return ApiResponse.<String>builder()
-                        .status(HttpStatus.OK.value())
-                        .message("Chuyển hướng đến VNPay")
-                        .data(paymentUrl)
-                        .timestamp(LocalDateTime.now())
-                        .build();
+                return ApiResponse.buildResponse(
+                        HttpStatus.OK.value(),
+                        "Chuyển hướng đến VNPay",
+                        paymentUrl
+                );
             }
             case MOMO -> {
                 // Gọi MoMoService nếu có
-                return ApiResponse.<String>builder()
-                        .status(HttpStatus.OK.value())
-                        .message("Chuyển hướng đến MoMo")
-                        .data("https://momo.vn")
-                        .timestamp(LocalDateTime.now())
-                        .build();
+                return ApiResponse.buildResponse(
+                        HttpStatus.OK.value(),
+                        "Chuyển hướng đến MoMo",
+                        "https://momo.vn"
+                );
             }
             case OFFLINE -> {
                 order = orderRepository.save(order);
@@ -203,12 +198,11 @@ public class OrderServiceImpl implements OrderService {
         OrderResponse orderResponse = orderMapper.toOrderResponse(order);
         orderResponse.setAddress(profileMapper.toProfileResponse(profile));
         orderResponse.setPaymentStatus(order.getPaymentStatus().name());
-        return ApiResponse.<OrderResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Tạo đơn hàng thành công")
-                .data(orderMapper.toOrderResponse(order))
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Tạo đơn hàng thành công",
+                orderResponse
+        );
     }
 
     @Transactional
@@ -221,12 +215,11 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
 
         OrderResponse orderResponse = orderMapper.toOrderResponse(order);
-        return ApiResponse.<OrderResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật trạng thái đơn hàng thành công")
-                .data(orderResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật trạng thái đơn hàng thành công",
+                orderResponse
+        );
     }
 
     @Override
@@ -239,12 +232,11 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
 
         OrderResponse orderResponse = orderMapper.toOrderResponse(order);
-        return ApiResponse.<OrderResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật trạng thái thanh toán đơn hàng thành công")
-                .data(orderResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật trạng thái thanh toán đơn hàng thành công",
+                orderResponse
+        );
     }
 
     @Transactional

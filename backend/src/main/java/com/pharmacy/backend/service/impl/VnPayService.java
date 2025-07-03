@@ -67,12 +67,11 @@ public class VnPayService {
         }
 
         orderRepository.save(order);
-        return ApiResponse.<String>builder()
-                .status(HttpStatus.OK.value())
-                .message("Thanh toán thành công")
-                .data("Vui lòng kiểm tra email để xem chi tiết đơn hàng")
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Thanh toán thành công",
+                "Vui lòng kiểm tra email để xem chi tiết đơn hàng"
+        );
     }
 
     public String createPaymentUrl(Order order, HttpServletRequest request) {

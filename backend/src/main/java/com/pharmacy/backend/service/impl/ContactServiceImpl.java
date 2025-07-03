@@ -13,11 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,7 +26,7 @@ public class ContactServiceImpl implements ContactService {
 
     @Override
     public ApiResponse<PageResponse<List<ContactResponse>>> getContactMessages(int pageIndex, int pageSize, Boolean status) {
-        if(pageIndex < 0) {
+        if(pageIndex <= 0) {
             pageIndex = 1;
         }
         if(pageSize <= 0) {
@@ -55,12 +53,11 @@ public class ContactServiceImpl implements ContactService {
                 .hasPrevious(contactPage.hasPrevious())
                 .build();
 
-        return ApiResponse.<PageResponse<List<ContactResponse>>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy thông tin yêu cầu tư vấn thành công")
-                .data(pageResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy thông tin yêu cầu tư vấn thành công",
+                pageResponse
+        );
     }
 
     @Transactional
@@ -71,12 +68,11 @@ public class ContactServiceImpl implements ContactService {
         Contact savedContact = contactRepository.save(contact);
         ContactResponse response = contactMapper.toContactResponse(savedContact);
 
-        return ApiResponse.<ContactResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Gửi yêu cầu tư vấn thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Gửi yêu cầu tư vấn thành công",
+                response
+        );
     }
 
     @Transactional
@@ -90,11 +86,10 @@ public class ContactServiceImpl implements ContactService {
         ContactResponse response = contactMapper.toContactResponse(updatedContact);
         response.setActive(updatedContact.getActive());
 
-        return ApiResponse.<ContactResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật trạng thái yêu cầu tư vấn thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật trạng thái yêu cầu tư vấn thành công",
+                response
+        );
     }
 }

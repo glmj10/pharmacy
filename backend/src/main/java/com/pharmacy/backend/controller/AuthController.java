@@ -41,7 +41,7 @@ public class AuthController {
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/info")
-    public ResponseEntity<ApiResponse<UserResponse>> changeInfo(@RequestPart(value = "info") @Valid UserInfoRequest request,
+    public ResponseEntity<ApiResponse<UserResponse>> changeInfo(@RequestPart(value = "info", required = false) @Valid UserInfoRequest request,
                                                                 @RequestPart(value = "profilePic", required = false) MultipartFile avatar) {
         ApiResponse<UserResponse> response = authService.changeInfo(request, avatar);
         return ResponseEntity.status(response.getStatus()).body(response);

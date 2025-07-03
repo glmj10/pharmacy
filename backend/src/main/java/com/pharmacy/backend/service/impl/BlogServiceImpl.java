@@ -60,12 +60,11 @@ public class BlogServiceImpl implements BlogService {
                 .hasPrevious(blogPage.hasPrevious())
                 .build();
 
-        return ApiResponse.<PageResponse<List<BlogResponse>>>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy danh sách bài viết thành công")
-                .data(pageResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách bài viết thành công",
+                pageResponse
+        );
     }
 
     @Override
@@ -74,12 +73,11 @@ public class BlogServiceImpl implements BlogService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                         "Không tìm thấy bài viết với slug: " + slug, "Blog not found"));
         BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
-        return ApiResponse.<BlogResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy bài viết thành công")
-                .data(blogResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy bài viết thành công",
+                blogResponse
+        );
     }
 
     @Override
@@ -88,12 +86,11 @@ public class BlogServiceImpl implements BlogService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                         "Không tìm thấy bài viết với ID: " + id, "Blog not found"));
         BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
-        return ApiResponse.<BlogResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Lấy bài viết thành công")
-                .data(blogResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy bài viết thành công",
+                blogResponse
+        );
     }
 
     @Transactional
@@ -108,12 +105,11 @@ public class BlogServiceImpl implements BlogService {
         Blog savedBlog = blogRepository.save(blog);
 
         BlogResponse blogResponse = blogMapper.toBlogResponse(savedBlog);
-        return ApiResponse.<BlogResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Tạo bài viết thành công")
-                .data(blogResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.CREATED.value(),
+                "Tạo bài viết thành công",
+                blogResponse
+        );
     }
 
     @Transactional
@@ -139,12 +135,11 @@ public class BlogServiceImpl implements BlogService {
         Blog updatedBlog = blogRepository.save(blogUpdateFromRequest);
         BlogResponse blogResponse = blogMapper.toBlogResponse(updatedBlog);
 
-        return ApiResponse.<BlogResponse>builder()
-                .status(HttpStatus.OK.value())
-                .message("Cập nhật bài viết thành công")
-                .data(blogResponse)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Cập nhật bài viết thành công",
+                blogResponse
+        );
     }
 
     @Transactional
@@ -155,11 +150,11 @@ public class BlogServiceImpl implements BlogService {
                         "Không tìm thấy bài viết với ID: " + id, "Blog not found"));
 
         blogRepository.delete(blog);
-        return ApiResponse.<Void>builder()
-                .status(HttpStatus.OK.value())
-                .message("Xóa bài viết thành công")
-                .timestamp(LocalDateTime.now())
-                .build();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Xóa bài viết thành công",
+                null
+        );
     }
 
     private String createSlug(String name) {
