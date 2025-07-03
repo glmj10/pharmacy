@@ -1,0 +1,164 @@
+import { useState, useCallback } from 'react'
+import { orderService } from '../services'
+import { useApiCall } from './useApiCall'
+
+export const useOrders = () => {
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 0,
+    totalElements: 0,
+    size: 10
+  })
+
+  const { execute: callApi } = useApiCall()
+
+  const getOrders = useCallback(async (params = {}) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const queryParams = {
+        pageIndex: (params.page || 1) - 1, // Convert to 0-based indexing
+        pageSize: params.size || 10,
+        ...(params.search && { search: params.search }),
+        ...(params.status && { status: params.status }),
+      }
+      
+      const response = await callApi(() => orderService.getOrders(queryParams))
+      
+      if (response.success) {
+        setOrders(response.data.content || [])
+        setPagination({
+          currentPage: params.page || 1,
+          totalPages: response.data.totalPages || 0,
+          totalElements: response.data.totalElements || 0,
+          size: response.data.size || 10
+        })
+        return response
+      } else {
+        throw new Error(response.message || 'Failed to fetch orders')
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while fetching orders')
+      setOrders([])
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [callApi])
+
+  const getOrderDetails = useCallback(async (orderId) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await callApi(() => orderService.getOrderDetails(orderId))
+      
+      if (response.success) {
+        return response.data
+      } else {
+        throw new Error(response.message || 'Failed to fetch order details')
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while fetching order details')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [callApi])
+
+  const updateOrderStatus = useCallback(async (orderId, status) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await callApi(() => orderService.updateOrderStatus(orderId, status))
+      
+      if (response.success) {
+        // Update the order in the local state
+        setOrders(prev => prev.map(order => 
+          order.id === orderId 
+            ? { ...order, status: status }
+            : order
+        ))
+        return response
+      } else {
+        throw new Error(response.message || 'Failed to update order status')
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while updating order status')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [callApi])
+
+  const updatePaymentStatus = useCallback(async (orderId, paymentStatus) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await callApi(() => orderService.updatePaymentStatus(orderId, paymentStatus))
+      
+      if (response.success) {
+        // Update the order in the local state
+        setOrders(prev => prev.map(order => 
+          order.id === orderId 
+            ? { ...order, paymentStatus: paymentStatus }
+            : order
+        ))
+        return response
+      } else {
+        throw new Error(response.message || 'Failed to update payment status')
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while updating payment status')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [callApi])
+
+  const createOrder = useCallback(async (orderData) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await callApi(() => orderService.createOrder(orderData))
+      
+      if (response.success) {
+        // Optionally refresh the orders list
+        return response
+      } else {
+        throw new Error(response.message || 'Failed to create order')
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while creating order')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [callApi])
+
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
+
+  return {
+    // State
+    orders,
+    loading,
+    error,
+    pagination,
+    
+    // Actions
+    getOrders,
+    getOrderDetails,
+    updateOrderStatus,
+    updatePaymentStatus,
+    createOrder,
+    clearError,
+
+    // Helper getters
+    hasOrders: orders.length > 0,
+    isEmpty: !loading && orders.length === 0,
+  }
+}
