@@ -29,42 +29,51 @@ import {
   CModalHeader,
   CModalTitle,
   CFormSelect,
+  CFormCheck,
   CAvatar,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
   cilSearch,
   cilOptions,
-  cilPencil,
-  cilLockLocked,
-  cilLockUnlocked,
   cilUser,
 } from '@coreui/icons'
-import { userService } from '../../../services'
+import { userService, roleService } from '../../../services'
 import { useApiCall } from '../../../hooks/useApiCall'
 
 const UserList = () => {
   const [users, setUsers] = useState([])
+  const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusModal, setStatusModal] = useState({ 
-    visible: false, 
-    user: null, 
-    newStatus: '' 
+  const [roleModal, setRoleModal] = useState({
+    visible: false,
+    user: null,
+    selectedRoles: []
   })
   
   const { execute: callApi } = useApiCall()
 
+  const fetchRoles = async () => {
+    try {
+      const response = await callApi(() => roleService.getAllRoles())
+      if (response.success) {
+        setRoles(response.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error)
+    }
+  }
 
   const fetchUsers = async (page = 1, search = '') => {
     setLoading(true)
     try {
       const params = {
-        pageIndex: page, // API uses 0-based indexing
+        pageIndex: page,
         pageSize: 10,
-        ...(search && { search }),
+        ...(search && { email: search }),
       }
       
       const response = await callApi(() => userService.getUsers(params))
@@ -89,7 +98,24 @@ const UserList = () => {
 
   useEffect(() => {
     fetchUsers()
+    fetchRoles()
   }, [])
+
+  // Auto search when typing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm !== '') {
+        setCurrentPage(1)
+        fetchUsers(1, searchTerm)
+      } else {
+        // If search is empty, fetch all users
+        setCurrentPage(1)
+        fetchUsers(1, '')
+      }
+    }, 500) // Debounce 500ms
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -101,21 +127,42 @@ const UserList = () => {
     fetchUsers(page, searchTerm)
   }
 
-  const handleStatusChange = async () => {
-    if (!statusModal.user || !statusModal.newStatus) return
+  const handleRoleChange = async () => {
+    if (!roleModal.user || roleModal.selectedRoles.length === 0) return
 
     try {
       const response = await callApi(() => 
-        userService.updateUserStatus(statusModal.user.id, statusModal.newStatus)
+        userService.changeUserRole(roleModal.user.id, roleModal.selectedRoles),
+        {
+          successMessage: 'Phân quyền người dùng thành công!',
+          showSuccessNotification: true,
+          onSuccess: () => {
+            setRoleModal({ visible: false, user: null, selectedRoles: [] })
+            fetchUsers(currentPage, searchTerm)
+          }
+        }
       )
-      
-      if (response.success) {
-        setStatusModal({ visible: false, user: null, newStatus: '' })
-        fetchUsers(currentPage, searchTerm)
-      }
     } catch (error) {
-      console.error('Error updating user status:', error)
+      console.error('Error updating user roles:', error)
     }
+  }
+
+  const openRoleModal = (user) => {
+    const currentRoleCodes = user.roles ? user.roles.map(role => role.code) : []
+    setRoleModal({
+      visible: true,
+      user,
+      selectedRoles: currentRoleCodes
+    })
+  }
+
+  const handleRoleSelection = (roleCode) => {
+    setRoleModal(prev => ({
+      ...prev,
+      selectedRoles: prev.selectedRoles.includes(roleCode)
+        ? prev.selectedRoles.filter(code => code !== roleCode)
+        : [...prev.selectedRoles, roleCode]
+    }))
   }
 
   const formatDate = (dateString) => {
@@ -158,19 +205,98 @@ const UserList = () => {
     
     return roles.map((role, index) => {
       // Xử lý trường hợp role là object có thuộc tính code
-      const roleName = typeof role === 'object' && role.code ? role.code : 
+      const roleName = typeof role === 'object' && role.name ? role.name: 
                       typeof role === 'object' && role.name ? role.name : role;
       
       return (
         <CBadge 
           key={index} 
-          color={roleName === 'ADMIN' ? 'danger' : roleName === 'USER' ? 'info' : roleName === 'STAFF' ? 'warning' : 'secondary'}
+          color={role.code === 'ADMIN' ? 'danger' : role.code === 'USER' ? 'info' : role.code === 'STAFF' ? 'warning' : 'secondary'}
           className="me-1"
         >
           {roleName}
         </CBadge>
       );
     });
+  }
+
+  // Generate smart pagination with limited visible pages
+  const generatePaginationItems = () => {
+    const items = []
+    const maxVisiblePages = 5 // Maximum number of page buttons to show
+    const halfVisible = Math.floor(maxVisiblePages / 2)
+    
+    let startPage = Math.max(1, currentPage - halfVisible)
+    let endPage = Math.min(totalPages, currentPage + halfVisible)
+    
+    // Adjust if we're near the beginning or end
+    if (currentPage <= halfVisible) {
+      endPage = Math.min(totalPages, maxVisiblePages)
+    }
+    if (currentPage > totalPages - halfVisible) {
+      startPage = Math.max(1, totalPages - maxVisiblePages + 1)
+    }
+    
+    // Add first page and ellipsis if needed
+    if (startPage > 1) {
+      items.push(
+        <CPaginationItem
+          key={1}
+          onClick={() => handlePageChange(1)}
+          style={{ cursor: 'pointer' }}
+          title="Trang 1"
+        >
+          1
+        </CPaginationItem>
+      )
+      
+      if (startPage > 2) {
+        items.push(
+          <CPaginationItem key="start-ellipsis" disabled>
+            ...
+          </CPaginationItem>
+        )
+      }
+    }
+    
+    // Add visible page numbers
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(
+        <CPaginationItem
+          key={page}
+          active={currentPage === page}
+          onClick={() => handlePageChange(page)}
+          style={{ cursor: 'pointer' }}
+          title={`Trang ${page}`}
+        >
+          {page}
+        </CPaginationItem>
+      )
+    }
+    
+    // Add ellipsis and last page if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        items.push(
+          <CPaginationItem key="end-ellipsis" disabled>
+            ...
+          </CPaginationItem>
+        )
+      }
+      
+      items.push(
+        <CPaginationItem
+          key={totalPages}
+          onClick={() => handlePageChange(totalPages)}
+          style={{ cursor: 'pointer' }}
+          title={`Trang ${totalPages}`}
+        >
+          {totalPages}
+        </CPaginationItem>
+      )
+    }
+    
+    return items
   }
 
   return (
@@ -188,17 +314,34 @@ const UserList = () => {
                   <form onSubmit={handleSearch}>
                     <CInputGroup>
                       <CFormInput
-                        placeholder="Tìm kiếm người dùng..."
+                        placeholder="Tìm kiếm theo email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        type="email"
                       />
                       <CInputGroupText>
                         <CButton type="submit" color="light">
                           <CIcon icon={cilSearch} />
                         </CButton>
                       </CInputGroupText>
+                      {searchTerm && (
+                        <CInputGroupText>
+                          <CButton 
+                            color="light" 
+                            onClick={() => setSearchTerm('')}
+                            title="Xóa tìm kiếm"
+                          >
+                            ×
+                          </CButton>
+                        </CInputGroupText>
+                      )}
                     </CInputGroup>
                   </form>
+                  {searchTerm && (
+                    <small className="text-muted mt-1 d-block">
+                      Đang tìm kiếm: "{searchTerm}"
+                    </small>
+                  )}
                 </CCol>
               </CRow>
 
@@ -251,22 +394,11 @@ const UserList = () => {
                                 <CIcon icon={cilOptions} />
                               </CDropdownToggle>
                               <CDropdownMenu>
-                                <CDropdownItem href={`#/users/edit/${user.id}`}>
-                                  <CIcon icon={cilPencil} className="me-2" />
-                                  Chỉnh sửa
-                                </CDropdownItem>
                                 <CDropdownItem
-                                  onClick={() => setStatusModal({
-                                    visible: true,
-                                    user,
-                                    newStatus: user.status
-                                  })}
+                                  onClick={() => openRoleModal(user)}
                                 >
-                                  <CIcon 
-                                    icon={user.status === 'ACTIVE' ? cilLockLocked : cilLockUnlocked} 
-                                    className="me-2" 
-                                  />
-                                  Cập nhật trạng thái
+                                  <CIcon icon={cilUser} className="me-2" />
+                                  Phân quyền
                                 </CDropdownItem>
                               </CDropdownMenu>
                             </CDropdown>
@@ -278,29 +410,51 @@ const UserList = () => {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <CPagination align="center" className="mt-3">
-                      <CPaginationItem
-                        disabled={currentPage === 1}
-                        onClick={() => handlePageChange(currentPage - 1)}
-                      >
-                        Trước
-                      </CPaginationItem>
-                      {[...Array(totalPages)].map((_, index) => (
+                    <div>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <small className="text-muted">
+                          Trang {currentPage} / {totalPages} (Hiển thị tối đa {users.length} kết quả)
+                        </small>
+                        <small className="text-muted">
+                          Tổng: {totalPages} trang
+                        </small>
+                      </div>
+                      <CPagination align="center">
                         <CPaginationItem
-                          key={index}
-                          active={currentPage === index + 1}
-                          onClick={() => handlePageChange(index + 1)}
+                          disabled={currentPage === 1}
+                          onClick={() => handlePageChange(1)}
+                          style={{ cursor: currentPage === 1 ? 'default' : 'pointer' }}
+                          title="Trang đầu"
                         >
-                          {index + 1}
+                          «
                         </CPaginationItem>
-                      ))}
-                      <CPaginationItem
-                        disabled={currentPage === totalPages}
-                        onClick={() => handlePageChange(currentPage + 1)}
-                      >
-                        Sau
-                      </CPaginationItem>
-                    </CPagination>
+                        <CPaginationItem
+                          disabled={currentPage === 1}
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          style={{ cursor: currentPage === 1 ? 'default' : 'pointer' }}
+                          title="Trang trước"
+                        >
+                          Trước
+                        </CPaginationItem>
+                        {generatePaginationItems()}
+                        <CPaginationItem
+                          disabled={currentPage === totalPages}
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          style={{ cursor: currentPage === totalPages ? 'default' : 'pointer' }}
+                          title="Trang sau"
+                        >
+                          Sau
+                        </CPaginationItem>
+                        <CPaginationItem
+                          disabled={currentPage === totalPages}
+                          onClick={() => handlePageChange(totalPages)}
+                          style={{ cursor: currentPage === totalPages ? 'default' : 'pointer' }}
+                          title="Trang cuối"
+                        >
+                          »
+                        </CPaginationItem>
+                      </CPagination>
+                    </div>
                   )}
                 </>
               )}
@@ -309,27 +463,58 @@ const UserList = () => {
         </CCol>
       </CRow>
 
-      {/* Status Update Modal */}
+      {/* Role Assignment Modal */}
       <CModal
-        visible={statusModal.visible}
-        onClose={() => setStatusModal({ visible: false, user: null, newStatus: '' })}
+        visible={roleModal.visible}
+        onClose={() => setRoleModal({ visible: false, user: null, selectedRoles: [] })}
+        size="lg"
       >
         <CModalHeader>
-          <CModalTitle>Cập nhật trạng thái người dùng</CModalTitle>
+          <CModalTitle>Phân quyền người dùng</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <p>Người dùng: <strong>{statusModal.user?.username}</strong></p>
-          <p>Email: <strong>{statusModal.user?.email}</strong></p>
+          <p>Người dùng: <strong>{roleModal.user?.username}</strong></p>
+          <p>Email: <strong>{roleModal.user?.email}</strong></p>
+          <p className="mb-3">Chọn vai trò cho người dùng:</p>
+          
+          <div className="d-flex flex-wrap gap-3">
+            {roles.map((role) => (
+              <CFormCheck
+                key={role.id}
+                id={`role-${role.id}`}
+                checked={roleModal.selectedRoles.includes(role.code)}
+                onChange={() => handleRoleSelection(role.code)}
+                label={
+                  <CBadge 
+                    color={role.code === 'ADMIN' ? 'danger' : role.code === 'USER' ? 'info' : role.code === 'STAFF' ? 'warning' : 'secondary'}
+                    className="ms-1"
+                  >
+                    {role.code}
+                  </CBadge>
+                }
+              />
+            ))}
+          </div>
+          
+          {roleModal.selectedRoles.length === 0 && (
+            <p className="text-warning mt-2">
+              <small>Vui lòng chọn ít nhất một vai trò</small>
+            </p>
+          )}
         </CModalBody>
         <CModalFooter>
           <CButton 
             color="secondary" 
-            onClick={() => setStatusModal({ visible: false, user: null, newStatus: '' })}
+            onClick={() => setRoleModal({ visible: false, user: null, selectedRoles: [] })}
           >
             Hủy
           </CButton>
-          <CButton color="primary" onClick={handleStatusChange}>
-            Cập nhật
+          <CButton 
+            color="primary" 
+            onClick={handleRoleChange}
+            disabled={roleModal.selectedRoles.length === 0}
+          >
+            Cập nhật vai trò
           </CButton>
         </CModalFooter>
       </CModal>

@@ -18,9 +18,6 @@ import {
   CDropdownToggle,
   CPagination,
   CPaginationItem,
-  CFormInput,
-  CInputGroup,
-  CInputGroupText,
   CSpinner,
   CModal,
   CModalBody,
@@ -32,7 +29,6 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
-  cilSearch,
   cilOptions,
   cilInfo,
   cilCheckCircle,
@@ -47,38 +43,35 @@ const ContactList = () => {
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusModal, setStatusModal] = useState({ 
-    visible: false, 
-    contact: null, 
-    newStatus: '' 
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusModal, setStatusModal] = useState({
+    visible: false,
+    contact: null,
+    newStatus: ''
   })
   const [detailModal, setDetailModal] = useState({ visible: false, contact: null })
-  
+
   const { execute: callApi } = useApiCall()
 
   const CONTACT_STATUSES = {
-    PENDING: { label: 'Chờ xử lý', color: 'warning' },
-    PROCESSING: { label: 'Đang xử lý', color: 'info' },
-    RESOLVED: { label: 'Đã giải quyết', color: 'success' },
-    CLOSED: { label: 'Đã đóng', color: 'secondary' },
+    true: { label: 'Đã xử lý', color: 'success' },
+    false: { label: 'Chưa xử lý', color: 'warning' },
   }
 
-  const fetchContacts = async (page = 1, search = '') => {
+  const fetchContacts = async (page = 1, status = 'all') => {
     setLoading(true)
     try {
       const params = {
-        pageIndex: page - 1, // API uses 0-based indexing
+        pageIndex: page,
         pageSize: 10,
-        ...(search && { search }),
+        ...(status !== 'all' && { status: status === 'true' }),
       }
-      
+
       const response = await callApi(() => contactService.getContacts(params))
-      console.log('Contacts response:', response)
       if (response.success) {
         // Handle both array and paginated response formats
-        const contactsData = Array.isArray(response.data) 
-          ? response.data 
+        const contactsData = Array.isArray(response.data)
+          ? response.data
           : response.data.content || response.data.data || []
         setContacts(contactsData)
         setTotalPages(response.data.totalPages || 1)
@@ -98,28 +91,32 @@ const ContactList = () => {
     fetchContacts()
   }, [])
 
-  const handleSearch = (e) => {
-    e.preventDefault()
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status)
     setCurrentPage(1)
-    fetchContacts(1, searchTerm)
+    fetchContacts(1, status)
   }
 
   const handlePageChange = (page) => {
-    fetchContacts(page, searchTerm)
+    fetchContacts(page, statusFilter)
   }
 
   const handleStatusChange = async () => {
     if (!statusModal.contact || !statusModal.newStatus) return
 
     try {
-      const response = await callApi(() => 
-        contactService.updateContactStatus(statusModal.contact.id, statusModal.newStatus)
+      const statusLabel = CONTACT_STATUSES[statusModal.newStatus]?.label || 'Không xác định'
+      await callApi(() =>
+        contactService.updateContactStatus(statusModal.contact.id, statusModal.newStatus),
+        {
+          successMessage: `Cập nhật trạng thái liên hệ thành công! Trạng thái mới: ${statusLabel}`,
+          showSuccessNotification: true,
+          onSuccess: () => {
+            setStatusModal({ visible: false, contact: null, newStatus: '' })
+            fetchContacts(currentPage, statusFilter)
+          }
+        }
       )
-      
-      if (response.success) {
-        setStatusModal({ visible: false, contact: null, newStatus: '' })
-        fetchContacts(currentPage, searchTerm)
-      }
     } catch (error) {
       console.error('Error updating contact status:', error)
     }
@@ -135,6 +132,85 @@ const ContactList = () => {
     })
   }
 
+  // Generate smart pagination with limited visible pages
+  const generatePaginationItems = () => {
+    const items = []
+    const maxVisiblePages = 5 // Maximum number of page buttons to show
+    const halfVisible = Math.floor(maxVisiblePages / 2)
+
+    let startPage = Math.max(1, currentPage - halfVisible)
+    let endPage = Math.min(totalPages, currentPage + halfVisible)
+
+    // Adjust if we're near the beginning or end
+    if (currentPage <= halfVisible) {
+      endPage = Math.min(totalPages, maxVisiblePages)
+    }
+    if (currentPage > totalPages - halfVisible) {
+      startPage = Math.max(1, totalPages - maxVisiblePages + 1)
+    }
+
+    // Add first page and ellipsis if needed
+    if (startPage > 1) {
+      items.push(
+        <CPaginationItem
+          key={1}
+          onClick={() => handlePageChange(1)}
+          style={{ cursor: 'pointer' }}
+          title="Trang 1"
+        >
+          1
+        </CPaginationItem>
+      )
+
+      if (startPage > 2) {
+        items.push(
+          <CPaginationItem key="start-ellipsis" disabled>
+            ...
+          </CPaginationItem>
+        )
+      }
+    }
+
+    // Add visible page numbers
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(
+        <CPaginationItem
+          key={page}
+          active={currentPage === page}
+          onClick={() => handlePageChange(page)}
+          style={{ cursor: 'pointer' }}
+          title={`Trang ${page}`}
+        >
+          {page}
+        </CPaginationItem>
+      )
+    }
+
+    // Add ellipsis and last page if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        items.push(
+          <CPaginationItem key="end-ellipsis" disabled>
+            ...
+          </CPaginationItem>
+        )
+      }
+
+      items.push(
+        <CPaginationItem
+          key={totalPages}
+          onClick={() => handlePageChange(totalPages)}
+          style={{ cursor: 'pointer' }}
+          title={`Trang ${totalPages}`}
+        >
+          {totalPages}
+        </CPaginationItem>
+      )
+    }
+
+    return items
+  }
+
   return (
     <>
       <CRow>
@@ -144,23 +220,17 @@ const ContactList = () => {
               <strong>Quản lý liên hệ</strong>
             </CCardHeader>
             <CCardBody>
-              {/* Search */}
+              {/* Status Filter */}
               <CRow className="mb-3">
-                <CCol md={6}>
-                  <form onSubmit={handleSearch}>
-                    <CInputGroup>
-                      <CFormInput
-                        placeholder="Tìm kiếm liên hệ..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                      <CInputGroupText>
-                        <CButton type="submit" color="light">
-                          <CIcon icon={cilSearch} />
-                        </CButton>
-                      </CInputGroupText>
-                    </CInputGroup>
-                  </form>
+                <CCol md={4}>
+                  <CFormSelect
+                    value={statusFilter}
+                    onChange={(e) => handleStatusFilter(e.target.value)}
+                  >
+                    <option value="all">Tất cả</option>
+                    <option value="true">Đã xử lý</option>
+                    <option value="false">Chưa xử lý</option>
+                  </CFormSelect>
                 </CCol>
               </CRow>
 
@@ -175,37 +245,45 @@ const ContactList = () => {
                     <CTableHead>
                       <CTableRow>
                         <CTableHeaderCell scope="col">Thông tin liên hệ</CTableHeaderCell>
-                        <CTableHeaderCell scope="col">Chủ đề</CTableHeaderCell>
                         <CTableHeaderCell scope="col">Nội dung</CTableHeaderCell>
                         <CTableHeaderCell scope="col">Trạng thái</CTableHeaderCell>
-                        <CTableHeaderCell scope="col">Ngày tạo</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Ngày gửi</CTableHeaderCell>
                         <CTableHeaderCell scope="col">Thao tác</CTableHeaderCell>
                       </CTableRow>
                     </CTableHead>
                     <CTableBody>
                       {Array.isArray(contacts) && contacts.map((contact) => (
-                        <CTableRow key={contact.id}>
+                        <CTableRow
+                          key={contact.id}
+                          style={{
+                            opacity: contact.status === false ? 0.7 : 1,
+                            backgroundColor: contact.status === false ? 'rgba(255, 193, 7, 0.1)' : 'transparent'
+                          }}
+                        >
                           <CTableDataCell>
                             <div>
                               <strong>{contact.name}</strong>
                               <br />
                               <small className="text-muted">{contact.email}</small>
+                              {contact.subject && (
+                                <>
+                                  <br />
+                                  <small className="text-info">Chủ đề: {contact.subject}</small>
+                                </>
+                              )}
                             </div>
                           </CTableDataCell>
                           <CTableDataCell>
-                            <strong>{contact.subject}</strong>
-                          </CTableDataCell>
-                          <CTableDataCell>
                             <div style={{ maxWidth: '200px' }}>
-                              {contact.message && contact.message.length > 100 
-                                ? `${contact.message.substring(0, 100)}...` 
-                                : contact.message
+                              {contact.content && contact.content.length > 100
+                                ? `${contact.content.substring(0, 100)}...`
+                                : contact.content
                               }
                             </div>
                           </CTableDataCell>
                           <CTableDataCell>
-                            <CBadge color={CONTACT_STATUSES[contact.status]?.color || 'secondary'}>
-                              {CONTACT_STATUSES[contact.status]?.label || contact.status}
+                            <CBadge color={CONTACT_STATUSES[contact.active]?.color || 'secondary'}>
+                              {CONTACT_STATUSES[contact.active]?.label || 'Không xác định'}
                             </CBadge>
                           </CTableDataCell>
                           <CTableDataCell>
@@ -250,15 +328,7 @@ const ContactList = () => {
                       >
                         Trước
                       </CPaginationItem>
-                      {[...Array(totalPages)].map((_, index) => (
-                        <CPaginationItem
-                          key={index}
-                          active={currentPage === index + 1}
-                          onClick={() => handlePageChange(index + 1)}
-                        >
-                          {index + 1}
-                        </CPaginationItem>
-                      ))}
+                      {generatePaginationItems()}
                       <CPaginationItem
                         disabled={currentPage === totalPages}
                         onClick={() => handlePageChange(currentPage + 1)}
@@ -296,8 +366,8 @@ const ContactList = () => {
           </CFormSelect>
         </CModalBody>
         <CModalFooter>
-          <CButton 
-            color="secondary" 
+          <CButton
+            color="secondary"
             onClick={() => setStatusModal({ visible: false, contact: null, newStatus: '' })}
           >
             Hủy
@@ -322,57 +392,56 @@ const ContactList = () => {
             <>
               <CRow className="mb-3">
                 <CCol md={6}>
-                  <strong>Tên:</strong> {detailModal.contact.name}
+                  <strong>Tên:</strong> {detailModal.contact.fullName}
                 </CCol>
                 <CCol md={6}>
                   <strong>Email:</strong> {detailModal.contact.email}
                 </CCol>
               </CRow>
-              
+
               <CRow className="mb-3">
                 <CCol md={6}>
-                  <strong>Chủ đề:</strong> {detailModal.contact.subject}
-                </CCol>
-                <CCol md={6}>
-                  <strong>Trạng thái:</strong>{' '}
-                  <CBadge color={CONTACT_STATUSES[detailModal.contact.status]?.color || 'secondary'}>
-                    {CONTACT_STATUSES[detailModal.contact.status]?.label || detailModal.contact.status}
-                  </CBadge>
+                  <strong>Số điện thoại: </strong> {detailModal.contact.phoneNumber || 'Không có'}
                 </CCol>
               </CRow>
-              
+              <CRow className="mb-3">
+                <CCol md={6}>
+                  <strong>Địa chỉ </strong> {detailModal.contact.address}
+                </CCol>
+              </CRow>
+
               <CRow className="mb-3">
                 <CCol md={12}>
                   <strong>Nội dung:</strong>
                   <div className="mt-2 p-3 bg-light rounded">
-                    {detailModal.contact.message}
+                    {detailModal.contact.content}
                   </div>
                 </CCol>
               </CRow>
-              
+
               <CRow className="mb-3">
                 <CCol md={12}>
-                  <strong>Ngày tạo:</strong> {formatDate(detailModal.contact.createdAt)}
+                  <strong>Ngày gửi:</strong> {formatDate(detailModal.contact.createdAt)}
                 </CCol>
               </CRow>
             </>
           )}
         </CModalBody>
         <CModalFooter>
-          <CButton 
-            color="secondary" 
+          <CButton
+            color="secondary"
             onClick={() => setDetailModal({ visible: false, contact: null })}
           >
             Đóng
           </CButton>
-          <CButton 
+          <CButton
             color="primary"
             onClick={() => {
               setDetailModal({ visible: false, contact: null })
               setStatusModal({
                 visible: true,
                 contact: detailModal.contact,
-                newStatus: detailModal.contact?.status || 'PENDING'
+                newStatus: detailModal.contact?.active || 'PENDING'
               })
             }}
           >

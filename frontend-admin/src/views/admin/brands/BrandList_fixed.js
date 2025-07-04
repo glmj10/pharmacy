@@ -26,11 +26,8 @@ import {
   CFormInput,
   CFormLabel,
   CFormTextarea,
-  CFormFeedback,
   CPagination,
   CPaginationItem,
-  CInputGroup,
-  CInputGroupText,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -40,7 +37,6 @@ import {
   cilPlus,
   cilSave,
   cilBuilding,
-  cilSearch,
 } from '@coreui/icons'
 import { brandService } from '../../../services'
 import { useApiCall } from '../../../hooks/useApiCall'
@@ -55,9 +51,6 @@ const BrandList = () => {
   })
   const [deleteModal, setDeleteModal] = useState({ visible: false, brand: null })
   
-  // Search state
-  const [searchTerm, setSearchTerm] = useState('')
-  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
@@ -70,19 +63,15 @@ const BrandList = () => {
     name: '',
     description: '',
   })
-  
-  const [formErrors, setFormErrors] = useState({
-    name: '',
-    description: '',
-  })
 
-  const fetchBrands = async (page = 1, search = '') => {
+  const [logoFile, setLogoFile] = useState(null)
+
+  const fetchBrands = async (page = 1) => {
     setLoading(true)
     try {
       const params = {
-        pageIndex: page,
-        pageSize: PAGE_SIZE,
-        ...(search && { name: search }),
+        page: page - 1, // Backend uses 0-based indexing
+        size: PAGE_SIZE,
       }
       
       const response = await callApi(() => brandService.getBrands(params))
@@ -111,30 +100,10 @@ const BrandList = () => {
     fetchBrands()
   }, [])
 
-  // Auto search when typing
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchTerm !== '') {
-        setCurrentPage(1)
-        fetchBrands(1, searchTerm)
-      } else {
-        // If search is empty, fetch all brands
-        setCurrentPage(1)
-        fetchBrands(1, '')
-      }
-    }, 500) // Debounce 500ms
-
-    return () => clearTimeout(timeoutId)
-  }, [searchTerm])
-
   const handlePageChange = (page) => {
-    fetchBrands(page, searchTerm)
-  }
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    setCurrentPage(1)
-    fetchBrands(1, searchTerm)
+    if (page >= 1 && page <= totalPages) {
+      fetchBrands(page)
+    }
   }
 
   const handleInputChange = (e) => {
@@ -143,51 +112,10 @@ const BrandList = () => {
       ...prev,
       [name]: value
     }))
-    
-    // Real-time validation
-    validateField(name, value)
   }
 
-  const validateForm = () => {
-    const errors = {}
-    
-    // Validate name
-    if (!formData.name.trim()) {
-      errors.name = 'Tên thương hiệu là bắt buộc'
-    } 
-
-    if (!formData.description.trim()) {
-      errors.description = 'Mô tả không được để trống'
-    }
-    
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
-  const isFormValid = () => {
-    return formData.name.trim() !== '' && formData.description.trim() !== ''
-  }
-
-  const validateField = (fieldName, value) => {
-    const errors = { ...formErrors }
-    
-    if (fieldName === 'name') {
-      if (!value.trim()) {
-        errors.name = 'Tên thương hiệu là bắt buộc'
-      } else {
-        errors.name = ''
-      }
-    }
-    
-    if (fieldName === 'description') {
-      if (!value.trim()) {
-        errors.description = 'Mô tả không được để trống'
-      } else {
-        errors.description = ''
-      }
-    }
-    
-    setFormErrors(errors)
+  const handleFileChange = (e) => {
+    setLogoFile(e.target.files[0])
   }
 
   const openCreateModal = () => {
@@ -195,10 +123,7 @@ const BrandList = () => {
       name: '',
       description: '',
     })
-    setFormErrors({
-      name: '',
-      description: '',
-    })
+    setLogoFile(null)
     setFormModal({ visible: true, brand: null, isEdit: false })
   }
 
@@ -207,25 +132,17 @@ const BrandList = () => {
       name: brand.name || '',
       description: brand.description || '',
     })
-    setFormErrors({
-      name: '',
-      description: '',
-    })
+    setLogoFile(null)
     setFormModal({ visible: true, brand, isEdit: true })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validate form before submission
-    if (!validateForm()) {
-      return
-    }
-
     try {      
       const brandData = {
-        name: formData.name.trim(),
-        description: formData.description?.trim() || '',
+        name: formData.name,
+        description: formData.description,
       }
 
       let response
@@ -236,7 +153,7 @@ const BrandList = () => {
             successMessage: 'Cập nhật thương hiệu thành công!',
             showSuccessNotification: true,
             onSuccess: () => {
-              fetchBrands(currentPage, searchTerm)
+              fetchBrands(currentPage)
               setFormModal({ visible: false, brand: null, isEdit: false })
             }
           }
@@ -248,7 +165,7 @@ const BrandList = () => {
             successMessage: 'Tạo thương hiệu thành công!',
             showSuccessNotification: true,
             onSuccess: () => {
-              fetchBrands(currentPage, searchTerm)
+              fetchBrands(currentPage)
               setFormModal({ visible: false, brand: null, isEdit: false })
             }
           }
@@ -270,7 +187,7 @@ const BrandList = () => {
           showSuccessNotification: true,
           onSuccess: () => {
             setDeleteModal({ visible: false, brand: null })
-            fetchBrands(currentPage, searchTerm)
+            fetchBrands(currentPage)
           }
         }
       )
@@ -350,36 +267,6 @@ const BrandList = () => {
               </CButton>
             </CCardHeader>
             <CCardBody>
-              {/* Search */}
-              <CRow className="mb-3">
-                <CCol md={6}>
-                  <form onSubmit={handleSearch}>
-                    <CInputGroup>
-                      <CFormInput
-                        placeholder="Tìm kiếm thương hiệu theo tên..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                      <CInputGroupText>
-                        <CButton type="submit" color="light">
-                          <CIcon icon={cilSearch} />
-                        </CButton>
-                      </CInputGroupText>
-                      {searchTerm && (
-                        <CInputGroupText>
-                          <CButton 
-                            color="light" 
-                            onClick={() => setSearchTerm('')}
-                            title="Xóa tìm kiếm"
-                          >
-                            ×
-                          </CButton>
-                        </CInputGroupText>
-                      )}
-                    </CInputGroup>
-                  </form>
-                </CCol>
-              </CRow>
               {loading ? (
                 <div className="text-center py-4">
                   <CSpinner color="primary" />
@@ -483,15 +370,8 @@ const BrandList = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  invalid={!!formErrors.name}
-                  placeholder="Nhập tên thương hiệu..."
                   required
                 />
-                {formErrors.name && (
-                  <CFormFeedback invalid>
-                    {formErrors.name}
-                  </CFormFeedback>
-                )}
               </CCol>
             </CRow>
 
@@ -504,14 +384,7 @@ const BrandList = () => {
                   rows={4}
                   value={formData.description}
                   onChange={handleInputChange}
-                  invalid={!!formErrors.description}
-                  placeholder="Nhập mô tả chi tiết về thương hiệu..."
                 />
-                {formErrors.description && (
-                  <CFormFeedback invalid>
-                    {formErrors.description}
-                  </CFormFeedback>
-                )}
               </CCol>
             </CRow>
           </CModalBody>
@@ -522,11 +395,7 @@ const BrandList = () => {
             >
               Hủy
             </CButton>
-            <CButton 
-              color="primary" 
-              type="submit" 
-              disabled={!isFormValid()}
-            >
+            <CButton color="primary" type="submit">
               <CIcon icon={cilSave} className="me-1" />
               {formModal.isEdit ? 'Cập nhật' : 'Tạo mới'}
             </CButton>

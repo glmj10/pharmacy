@@ -3,6 +3,7 @@ export { authService } from './auth';
 
 // Core Services  
 export { default as userService } from './user.service';
+export { default as roleService } from './role.service';
 export { default as productService } from './product.service';
 
 // Additional Services (if they exist)

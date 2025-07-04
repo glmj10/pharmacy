@@ -46,35 +46,6 @@ class UserService {
     }
 
     /**
-     * Update user
-     * @param {string|number} id - User ID
-     * @param {Object} userData - Updated user data
-     * @returns {Promise<ApiResponse>}
-     */
-    async updateUser(id, userData) {
-        try {
-            const response = await api.put(ENDPOINTS.USERS.UPDATE(id), userData);
-            return apiUtils.fromAxiosResponse(response);
-        } catch (error) {
-            throw apiUtils.fromAxiosError(error);
-        }
-    }
-
-    /**
-     * Delete user
-     * @param {string|number} id - User ID
-     * @returns {Promise<ApiResponse>}
-     */
-    async deleteUser(id) {
-        try {
-            const response = await api.delete(ENDPOINTS.USERS.DELETE(id));
-            return apiUtils.fromAxiosResponse(response);
-        } catch (error) {
-            throw apiUtils.fromAxiosError(error);
-        }
-    }
-
-    /**
      * Get current user profile
      * @returns {Promise<ApiResponse>}
      */
@@ -107,23 +78,24 @@ class UserService {
      */
     async getUsers(params = {}) {
         try {
-            const response = await api.get('/users', { params });
+            const response = await api.get(ENDPOINTS.USERS.GET_ALL, { params });
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
         }
     }
 
+
     /**
-     * Update user status
-     * @param {string|number} id - User ID
-     * @param {string} status - New status
+     * Change user roles
+     * @param {string|number} userId - User ID
+     * @param {Array<string>} roleCodes - Array of role codes
      * @returns {Promise<ApiResponse>}
      */
-    async updateUserStatus(id, status) {
+    async changeUserRole(userId, roleCodes) {
         try {
-            const response = await api.put(`/users/status/${id}`, null, {
-                params: { status }
+            const response = await api.put(`/users/role/${userId}`, {
+                roleCodes: roleCodes
             });
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {

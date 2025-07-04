@@ -1,4 +1,5 @@
 import api from '../config/api';
+import { ENDPOINTS } from '../config/constants';
 import { apiUtils } from '../utils/apiUtils';
 
 class ContactService {
@@ -9,7 +10,7 @@ class ContactService {
      */
     async getContacts(params = {}) {
         try {
-            const response = await api.get('/contacts', { params });
+            const response = await api.get(ENDPOINTS.CONTACTS.GET_ALL, { params });
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -52,7 +53,7 @@ class ContactService {
      */
     async updateContactStatus(id, status) {
         try {
-            const response = await api.put(`/contacts/status/${id}`, null, {
+            const response = await api.put(ENDPOINTS.CONTACTS.CHANGE_STATUS(id), null, {
                 params: { status }
             });
             return apiUtils.fromAxiosResponse(response);

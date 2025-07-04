@@ -64,6 +64,7 @@ export const ENDPOINTS = {
         CREATE: "/contacts",
         UPDATE: (id) => `/contacts/${id}`,
         DELETE: (id) => `/contacts/${id}`,
+        CHANGE_STATUS: (id) => `/contacts/${id}`,
     },
 
     BLOG: {
