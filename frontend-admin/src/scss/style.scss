@@ -65,3 +65,75 @@ body {
     --cui-footer-bg: var(--cui-body-bg);
   }
 }
+
+/* CKEditor styling */
+.ck-editor__editable {
+  min-height: 300px;
+  max-height: 600px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+}
+
+.ck-editor__editable_inline {
+  padding: 1rem;
+}
+
+.ck-editor__top {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.ck-editor__main {
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.ck.ck-editor {
+  width: 100%;
+}
+
+.ck-editor__editable.ck-focused {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* CKEditor table styles */
+.ck-content .table {
+  margin: 1rem 0;
+}
+
+.ck-content .table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ck-content .table table td,
+.ck-content .table table th {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem;
+}
+
+.ck-content .table table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* CKEditor blockquote styles */
+.ck-content blockquote {
+  border-left: 4px solid #dee2e6;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* CKEditor image styles */
+.ck-content .image {
+  margin: 1rem 0;
+}
+
+.ck-content .image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+}

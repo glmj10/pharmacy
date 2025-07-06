@@ -13,6 +13,7 @@ const CategoryList = React.lazy(() => import('./views/admin/categories/CategoryL
 const BrandList = React.lazy(() => import('./views/admin/brands/BrandList'))
 const ContactList = React.lazy(() => import('./views/admin/contacts/ContactList'))
 const BlogList = React.lazy(() => import('./views/admin/blogs/BlogList'))
+const BlogForm = React.lazy(() => import('./views/admin/blogs/BlogForm'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -45,6 +46,9 @@ const routes = [
   
   // Blog Management
   { path: '/blogs', name: 'Quản lý bài viết', element: BlogList, exact: true },
+  { path: '/blogs/list', name: 'Danh sách bài viết', element: BlogList },
+  { path: '/blogs/create', name: 'Thêm bài viết', element: BlogForm },
+  { path: '/blogs/edit/:id', name: 'Chỉnh sửa bài viết', element: BlogForm },
 ]
 
 export default routes

@@ -1,4 +1,5 @@
 import api from '../config/api';
+import { ENDPOINTS } from '../config/constants';
 import { apiUtils } from '../utils/apiUtils';
 
 class CategoryService {
@@ -8,7 +9,7 @@ class CategoryService {
      */
     async getCategories() {
         try {
-            const response = await api.get('/categories');
+            const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -16,13 +17,12 @@ class CategoryService {
     }
 
     /**
-     * Get categories by parent slug
-     * @param {string} parentSlug - Parent category slug
+     * Get all blog categories
      * @returns {Promise<ApiResponse>}
      */
-    async getCategoriesByParent(parentSlug) {
+    async getBlogCategories() {
         try {
-            const response = await api.get(`/categories/parent/${parentSlug}`);
+            const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL_BLOG_CATEGORIES);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -36,7 +36,7 @@ class CategoryService {
      */
     async getCategoryById(id) {
         try {
-            const response = await api.get(`/categories/${id}`);
+            const response = await api.get(ENDPOINTS.CATEGORIES.GET_BY_ID(id));
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -46,15 +46,12 @@ class CategoryService {
     /**
      * Create new category
      * @param {FormData} categoryData - Category form data
+     * @param {Object} config - Axios config options
      * @returns {Promise<ApiResponse>}
      */
-    async createCategory(categoryData) {
+    async createCategory(categoryData, config = {}) {
         try {
-            const response = await api.post('/categories', categoryData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post(ENDPOINTS.CATEGORIES.CREATE, categoryData, config);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -65,15 +62,12 @@ class CategoryService {
      * Update category
      * @param {string|number} id - Category ID
      * @param {FormData} categoryData - Category form data
+     * @param {Object} config - Axios config options
      * @returns {Promise<ApiResponse>}
      */
-    async updateCategory(id, categoryData) {
+    async updateCategory(id, categoryData, config = {}) {
         try {
-            const response = await api.put(`/categories/${id}`, categoryData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.put(ENDPOINTS.CATEGORIES.UPDATE(id), categoryData, config);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);

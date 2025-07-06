@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   CButton,
   CCard,
@@ -44,12 +45,14 @@ import { blogService } from '../../../services'
 import { useApiCall } from '../../../hooks/useApiCall'
 
 const BlogList = () => {
+  const navigate = useNavigate()
   const [blogs, setBlogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteModal, setDeleteModal] = useState({ visible: false, blog: null })
+  const [detailModal, setDetailModal] = useState({ visible: false, blog: null })
   
   const { execute: callApi } = useApiCall()
 
@@ -57,21 +60,18 @@ const BlogList = () => {
     setLoading(true)
     try {
       const params = {
-        pageIndex: page - 1, // API uses 0-based indexing
+        pageIndex: page, // Backend expects 1-based indexing
         pageSize: 10,
-        ...(search && { search }),
+        ...(search.trim() && { title: search.trim() }),
       }
       
       const response = await callApi(() => blogService.getBlogs(params))
       if (response.success) {
-        // Handle both array and paginated response formats
-        const blogsData = Array.isArray(response.data) 
-          ? response.data 
-          : response.data.content || response.data.data || []
+        const pageData = response.data
+        const blogsData = pageData.content || []
         setBlogs(blogsData)
-        setTotalPages(response.data.totalPages || 1)
+        setTotalPages(pageData.totalPages || 1)
         setCurrentPage(page)
-        console.log('Blogs loaded:', blogsData) // Debug log
       } else {
         setBlogs([])
       }
@@ -90,24 +90,27 @@ const BlogList = () => {
   const handleSearch = (e) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchBlogs(1, searchTerm)
+    fetchBlogs(1, searchTerm.trim())
   }
+
+  const handleClearSearch = () => {
+    setSearchTerm('')
+    setCurrentPage(1)
+    fetchBlogs(1, '')
+  }
+
+  // Real-time search with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setCurrentPage(1)
+      fetchBlogs(1, searchTerm.trim())
+    }, 500) // 500ms delay
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm])
 
   const handlePageChange = (page) => {
-    fetchBlogs(page, searchTerm)
-  }
-
-  const handleStatusToggle = async (blogId, currentStatus) => {
-    try {
-      const response = await callApi(() => 
-        blogService.updateBlogStatus(blogId, !currentStatus)
-      )
-      if (response.success) {
-        fetchBlogs(currentPage, searchTerm)
-      }
-    } catch (error) {
-      console.error('Error updating blog status:', error)
-    }
+    fetchBlogs(page, searchTerm.trim())
   }
 
   const handleDeleteBlog = async () => {
@@ -119,7 +122,7 @@ const BlogList = () => {
       )
       if (response.success) {
         setDeleteModal({ visible: false, blog: null })
-        fetchBlogs(currentPage, searchTerm)
+        fetchBlogs(currentPage, searchTerm.trim())
       }
     } catch (error) {
       console.error('Error deleting blog:', error)
@@ -131,6 +134,8 @@ const BlogList = () => {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     })
   }
 
@@ -157,7 +162,7 @@ const BlogList = () => {
               <strong>Quản lý bài viết</strong>
               <CButton 
                 color="primary" 
-                href="#/blogs/create"
+                onClick={() => navigate('/blogs/create')}
               >
                 <CIcon icon={cilPlus} className="me-1" />
                 Thêm bài viết
@@ -166,21 +171,40 @@ const BlogList = () => {
             <CCardBody>
               {/* Search */}
               <CRow className="mb-3">
-                <CCol md={6}>
+                <CCol md={8}>
                   <form onSubmit={handleSearch}>
                     <CInputGroup>
                       <CFormInput
-                        placeholder="Tìm kiếm bài viết..."
+                        placeholder="Tìm kiếm bài viết theo tiêu đề..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                       <CInputGroupText>
-                        <CButton type="submit" color="light">
+                        <CButton type="submit" color="primary" variant="ghost">
                           <CIcon icon={cilSearch} />
                         </CButton>
                       </CInputGroupText>
+                      {searchTerm && (
+                        <CInputGroupText>
+                          <CButton 
+                            type="button" 
+                            color="secondary" 
+                            variant="ghost"
+                            onClick={handleClearSearch}
+                          >
+                            ×
+                          </CButton>
+                        </CInputGroupText>
+                      )}
                     </CInputGroup>
                   </form>
+                </CCol>
+                <CCol md={4} className="text-end">
+                  {searchTerm.trim() && (
+                    <small className="text-muted">
+                      Kết quả tìm kiếm cho: <strong>"{searchTerm.trim()}"</strong>
+                    </small>
+                  )}
                 </CCol>
               </CRow>
 
@@ -189,6 +213,31 @@ const BlogList = () => {
                 <div className="text-center py-4">
                   <CSpinner color="primary" />
                 </div>
+              ) : Array.isArray(blogs) && blogs.length === 0 ? (
+                <div className="text-center py-5">
+                  <div className="mb-3">
+                    <CIcon icon={cilSearch} size="3xl" className="text-muted" />
+                  </div>
+                  <h5 className="text-muted">
+                    {searchTerm.trim() ? 'Không tìm thấy bài viết nào' : 'Chưa có bài viết nào'}
+                  </h5>
+                  <p className="text-muted">
+                    {searchTerm.trim() 
+                      ? `Không có bài viết nào khớp với "${searchTerm.trim()}"` 
+                      : 'Hãy thêm bài viết đầu tiên của bạn'
+                    }
+                  </p>
+                  {searchTerm.trim() ? (
+                    <CButton color="secondary" onClick={handleClearSearch}>
+                      Xóa tìm kiếm
+                    </CButton>
+                  ) : (
+                    <CButton color="primary" onClick={() => navigate('/blogs/create')}>
+                      <CIcon icon={cilPlus} className="me-1" />
+                      Thêm bài viết đầu tiên
+                    </CButton>
+                  )}
+                </div>
               ) : (
                 <>
                   <CTable hover responsive>
@@ -196,8 +245,6 @@ const BlogList = () => {
                       <CTableRow>
                         <CTableHeaderCell scope="col">Hình ảnh</CTableHeaderCell>
                         <CTableHeaderCell scope="col">Tiêu đề</CTableHeaderCell>
-                        <CTableHeaderCell scope="col">Nội dung</CTableHeaderCell>
-                        <CTableHeaderCell scope="col">Trạng thái</CTableHeaderCell>
                         <CTableHeaderCell scope="col">Ngày tạo</CTableHeaderCell>
                         <CTableHeaderCell scope="col">Thao tác</CTableHeaderCell>
                       </CTableRow>
@@ -220,16 +267,6 @@ const BlogList = () => {
                             </div>
                           </CTableDataCell>
                           <CTableDataCell>
-                            <div style={{ maxWidth: '200px' }}>
-                              {truncateContent(blog.content)}
-                            </div>
-                          </CTableDataCell>
-                          <CTableDataCell>
-                            <CBadge color={getBadgeColor(blog.active)}>
-                              {getStatusText(blog.active)}
-                            </CBadge>
-                          </CTableDataCell>
-                          <CTableDataCell>
                             <small>{formatDate(blog.createdAt)}</small>
                           </CTableDataCell>
                           <CTableDataCell>
@@ -238,18 +275,17 @@ const BlogList = () => {
                                 <CIcon icon={cilOptions} />
                               </CDropdownToggle>
                               <CDropdownMenu>
-                                <CDropdownItem href={`#/blogs/edit/${blog.id}`}>
+                                <CDropdownItem 
+                                  onClick={() => setDetailModal({ visible: true, blog })}
+                                >
+                                  <CIcon icon={cilDescription} className="me-2" />
+                                  Xem chi tiết
+                                </CDropdownItem>
+                                <CDropdownItem 
+                                  onClick={() => navigate(`/blogs/edit/${blog.id}`)}
+                                >
                                   <CIcon icon={cilPencil} className="me-2" />
                                   Chỉnh sửa
-                                </CDropdownItem>
-                                <CDropdownItem
-                                  onClick={() => handleStatusToggle(blog.id, blog.active)}
-                                >
-                                  <CIcon 
-                                    icon={blog.active ? cilToggleOff : cilToggleOn} 
-                                    className="me-2" 
-                                  />
-                                  {blog.active ? 'Chuyển về nháp' : 'Xuất bản'}
                                 </CDropdownItem>
                                 <CDropdownItem
                                   onClick={() => setDeleteModal({ visible: true, blog })}
@@ -321,6 +357,120 @@ const BlogList = () => {
           </CButton>
           <CButton color="danger" onClick={handleDeleteBlog}>
             Xóa
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      {/* Blog Detail Modal */}
+      <CModal
+        size="xl"
+        visible={detailModal.visible}
+        onClose={() => setDetailModal({ visible: false, blog: null })}
+        scrollable
+      >
+        <CModalHeader>
+          <CModalTitle>Chi tiết bài viết</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {detailModal.blog && (
+            <div>
+              {/* Blog Header */}
+              <div className="mb-4">
+                <h2 className="mb-3">{detailModal.blog.title}</h2>
+                <div className="d-flex flex-wrap gap-2 mb-3">
+                  <CBadge color={getBadgeColor(detailModal.blog.published)}>
+                    {getStatusText(detailModal.blog.published)}
+                  </CBadge>
+                  <small className="text-muted">
+                    Ngày tạo: {formatDate(detailModal.blog.createdAt)}
+                  </small>
+                  {detailModal.blog.updatedAt && (
+                    <small className="text-muted">
+                      Cập nhật: {formatDate(detailModal.blog.updatedAt)}
+                    </small>
+                  )}
+                </div>
+                <div className="mb-3">
+                  <small className="text-muted">Slug: </small>
+                  <code>{detailModal.blog.slug}</code>
+                </div>
+              </div>
+
+              {/* Blog Thumbnail */}
+              {detailModal.blog.thumbnail && (
+                <div className="mb-4">
+                  <h6>Hình ảnh đại diện</h6>
+                  <img
+                    src={detailModal.blog.thumbnail}
+                    alt={detailModal.blog.title}
+                    style={{ 
+                      maxWidth: '100%', 
+                      height: 'auto', 
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Blog Summary */}
+              {detailModal.blog.summary && (
+                <div className="mb-4">
+                  <h6>Tóm tắt</h6>
+                  <p className="text-muted">{detailModal.blog.summary}</p>
+                </div>
+              )}
+
+              {/* Blog Content */}
+              <div className="mb-4">
+                <h6>Nội dung</h6>
+                <div 
+                  style={{ 
+                    border: '1px solid #dee2e6',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    backgroundColor: '#f8f9fa',
+                    minHeight: '200px'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: detailModal.blog.content }}
+                />
+              </div>
+
+              {/* Blog Category */}
+              {detailModal.blog.category && (
+                <div className="mb-4">
+                  <h6>Danh mục</h6>
+                  <CBadge color="info">{detailModal.blog.category.name}</CBadge>
+                </div>
+              )}
+
+              {/* Blog Tags */}
+              {detailModal.blog.tags && detailModal.blog.tags.length > 0 && (
+                <div className="mb-4">
+                  <h6>Thẻ tag</h6>
+                  <div className="d-flex flex-wrap gap-2">
+                    {detailModal.blog.tags.map((tag, index) => (
+                      <CBadge key={index} color="secondary">{tag}</CBadge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton 
+            color="secondary" 
+            onClick={() => setDetailModal({ visible: false, blog: null })}
+          >
+            Đóng
+          </CButton>
+          <CButton 
+            color="primary" 
+            onClick={() => navigate(`/blogs/edit/${detailModal.blog?.id}`)}
+          >
+            <CIcon icon={cilPencil} className="me-1" />
+            Chỉnh sửa
           </CButton>
         </CModalFooter>
       </CModal>

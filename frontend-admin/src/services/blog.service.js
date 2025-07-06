@@ -24,7 +24,7 @@ class BlogService {
      */
     async getBlogById(id) {
         try {
-            const response = await api.get(`/blogs/${id}`);
+            const response = await api.get(ENDPOINTS.BLOG.GET_BY_ID(id));
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -38,7 +38,7 @@ class BlogService {
      */
     async getBlogBySlug(slug) {
         try {
-            const response = await api.get(`/blogs/slug/${slug}`);
+            const response = await api.get(ENDPOINTS.BLOG.GET_BY_SLUG(slug));
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -52,11 +52,7 @@ class BlogService {
      */
     async createBlog(blogData) {
         try {
-            const response = await api.post('/blogs', blogData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post(ENDPOINTS.BLOG.CREATE, blogData);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -71,40 +67,16 @@ class BlogService {
      */
     async updateBlog(id, blogData) {
         try {
-            const response = await api.put(`/blogs/${id}`, blogData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.put(ENDPOINTS.BLOG.UPDATE(id), blogData);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
         }
     }
 
-    /**
-     * Update blog status
-     * @param {string|number} id - Blog ID
-     * @param {boolean} status - New status
-     * @returns {Promise<ApiResponse>}
-     */
-    async updateBlogStatus(id, status) {
-        try {
-            const response = await api.put(`/blogs/status/${id}`, status);
-            return apiUtils.fromAxiosResponse(response);
-        } catch (error) {
-            throw apiUtils.fromAxiosError(error);
-        }
-    }
-
-    /**
-     * Delete blog
-     * @param {string|number} id - Blog ID
-     * @returns {Promise<ApiResponse>}
-     */
     async deleteBlog(id) {
         try {
-            const response = await api.delete(`/blogs/${id}`);
+            const response = await api.delete(ENDPOINTS.BLOG.DELETE(id));
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);

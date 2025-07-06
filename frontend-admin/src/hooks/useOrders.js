@@ -20,18 +20,36 @@ export const useOrders = () => {
     setError(null)
     try {
       const queryParams = {
-        pageIndex: (params.page || 1) - 1, // Convert to 0-based indexing
-        pageSize: params.size || 10,
-        ...(params.search && { search: params.search }),
-        ...(params.status && { status: params.status }),
+        pageIndex: params.pageIndex || 1, // Backend expects 1-based indexing
+        pageSize: params.pageSize || 10,
+      }
+      
+      // Add filter parameters only if they exist
+      if (params.id) {
+        queryParams.id = params.id
+      }
+      if (params.orderStatus) {
+        queryParams.orderStatus = params.orderStatus
+      }
+      if (params.paymentStatus) {
+        queryParams.paymentStatus = params.paymentStatus
+      }
+      if (params.customerPhoneNumber) {
+        queryParams.customerPhoneNumber = params.customerPhoneNumber
+      }
+      if (params.fromDate) {
+        queryParams.fromDate = params.fromDate
+      }
+      if (params.toDate) {
+        queryParams.toDate = params.toDate
       }
       
       const response = await callApi(() => orderService.getOrders(queryParams))
-      
       if (response.success) {
-        setOrders(response.data.content || [])
+        const orders = response.data.content || []
+        setOrders(orders)
         setPagination({
-          currentPage: params.page || 1,
+          currentPage: params.pageIndex || 1,
           totalPages: response.data.totalPages || 0,
           totalElements: response.data.totalElements || 0,
           size: response.data.size || 10
@@ -54,7 +72,7 @@ export const useOrders = () => {
     setError(null)
     try {
       const response = await callApi(() => orderService.getOrderDetails(orderId))
-      
+      console.log('Order details response:', response)
       if (response.success) {
         return response.data
       } else {
@@ -118,26 +136,6 @@ export const useOrders = () => {
     }
   }, [callApi])
 
-  const createOrder = useCallback(async (orderData) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await callApi(() => orderService.createOrder(orderData))
-      
-      if (response.success) {
-        // Optionally refresh the orders list
-        return response
-      } else {
-        throw new Error(response.message || 'Failed to create order')
-      }
-    } catch (err) {
-      setError(err.message || 'An error occurred while creating order')
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }, [callApi])
-
   const clearError = useCallback(() => {
     setError(null)
   }, [])
@@ -154,7 +152,6 @@ export const useOrders = () => {
     getOrderDetails,
     updateOrderStatus,
     updatePaymentStatus,
-    createOrder,
     clearError,
 
     // Helper getters

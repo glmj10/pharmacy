@@ -1,4 +1,5 @@
 import api from '../config/api';
+import { ENDPOINTS } from '../config/constants';
 import { apiUtils } from '../utils/apiUtils';
 
 class OrderService {
@@ -9,7 +10,7 @@ class OrderService {
      */
     async getOrders(params = {}) {
         try {
-            const response = await api.get('/orders', { params });
+            const response = await api.get(ENDPOINTS.ORDERS.GET_ALL, { params });
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
@@ -23,39 +24,14 @@ class OrderService {
      */
     async getOrderDetails(id) {
         try {
-            const response = await api.get(`/orders/detail/${id}`);
+            const response = await api.get(ENDPOINTS.ORDERS.GET_DETAILS(id));
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
         }
     }
 
-    /**
-     * Get current user's orders
-     * @returns {Promise<ApiResponse>}
-     */
-    async getMyOrders() {
-        try {
-            const response = await api.get('/orders/my-orders');
-            return apiUtils.fromAxiosResponse(response);
-        } catch (error) {
-            throw apiUtils.fromAxiosError(error);
-        }
-    }
 
-    /**
-     * Create new order
-     * @param {Object} orderData - Order data
-     * @returns {Promise<ApiResponse>}
-     */
-    async createOrder(orderData) {
-        try {
-            const response = await api.post('/orders', orderData);
-            return apiUtils.fromAxiosResponse(response);
-        } catch (error) {
-            throw apiUtils.fromAxiosError(error);
-        }
-    }
 
     /**
      * Update order status
@@ -65,7 +41,7 @@ class OrderService {
      */
     async updateOrderStatus(id, status) {
         try {
-            const response = await api.put(`/orders/status/${id}`, null, {
+            const response = await api.put(ENDPOINTS.ORDERS.UPDATE_STATUS, null, {
                 params: { status }
             });
             return apiUtils.fromAxiosResponse(response);
@@ -82,7 +58,7 @@ class OrderService {
      */
     async updatePaymentStatus(id, status) {
         try {
-            const response = await api.put(`/orders/payment-status/${id}`, null, {
+            const response = await api.put(ENDPOINTS.ORDERS.UPDATE_PAYMENT_STATUS(id), null, {
                 params: { status }
             });
             return apiUtils.fromAxiosResponse(response);

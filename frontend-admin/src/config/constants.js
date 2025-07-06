@@ -50,6 +50,8 @@ export const ENDPOINTS = {
         CREATE: "/categories",
         UPDATE: (id) => `/categories/${id}`,
         DELETE: (id) => `/categories/${id}`,
+        GET_ALL_BLOG_CATEGORIES: "/categories/blogs/all",
+        GET_ALL_PRODUCT_CATEGORIES: "/categories/products/all",
     },
     BRANDS: {
         GET_ALL: "/brands",
@@ -70,6 +72,7 @@ export const ENDPOINTS = {
     BLOG: {
         GET_ALL: "/blogs",
         GET_BY_ID: (id) => `/blogs/${id}`,
+        GET_BY_SLUG: (slug) => `/blogs/slug/${slug}`,
         CREATE: "/blogs",
         UPDATE: (id) => `/blogs/${id}`,
         DELETE: (id) => `/blogs/${id}`,
@@ -95,8 +98,6 @@ export const STORAGE_KEYS = {
 
 export const ORDER_STATUS = {
     PENDING: 'PENDING',
-    CONFIRMED: 'CONFIRMED',
-    PROCESSING: 'PROCESSING',
     SHIPPING: 'SHIPPING',
     DELIVERED: 'DELIVERED',
     CANCELLED: 'CANCELLED',
@@ -104,21 +105,19 @@ export const ORDER_STATUS = {
 
 export const ORDER_STATUS_LABELS = {
     [ORDER_STATUS.PENDING]: { label: 'Chờ xử lý', color: 'warning' },
-    [ORDER_STATUS.CONFIRMED]: { label: 'Đã xác nhận', color: 'info' },
-    [ORDER_STATUS.PROCESSING]: { label: 'Đang xử lý', color: 'primary' },
     [ORDER_STATUS.SHIPPING]: { label: 'Đang giao', color: 'secondary' },
     [ORDER_STATUS.DELIVERED]: { label: 'Đã giao', color: 'success' },
     [ORDER_STATUS.CANCELLED]: { label: 'Đã hủy', color: 'danger' },
 };
 
 export const PAYMENT_STATUS = {
-    UNPAID: 'UNPAID',
-    PAID: 'PAID',
-    REFUNDED: 'REFUNDED',
+    PENDING: 'PENDING',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
 };
 
 export const PAYMENT_STATUS_LABELS = {
-    [PAYMENT_STATUS.UNPAID]: { label: 'Chưa thanh toán', color: 'warning' },
-    [PAYMENT_STATUS.PAID]: { label: 'Đã thanh toán', color: 'success' },
-    [PAYMENT_STATUS.REFUNDED]: { label: 'Đã hoàn tiền', color: 'info' },
+    [PAYMENT_STATUS.PENDING]: { label: 'Đang xử lý', color: 'primary' },
+    [PAYMENT_STATUS.COMPLETED]: { label: 'Hoàn thành', color: 'success' },
+    [PAYMENT_STATUS.FAILED]: { label: 'Thất bại', color: 'danger' },
 };

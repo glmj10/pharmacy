@@ -58,6 +58,23 @@ const _nav = [
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
   {
+    component: CNavGroup,
+    name: 'Bài viết',
+    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+    items: [
+      {
+        component: CNavItem,
+        name: 'Danh sách bài viết',
+        to: '/blogs/list',
+      },
+      {
+        component: CNavItem,
+        name: 'Thêm bài viết',
+        to: '/blogs/create',
+      },
+    ],
+  },
+  {
     component: CNavTitle,
     name: 'Cấu hình',
   },
@@ -76,19 +93,6 @@ const _nav = [
   {
     component: CNavTitle,
     name: 'Hỗ trợ',
-  },
-  {
-    component: CNavGroup,
-    name: 'Nội dung',
-    to: '/blogs',
-    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Danh sách bài viết',
-        to: '/blogs',
-      },
-    ],
   },
   {
     component: CNavItem,
