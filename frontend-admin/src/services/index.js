@@ -5,6 +5,7 @@ export { authService } from './auth';
 export { default as userService } from './user.service';
 export { default as roleService } from './role.service';
 export { default as productService } from './product.service';
+export { default as dashboardService } from './dashboard.service';
 
 // Additional Services (if they exist)
 export { default as blogService } from './blog.service';

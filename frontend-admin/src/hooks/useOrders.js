@@ -72,7 +72,6 @@ export const useOrders = () => {
     setError(null)
     try {
       const response = await callApi(() => orderService.getOrderDetails(orderId))
-      console.log('Order details response:', response)
       if (response.success) {
         return response.data
       } else {

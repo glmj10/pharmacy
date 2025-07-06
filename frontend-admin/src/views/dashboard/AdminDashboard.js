@@ -24,7 +24,7 @@ import {
   cilMoney,
   cilXCircle,
 } from '@coreui/icons'
-import dashboardService from '../../services/dashboard.service.js'
+import dashboardService from '../../services/dashboard.service'
 import { ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS } from '../../config/constants'
 
 const AdminDashboard = () => {

@@ -18,6 +18,19 @@ class BrandService {
     }
 
     /**
+     * Get all brands without pagination
+     * @returns {Promise<ApiResponse>}
+     */
+    async getAllBrands() {
+        try {
+            const response = await api.get(ENDPOINTS.BRANDS.GET_ALL);
+            return apiUtils.fromAxiosResponse(response);
+        } catch (error) {
+            throw apiUtils.fromAxiosError(error);
+        }
+    }
+
+    /**
      * Get brand by ID
      * @param {string|number} id - Brand ID
      * @returns {Promise<ApiResponse>}

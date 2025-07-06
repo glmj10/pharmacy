@@ -17,23 +17,30 @@ import {
   CInputGroup,
   CInputGroupText,
   CFormFeedback,
+  CFormCheck,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilSave, cilArrowLeft } from '@coreui/icons'
-import { useProducts } from '../../../hooks/useProducts'
-import { useFormSubmit } from '../../../hooks/useApiCall'
-import LoadingSpinner from '../../../components/common/LoadingSpinner'
+import { cilSave, cilArrowLeft, cilX } from '@coreui/icons'
+import { productService, brandService, categoryService } from '../../../services'
+import { useApiCall } from '../../../hooks/useApiCall'
 
 const ProductForm = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = Boolean(id)
   
-  const [initialLoading, setInitialLoading] = useState(isEdit)
-  const [error, setError] = useState('')
-
-  const { submit, loading, validationErrors, clearValidationError } = useFormSubmit()
-  const { getProductById, createProduct, updateProduct } = useProducts()
+  const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true) // For brands/categories loading
+  const [brands, setBrands] = useState([])
+  const [categories, setCategories] = useState([])
+  const [thumbnailFile, setThumbnailFile] = useState(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState('')
+  const [imageFiles, setImageFiles] = useState([])
+  const [imagePreviews, setImagePreviews] = useState([])
+  const [existingImages, setExistingImages] = useState([])
+  const [removedImageIds, setRemovedImageIds] = useState([]) // Track removed existing images
+  
+  const { execute: callApi } = useApiCall()
 
   const [formData, setFormData] = useState({
     title: '',
@@ -49,106 +56,226 @@ const ProductForm = () => {
     activeIngredient: '',
     dosageForm: '',
     priority: 0,
-    active: true,
+    brandId: '',
+    categoryIds: [],
   })
 
-  const [files, setFiles] = useState({
-    thumbnail: null,
-    images: [],
-  })
-
-  const [previewUrls, setPreviewUrls] = useState({
+  const [formErrors, setFormErrors] = useState({
+    title: '',
+    priceOld: '',
+    priceNew: '',
+    quantity: '',
+    manufacturer: '',
+    type: '',
+    brandId: '',
+    categoryIds: '',
     thumbnail: '',
-    images: [],
   })
+
+  // Load brands and categories
+  useEffect(() => {
+    const fetchData = async () => {
+      setInitialLoading(true)
+      try {
+        // Fetch brands
+        const brandsResponse = await callApi(() => brandService.getAllBrands())
+        if (brandsResponse.success) {
+          const brandsData = Array.isArray(brandsResponse.data) 
+            ? brandsResponse.data 
+            : brandsResponse.data.content || brandsResponse.data.data || []
+          setBrands(brandsData)
+        }
+
+        // Fetch categories
+        const categoriesResponse = await callApi(() => categoryService.getAllProductCategories())
+        if (categoriesResponse.success) {
+          const categoriesData = Array.isArray(categoriesResponse.data) 
+            ? categoriesResponse.data 
+            : categoriesResponse.data.content || categoriesResponse.data.data || []
+          setCategories(categoriesData)
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
 
   // Load product data for editing
   useEffect(() => {
-    if (isEdit && id) {
-      loadProduct()
-    }
-  }, [isEdit, id])
+    if (isEdit && brands.length > 0 && categories.length > 0) {
+      const fetchProduct = async () => {
+        setLoading(true)
+        try {
+          const response = await callApi(() => productService.getProductById(id))
+          if (response.success) {
+            const product = response.data
+            
+            console.log('Loaded product data:', product) // Debug log
+            
+            // Handle different response structures
+            let brandId = ''
+            if (product.brand && product.brand.id) {
+              brandId = String(product.brand.id)
+            } else if (product.brandId) {
+              brandId = String(product.brandId)
+            }
 
-  const loadProduct = async () => {
-    setInitialLoading(true)
-    try {
-      const result = await getProductById(id)
-      if (result.success) {
-        const productData = result.data
-        setFormData({
-          title: productData.title || '',
-          priceOld: productData.priceOld || '',
-          priceNew: productData.priceNew || '',
-          quantity: productData.quantity || '',
-          manufacturer: productData.manufacturer || '',
-          type: productData.type || '',
-          noted: productData.noted || '',
-          indication: productData.indication || '',
-          description: productData.description || '',
-          registrationNumber: productData.registrationNumber || '',
-          activeIngredient: productData.activeIngredient || '',
-          dosageForm: productData.dosageForm || '',
-          priority: productData.priority || 0,
-          active: productData.active !== undefined ? productData.active : true,
-        })
+            let categoryIds = []
+            if (product.categories && Array.isArray(product.categories)) {
+              categoryIds = product.categories.map(cat => String(cat.id))
+            } else if (product.categoryIds && Array.isArray(product.categoryIds)) {
+              categoryIds = product.categoryIds.map(id => String(id))
+            }
+            
+            const newFormData = {
+              title: product.title || '',
+              priceOld: product.priceOld || '',
+              priceNew: product.priceNew || '',
+              quantity: product.quantity || '',
+              manufacturer: product.manufacturer || '',
+              type: product.type || '',
+              noted: product.noted || '',
+              indication: product.indication || '',
+              description: product.description || '',
+              registrationNumber: product.registrationNumber || '',
+              activeIngredient: product.activeIngredient || '',
+              dosageForm: product.dosageForm || '',
+              priority: product.priority || 0,
+              brandId: brandId,
+              categoryIds: categoryIds,
+            }
+            setFormData(newFormData)
+            
+            // Set existing thumbnail preview
+            if (product.thumbnailUrl) {
+              setThumbnailPreview(product.thumbnailUrl)
+            }
 
-        // Set existing thumbnail preview
-        if (productData.thumbnailUrl) {
-          setPreviewUrls(prev => ({
-            ...prev,
-            thumbnail: productData.thumbnailUrl
-          }))
+            // Set existing images preview
+            if (product.images && product.images.length > 0) {
+              setExistingImages(product.images)
+            }
+          } else {
+            console.error('Failed to load product:', response.message)
+            // Navigate back to list if product not found
+            navigate('/products')
+          }
+        } catch (error) {
+          console.error('Error fetching product:', error)
+          // Navigate back to list on error
+          navigate('/products')
+        } finally {
+          setLoading(false)
         }
-
-        // Set existing images preview
-        if (productData.images && productData.images.length > 0) {
-          setPreviewUrls(prev => ({
-            ...prev,
-            images: productData.images.map(img => img.imageUrl)
-          }))
-        }
-      } else {
-        setError('Không thể tải thông tin sản phẩm')
       }
-    } catch (error) {
-      console.error('Error loading product:', error)
-      setError('Không thể tải thông tin sản phẩm')
-    } finally {
-      setInitialLoading(false)
+      fetchProduct()
     }
-  }
+  }, [id, isEdit, brands, categories, navigate])
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
+    
+    if (name === 'categoryIds') {
+      // Handle multiple select for categories
+      const selectedOptions = Array.from(e.target.selectedOptions, option => option.value)
+      setFormData(prev => ({
+        ...prev,
+        categoryIds: selectedOptions
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }))
+    }
 
-    // Clear validation error when user starts typing
-    if (validationErrors[name]) {
-      clearValidationError(name)
+    // Clear error when field is modified
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }))
     }
   }
 
-  const handleFileChange = (e, type) => {
-    const selectedFiles = Array.from(e.target.files)
-    
-    if (type === 'thumbnail') {
-      setFiles(prev => ({ ...prev, thumbnail: selectedFiles[0] }))
-      
-      // Create preview URL
-      if (selectedFiles[0]) {
-        const url = URL.createObjectURL(selectedFiles[0])
-        setPreviewUrls(prev => ({ ...prev, thumbnail: url }))
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setThumbnailFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setThumbnailPreview(e.target.result)
       }
-    } else if (type === 'images') {
-      setFiles(prev => ({ ...prev, images: selectedFiles }))
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length > 0) {
+      setImageFiles(files)
       
       // Create preview URLs
-      const urls = selectedFiles.map(file => URL.createObjectURL(file))
-      setPreviewUrls(prev => ({ ...prev, images: urls }))
+      const previews = files.map(file => {
+        const reader = new FileReader()
+        return new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target.result)
+          reader.readAsDataURL(file)
+        })
+      })
+
+      Promise.all(previews).then(urls => {
+        setImagePreviews(urls)
+      })
     }
+  }
+
+  const removeImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const removeExistingImage = (index) => {
+    const imageToRemove = existingImages[index]
+    if (imageToRemove && imageToRemove.id) {
+      setRemovedImageIds(prev => [...prev, imageToRemove.id])
+    }
+    setExistingImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const removeThumbnail = () => {
+    setThumbnailFile(null)
+    setThumbnailPreview('')
+  }
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      priceOld: '',
+      priceNew: '',
+      quantity: '',
+      manufacturer: '',
+      type: '',
+      noted: '',
+      indication: '',
+      description: '',
+      registrationNumber: '',
+      activeIngredient: '',
+      dosageForm: '',
+      priority: 0,
+      brandId: '',
+      categoryIds: [],
+    })
+    setThumbnailFile(null)
+    setThumbnailPreview('')
+    setImageFiles([])
+    setImagePreviews([])
+    setExistingImages([])
+    setRemovedImageIds([])
+    setFormErrors({})
   }
 
   const validateForm = () => {
@@ -158,78 +285,136 @@ const ProductForm = () => {
       errors.title = 'Tên sản phẩm là bắt buộc'
     }
     
+    if (!formData.priceOld || formData.priceOld <= 0) {
+      errors.priceOld = 'Giá gốc phải lớn hơn 0'
+    }
+    
     if (!formData.priceNew || formData.priceNew <= 0) {
-      errors.priceNew = 'Giá bán phải lớn hơn 0'
+      errors.priceNew = 'Giá mới phải lớn hơn 0'
     }
     
     if (!formData.quantity || formData.quantity < 0) {
       errors.quantity = 'Số lượng phải >= 0'
     }
-
-    if (!isEdit && !files.thumbnail) {
+    
+    if (!formData.manufacturer.trim()) {
+      errors.manufacturer = 'Nhà sản xuất là bắt buộc'
+    }
+    
+    if (!formData.type.trim()) {
+      errors.type = 'Loại sản phẩm là bắt buộc'
+    }
+    
+    if (!formData.brandId) {
+      errors.brandId = 'Thương hiệu là bắt buộc'
+    }
+    
+    if (!formData.categoryIds || formData.categoryIds.length === 0) {
+      errors.categoryIds = 'Danh mục là bắt buộc'
+    }
+    
+    if (!isEdit && !thumbnailFile && !thumbnailPreview) {
       errors.thumbnail = 'Hình ảnh đại diện là bắt buộc'
     }
     
-    return errors
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Validate form
-    const errors = validateForm()
-    if (Object.keys(errors).length > 0) {
-      // Show first error
-      setError(Object.values(errors)[0])
-      return { success: false, data: null }
-    }
-
-    // Create FormData
-    const formDataToSend = new FormData()
-    
-    // Add product data as JSON
-    const productRequest = {
-      ...formData,
-      priceOld: formData.priceOld ? parseInt(formData.priceOld) : null,
-      priceNew: parseInt(formData.priceNew),
-      quantity: parseInt(formData.quantity),
-      priority: parseInt(formData.priority),
+    if (!validateForm()) {
+      return
     }
     
-    formDataToSend.append('product', JSON.stringify(productRequest))
-    
-    // Add files
-    if (files.thumbnail) {
-      formDataToSend.append('thumbnail', files.thumbnail)
-    }
-    
-    if (files.images && files.images.length > 0) {
-      files.images.forEach((image) => {
-        formDataToSend.append('images', image)
-      })
-    }
-
-    const result = await submit(
-      () => isEdit 
-        ? updateProduct(id, formDataToSend)
-        : createProduct(formDataToSend),
-      {
-        successMessage: isEdit ? 'Cập nhật sản phẩm thành công' : 'Tạo sản phẩm thành công',
-        onSuccess: () => {
-          navigate('/admin/products')
-        }
+    setLoading(true)
+    try {
+      const submitFormData = new FormData()
+      
+      // Create product request object to match backend ProductRequest
+      const productRequest = {
+        title: formData.title.trim(),
+        priceOld: parseFloat(formData.priceOld),
+        priceNew: parseFloat(formData.priceNew),
+        quantity: parseInt(formData.quantity),
+        manufacturer: formData.manufacturer.trim(),
+        type: formData.type.trim(),
+        noted: formData.noted.trim(),
+        indication: formData.indication.trim(),
+        description: formData.description.trim(),
+        registrationNumber: formData.registrationNumber.trim(),
+        activeIngredient: formData.activeIngredient.trim(),
+        dosageForm: formData.dosageForm.trim(),
+        priority: parseInt(formData.priority),
+        brandId: parseInt(formData.brandId),
+        categoryIds: formData.categoryIds.map(id => parseInt(id)),
       }
-    )
-
-    return result
+      
+      // Add product data as JSON string for @RequestPart("product")
+      const productBlob = new Blob([JSON.stringify(productRequest)], { type: 'application/json' })
+      submitFormData.append('product', productBlob)
+      
+      // Add thumbnail if provided
+      if (thumbnailFile) {
+        submitFormData.append('thumbnail', thumbnailFile)
+      }
+      
+      // Add images if provided
+      imageFiles.forEach((file, index) => {
+        submitFormData.append('images', file)
+      })
+      
+      // Add removed image IDs for update operation
+      if (isEdit && removedImageIds.length > 0) {
+        submitFormData.append('removedImageIds', JSON.stringify(removedImageIds))
+      }
+      
+      if (isEdit) {
+        await callApi(() => 
+          productService.updateProduct(id, submitFormData),
+          {
+            successMessage: 'Cập nhật sản phẩm thành công!',
+            showSuccessNotification: true,
+            onSuccess: () => {
+              navigate('/products')
+            }
+          }
+        )
+      } else {
+        await callApi(() => 
+          productService.createProduct(submitFormData),
+          {
+            successMessage: 'Tạo sản phẩm thành công!',
+            showSuccessNotification: true,
+            onSuccess: () => {
+              navigate('/products')
+            }
+          }
+        )
+      }
+    } catch (error) {
+      console.error('Error saving product:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (initialLoading) {
     return (
-      <LoadingSpinner 
-        text="Đang tải thông tin sản phẩm..." 
-        className="py-5"
-      />
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
+        <CSpinner color="primary" size="lg" />
+        <span className="ms-2">Đang tải dữ liệu...</span>
+      </div>
+    )
+  }
+
+  if (loading && isEdit) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
+        <CSpinner color="primary" size="lg" />
+        <span className="ms-2">Đang tải thông tin sản phẩm...</span>
+      </div>
     )
   }
 
@@ -238,210 +423,296 @@ const ProductForm = () => {
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
-            <strong>{isEdit ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</strong>
+            <div>
+              <strong>{isEdit ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</strong>
+            </div>
             <CButton 
-              color="light" 
-              onClick={() => navigate('/admin/products')}
+              color="secondary" 
+              onClick={() => navigate('/products/list')}
+              className="me-2"
             >
               <CIcon icon={cilArrowLeft} className="me-1" />
               Quay lại
             </CButton>
           </CCardHeader>
           <CCardBody>
-            {error && (
-              <CAlert color="danger" className="mb-3">
-                {error}
-              </CAlert>
-            )}
-            
             <CForm onSubmit={handleSubmit}>
               <CRow>
-                {/* Basic Information */}
                 <CCol md={8}>
-                  <h6 className="border-bottom pb-2 mb-3">Thông tin cơ bản</h6>
-                  
-                  <CRow className="mb-3">
-                    <CCol md={12}>
-                      <CFormLabel htmlFor="title">Tên sản phẩm *</CFormLabel>
-                      <CFormInput
-                        id="title"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        invalid={!!validationErrors.title}
-                      />
-                      <CFormFeedback invalid>{validationErrors.title}</CFormFeedback>
+                  {/* Title */}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="title">Tên sản phẩm *</CFormLabel>
+                    <CFormInput
+                      type="text"
+                      id="title"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      invalid={!!formErrors.title}
+                      placeholder="Nhập tên sản phẩm"
+                    />
+                    {formErrors.title && (
+                      <CFormFeedback invalid>
+                        {formErrors.title}
+                      </CFormFeedback>
+                    )}
+                  </div>
+
+                  {/* Price */}
+                  <CRow>
+                    <CCol md={6}>
+                      <div className="mb-3">
+                        <CFormLabel htmlFor="priceOld">Giá gốc *</CFormLabel>
+                        <CInputGroup>
+                          <CFormInput
+                            type="number"
+                            id="priceOld"
+                            name="priceOld"
+                            value={formData.priceOld}
+                            onChange={handleInputChange}
+                            invalid={!!formErrors.priceOld}
+                            placeholder="0"
+                          />
+                          <CInputGroupText>VND</CInputGroupText>
+                        </CInputGroup>
+                        {formErrors.priceOld && (
+                          <CFormFeedback invalid>
+                            {formErrors.priceOld}
+                          </CFormFeedback>
+                        )}
+                      </div>
+                    </CCol>
+                    <CCol md={6}>
+                      <div className="mb-3">
+                        <CFormLabel htmlFor="priceNew">Giá bán *</CFormLabel>
+                        <CInputGroup>
+                          <CFormInput
+                            type="number"
+                            id="priceNew"
+                            name="priceNew"
+                            value={formData.priceNew}
+                            onChange={handleInputChange}
+                            invalid={!!formErrors.priceNew}
+                            placeholder="0"
+                          />
+                          <CInputGroupText>VND</CInputGroupText>
+                        </CInputGroup>
+                        {formErrors.priceNew && (
+                          <CFormFeedback invalid>
+                            {formErrors.priceNew}
+                          </CFormFeedback>
+                        )}
+                      </div>
                     </CCol>
                   </CRow>
 
-                  <CRow className="mb-3">
+                  {/* Quantity */}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="quantity">Số lượng *</CFormLabel>
+                    <CFormInput
+                      type="number"
+                      id="quantity"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      invalid={!!formErrors.quantity}
+                      placeholder="0"
+                    />
+                    {formErrors.quantity && (
+                      <CFormFeedback invalid>
+                        {formErrors.quantity}
+                      </CFormFeedback>
+                    )}
+                  </div>
+
+                  {/* Manufacturer */}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="manufacturer">Nhà sản xuất *</CFormLabel>
+                    <CFormInput
+                      type="text"
+                      id="manufacturer"
+                      name="manufacturer"
+                      value={formData.manufacturer}
+                      onChange={handleInputChange}
+                      invalid={!!formErrors.manufacturer}
+                      placeholder="Nhập tên nhà sản xuất"
+                    />
+                    {formErrors.manufacturer && (
+                      <CFormFeedback invalid>
+                        {formErrors.manufacturer}
+                      </CFormFeedback>
+                    )}
+                  </div>
+
+                  {/* Type */}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="type">Loại sản phẩm *</CFormLabel>
+                    <CFormInput
+                      type="text"
+                      id="type"
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      invalid={!!formErrors.type}
+                      placeholder="Nhập loại sản phẩm"
+                    />
+                    {formErrors.type && (
+                      <CFormFeedback invalid>
+                        {formErrors.type}
+                      </CFormFeedback>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="description">Mô tả</CFormLabel>
+                    <CFormTextarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows={4}
+                      placeholder="Nhập mô tả sản phẩm"
+                    />
+                  </div>
+
+                  {/* Noted */}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="noted">Ghi chú</CFormLabel>
+                    <CFormTextarea
+                      id="noted"
+                      name="noted"
+                      value={formData.noted}
+                      onChange={handleInputChange}
+                      rows={3}
+                      placeholder="Nhập ghi chú"
+                    />
+                  </div>
+
+                  {/* Indication */}
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="indication">Chỉ định</CFormLabel>
+                    <CFormTextarea
+                      id="indication"
+                      name="indication"
+                      value={formData.indication}
+                      onChange={handleInputChange}
+                      rows={3}
+                      placeholder="Nhập chỉ định sử dụng"
+                    />
+                  </div>
+
+                  {/* Additional Fields */}
+                  <CRow>
                     <CCol md={6}>
-                      <CFormLabel htmlFor="priceOld">Giá cũ</CFormLabel>
-                      <CInputGroup>
+                      <div className="mb-3">
+                        <CFormLabel htmlFor="registrationNumber">Số đăng ký</CFormLabel>
                         <CFormInput
-                          id="priceOld"
-                          name="priceOld"
-                          type="number"
-                          value={formData.priceOld}
+                          type="text"
+                          id="registrationNumber"
+                          name="registrationNumber"
+                          value={formData.registrationNumber}
                           onChange={handleInputChange}
-                          invalid={!!validationErrors.priceOld}
+                          placeholder="Nhập số đăng ký"
                         />
-                        <CInputGroupText>₫</CInputGroupText>
-                      </CInputGroup>
-                      <CFormFeedback invalid>{validationErrors.priceOld}</CFormFeedback>
+                      </div>
                     </CCol>
                     <CCol md={6}>
-                      <CFormLabel htmlFor="priceNew">Giá bán *</CFormLabel>
-                      <CInputGroup>
+                      <div className="mb-3">
+                        <CFormLabel htmlFor="activeIngredient">Hoạt chất</CFormLabel>
                         <CFormInput
-                          id="priceNew"
-                          name="priceNew"
-                          type="number"
-                          value={formData.priceNew}
+                          type="text"
+                          id="activeIngredient"
+                          name="activeIngredient"
+                          value={formData.activeIngredient}
                           onChange={handleInputChange}
-                          invalid={!!validationErrors.priceNew}
+                          placeholder="Nhập hoạt chất"
                         />
-                        <CInputGroupText>₫</CInputGroupText>
-                      </CInputGroup>
-                      <CFormFeedback invalid>{validationErrors.priceNew}</CFormFeedback>
+                      </div>
                     </CCol>
                   </CRow>
 
-                  <CRow className="mb-3">
+                  <CRow>
                     <CCol md={6}>
-                      <CFormLabel htmlFor="quantity">Số lượng *</CFormLabel>
-                      <CFormInput
-                        id="quantity"
-                        name="quantity"
-                        type="number"
-                        value={formData.quantity}
-                        onChange={handleInputChange}
-                        invalid={!!validationErrors.quantity}
-                      />
-                      <CFormFeedback invalid>{validationErrors.quantity}</CFormFeedback>
-                    </CCol>
-                    <CCol md={6}>
-                      <CFormLabel htmlFor="manufacturer">Nhà sản xuất</CFormLabel>
-                      <CFormInput
-                        id="manufacturer"
-                        name="manufacturer"
-                        value={formData.manufacturer}
-                        onChange={handleInputChange}
-                      />
-                    </CCol>
-                  </CRow>
-
-                  <CRow className="mb-3">
-                    <CCol md={6}>
-                      <CFormLabel htmlFor="type">Loại sản phẩm</CFormLabel>
-                      <CFormInput
-                        id="type"
-                        name="type"
-                        value={formData.type}
-                        onChange={handleInputChange}
-                      />
+                      <div className="mb-3">
+                        <CFormLabel htmlFor="dosageForm">Dạng bào chế</CFormLabel>
+                        <CFormInput
+                          type="text"
+                          id="dosageForm"
+                          name="dosageForm"
+                          value={formData.dosageForm}
+                          onChange={handleInputChange}
+                          placeholder="Nhập dạng bào chế"
+                        />
+                      </div>
                     </CCol>
                     <CCol md={6}>
-                      <CFormLabel htmlFor="dosageForm">Dạng bào chế</CFormLabel>
-                      <CFormInput
-                        id="dosageForm"
-                        name="dosageForm"
-                        value={formData.dosageForm}
-                        onChange={handleInputChange}
-                      />
-                    </CCol>
-                  </CRow>
-
-                  <CRow className="mb-3">
-                    <CCol md={12}>
-                      <CFormLabel htmlFor="activeIngredient">Hoạt chất</CFormLabel>
-                      <CFormInput
-                        id="activeIngredient"
-                        name="activeIngredient"
-                        value={formData.activeIngredient}
-                        onChange={handleInputChange}
-                      />
-                    </CCol>
-                  </CRow>
-
-                  <CRow className="mb-3">
-                    <CCol md={12}>
-                      <CFormLabel htmlFor="registrationNumber">Số đăng ký</CFormLabel>
-                      <CFormInput
-                        id="registrationNumber"
-                        name="registrationNumber"
-                        value={formData.registrationNumber}
-                        onChange={handleInputChange}
-                      />
-                    </CCol>
-                  </CRow>
-
-                  <CRow className="mb-3">
-                    <CCol md={12}>
-                      <CFormLabel htmlFor="indication">Chỉ định</CFormLabel>
-                      <CFormTextarea
-                        id="indication"
-                        name="indication"
-                        rows={3}
-                        value={formData.indication}
-                        onChange={handleInputChange}
-                      />
-                    </CCol>
-                  </CRow>
-
-                  <CRow className="mb-3">
-                    <CCol md={12}>
-                      <CFormLabel htmlFor="noted">Ghi chú</CFormLabel>
-                      <CFormTextarea
-                        id="noted"
-                        name="noted"
-                        rows={3}
-                        value={formData.noted}
-                        onChange={handleInputChange}
-                      />
-                    </CCol>
-                  </CRow>
-
-                  <CRow className="mb-3">
-                    <CCol md={12}>
-                      <CFormLabel htmlFor="description">Mô tả</CFormLabel>
-                      <CFormTextarea
-                        id="description"
-                        name="description"
-                        rows={4}
-                        value={formData.description}
-                        onChange={handleInputChange}
-                      />
+                      <div className="mb-3">
+                        <CFormLabel htmlFor="priority">Độ ưu tiên</CFormLabel>
+                        <CFormInput
+                          type="number"
+                          id="priority"
+                          name="priority"
+                          value={formData.priority}
+                          onChange={handleInputChange}
+                          placeholder="0"
+                        />
+                      </div>
                     </CCol>
                   </CRow>
                 </CCol>
 
-                {/* Settings & Images */}
                 <CCol md={4}>
-                  <h6 className="border-bottom pb-2 mb-3">Cài đặt & Hình ảnh</h6>
-                  
+                  {/* Brand */}
                   <div className="mb-3">
-                    <CFormLabel htmlFor="priority">Độ ưu tiên</CFormLabel>
-                    <CFormInput
-                      id="priority"
-                      name="priority"
-                      type="number"
-                      value={formData.priority}
+                    <CFormLabel htmlFor="brandId">Thương hiệu *</CFormLabel>
+                    <CFormSelect
+                      id="brandId"
+                      name="brandId"
+                      value={formData.brandId}
                       onChange={handleInputChange}
-                    />
+                      invalid={!!formErrors.brandId}
+                    >
+                      <option value="">Chọn thương hiệu</option>
+                      {brands.map(brand => (
+                        <option key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </option>
+                      ))}
+                    </CFormSelect>
+                    {formErrors.brandId && (
+                      <CFormFeedback invalid>
+                        {formErrors.brandId}
+                      </CFormFeedback>
+                    )}
                   </div>
 
+                  {/* Categories */}
                   <div className="mb-3">
-                    <CFormLabel htmlFor="active">Trạng thái</CFormLabel>
+                    <CFormLabel htmlFor="categoryIds">Danh mục *</CFormLabel>
                     <CFormSelect
-                      id="active"
-                      name="active"
-                      value={formData.active}
+                      id="categoryIds"
+                      name="categoryIds"
+                      multiple
+                      value={formData.categoryIds}
                       onChange={handleInputChange}
+                      invalid={!!formErrors.categoryIds}
+                      size={5}
                     >
-                      <option value={true}>Hoạt động</option>
-                      <option value={false}>Tạm dừng</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
                     </CFormSelect>
+                    {formErrors.categoryIds && (
+                      <CFormFeedback invalid>
+                        {formErrors.categoryIds}
+                      </CFormFeedback>
+                    )}
+                    <div className="form-text">
+                      Giữ Ctrl để chọn nhiều danh mục
+                    </div>
                   </div>
 
                   {/* Thumbnail */}
@@ -450,99 +721,149 @@ const ProductForm = () => {
                       Hình ảnh đại diện {!isEdit && '*'}
                     </CFormLabel>
                     <CFormInput
+                      type="file"
                       id="thumbnail"
                       name="thumbnail"
-                      type="file"
                       accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'thumbnail')}
-                      invalid={!!validationErrors.thumbnail}
+                      onChange={handleThumbnailChange}
+                      invalid={!!formErrors.thumbnail}
                     />
-                    <CFormFeedback invalid>{validationErrors.thumbnail}</CFormFeedback>
+                    {formErrors.thumbnail && (
+                      <CFormFeedback invalid>
+                        {formErrors.thumbnail}
+                      </CFormFeedback>
+                    )}
                     
-                    {previewUrls.thumbnail && (
-                      <div className="mt-2">
+                    {/* Thumbnail Preview */}
+                    {thumbnailPreview && (
+                      <div className="mt-3 position-relative">
                         <img
-                          src={previewUrls.thumbnail}
-                          alt="Thumbnail preview"
-                          style={{
-                            width: '100%',
-                            maxWidth: '200px',
-                            height: 'auto',
-                            borderRadius: '4px',
-                            border: '1px solid #ddd'
+                          src={thumbnailPreview}
+                          alt="Thumbnail Preview"
+                          style={{ 
+                            width: '100%', 
+                            height: '200px', 
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #dee2e6'
                           }}
                         />
+                        <CButton
+                          color="danger"
+                          size="sm"
+                          className="position-absolute top-0 end-0 m-2"
+                          onClick={removeThumbnail}
+                        >
+                          <CIcon icon={cilX} />
+                        </CButton>
                       </div>
                     )}
                   </div>
 
-                  {/* Additional Images */}
+                  {/* Images */}
                   <div className="mb-3">
-                    <CFormLabel htmlFor="images">Hình ảnh bổ sung</CFormLabel>
+                    <CFormLabel htmlFor="images">Hình ảnh sản phẩm</CFormLabel>
                     <CFormInput
+                      type="file"
                       id="images"
                       name="images"
-                      type="file"
                       accept="image/*"
                       multiple
-                      onChange={(e) => handleFileChange(e, 'images')}
+                      onChange={handleImagesChange}
                     />
                     
-                    {previewUrls.images.length > 0 && (
-                      <div className="mt-2">
-                        <div className="row g-2">
-                          {previewUrls.images.map((url, index) => (
-                            <div key={index} className="col-6">
-                              <img
-                                src={url}
-                                alt={`Preview ${index + 1}`}
-                                style={{
-                                  width: '100%',
-                                  height: '80px',
-                                  objectFit: 'cover',
-                                  borderRadius: '4px',
-                                  border: '1px solid #ddd'
-                                }}
-                              />
+                    {/* Existing Images */}
+                    {existingImages.length > 0 && (
+                      <div className="mt-3">
+                        <small className="text-muted">Hình ảnh hiện tại:</small>
+                        <div className="row mt-2">
+                          {existingImages.map((image, index) => (
+                            <div key={index} className="col-6 mb-2">
+                              <div className="position-relative">
+                                <img
+                                  src={image.imageUrl}
+                                  alt={`Existing ${index + 1}`}
+                                  style={{
+                                    width: '100%',
+                                    height: '100px',
+                                    objectFit: 'cover',
+                                    borderRadius: '4px',
+                                    border: '1px solid #dee2e6'
+                                  }}
+                                />
+                                <CButton
+                                  color="danger"
+                                  size="sm"
+                                  className="position-absolute top-0 end-0 m-1"
+                                  onClick={() => removeExistingImage(index)}
+                                >
+                                  <CIcon icon={cilX} />
+                                </CButton>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* New Images Preview */}
+                    {imagePreviews.length > 0 && (
+                      <div className="mt-3">
+                        <small className="text-muted">Hình ảnh mới:</small>
+                        <div className="row mt-2">
+                          {imagePreviews.map((preview, index) => (
+                            <div key={index} className="col-6 mb-2">
+                              <div className="position-relative">
+                                <img
+                                  src={preview}
+                                  alt={`New ${index + 1}`}
+                                  style={{
+                                    width: '100%',
+                                    height: '100px',
+                                    objectFit: 'cover',
+                                    borderRadius: '4px',
+                                    border: '1px solid #dee2e6'
+                                  }}
+                                />
+                                <CButton
+                                  color="danger"
+                                  size="sm"
+                                  className="position-absolute top-0 end-0 m-1"
+                                  onClick={() => removeImage(index)}
+                                >
+                                  <CIcon icon={cilX} />
+                                </CButton>
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
+
+                  {/* Submit Button */}
+                  <div className="d-grid gap-2">
+                    <CButton 
+                      type="submit" 
+                      color="primary" 
+                      disabled={loading}
+                      size="lg"
+                    >
+                      {loading ? (
+                        <>
+                          <CSpinner size="sm" className="me-2" />
+                          Đang lưu...
+                        </>
+                      ) : (
+                        <>
+                          <CIcon icon={cilSave} className="me-2" />
+                          {isEdit ? 'Cập nhật' : 'Tạo mới'}
+                        </>
+                      )}
+                    </CButton>
+                  </div>
                 </CCol>
               </CRow>
-
-              {/* Form Actions */}
-              <div className="border-top pt-3 mt-4">
-                <div className="d-flex gap-2">
-                  <CButton
-                    type="submit"
-                    color="primary"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <CSpinner size="sm" className="me-1" />
-                        {isEdit ? 'Đang cập nhật...' : 'Đang tạo...'}
-                      </>
-                    ) : (
-                      <>
-                        <CIcon icon={cilSave} className="me-1" />
-                        {isEdit ? 'Cập nhật' : 'Tạo mới'}
-                      </>
-                    )}
-                  </CButton>
-                  <CButton
-                    type="button"
-                    color="secondary"
-                    onClick={() => navigate('/admin/products')}
-                    disabled={loading}
-                  >
-                    Hủy
-                  </CButton>
-                </div>
-              </div>
             </CForm>
           </CCardBody>
         </CCard>

@@ -1,10 +1,9 @@
 import React from 'react'
 
-const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Profile = React.lazy(() => import('./views/profile/Profile'))
 
 // Admin Views
-const AdminDashboard = React.lazy(() => import('./views/admin/AdminDashboard'))
+const AdminDashboard = React.lazy(() => import('./views/dashboard/AdminDashboard'))
 const ProductList = React.lazy(() => import('./views/admin/products/ProductList'))
 const ProductForm = React.lazy(() => import('./views/admin/products/ProductForm'))
 const OrderList = React.lazy(() => import('./views/admin/orders/OrderList'))
@@ -17,7 +16,6 @@ const BlogForm = React.lazy(() => import('./views/admin/blogs/BlogForm'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
-  { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/profile', name: 'Profile', element: Profile },
   
   // Admin Routes
@@ -25,7 +23,7 @@ const routes = [
   { path: '/dashboard', name: 'Admin Dashboard', element: AdminDashboard },
   
   // Product Management
-  { path: '/products', name: 'Quản lý sản phẩm', element: ProductList, exact: true },
+  { path: '/products/list', name: 'Quản lý sản phẩm', element: ProductList, exact: true },
   { path: '/products/create', name: 'Thêm sản phẩm', element: ProductForm },
   { path: '/products/edit/:id', name: 'Chỉnh sửa sản phẩm', element: ProductForm },
   

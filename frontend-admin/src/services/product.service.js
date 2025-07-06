@@ -4,20 +4,6 @@ import { apiUtils } from '../utils/apiUtils';
 
 class ProductService {
     /**
-     * Get all products for customers (public)
-     * @param {Object} params - Query parameters
-     * @returns {Promise<ApiResponse>}
-     */
-    async getAllProducts(params = {}) {
-        try {
-            const response = await api.get(ENDPOINTS.PRODUCTS.GET_ALL, { params });
-            return apiUtils.fromAxiosResponse(response);
-        } catch (error) {
-            throw apiUtils.fromAxiosError(error);
-        }
-    }
-
-    /**
      * Get all products for CMS (admin/staff)
      * @param {Object} params - Query parameters
      * @returns {Promise<ApiResponse>}
@@ -39,20 +25,6 @@ class ProductService {
     async getProductById(id) {
         try {
             const response = await api.get(ENDPOINTS.PRODUCTS.GET_BY_ID(id));
-            return apiUtils.fromAxiosResponse(response);
-        } catch (error) {
-            throw apiUtils.fromAxiosError(error);
-        }
-    }
-
-    /**
-     * Get product by slug (public)
-     * @param {string} slug - Product slug
-     * @returns {Promise<ApiResponse>}
-     */
-    async getProductBySlug(slug) {
-        try {
-            const response = await api.get(ENDPOINTS.PRODUCTS.GET_BY_SLUG(slug));
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);

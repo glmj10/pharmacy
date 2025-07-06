@@ -63,6 +63,10 @@ const ProductList = () => {
   const [searchInput, setSearchInput] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [sortOrder, setSortOrder] = useState('')
+  const [manufacturerFilter, setManufacturerFilter] = useState('')
+  const [priceFromFilter, setPriceFromFilter] = useState('')
+  const [priceToFilter, setPriceToFilter] = useState('')
+  const [quantityFilter, setQuantityFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [deleteModal, setDeleteModal] = useState({ visible: false, product: null })
@@ -96,7 +100,7 @@ const ProductList = () => {
       if (searchInput !== searchTerm) {
         setSearchTerm(searchInput)
         setCurrentPage(1) // Reset to first page on search
-        loadProducts(1, searchInput, statusFilter, sortOrder)
+        loadProducts(1, searchInput, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)
       }
     }, 500)
     
@@ -108,10 +112,10 @@ const ProductList = () => {
   // Filter change effects  
   useEffect(() => {
     setCurrentPage(1) // Reset to first page on filter change
-    loadProducts(1, searchTerm, statusFilter, sortOrder)
-  }, [statusFilter, sortOrder])
+    loadProducts(1, searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)
+  }, [statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter])
 
-  const loadProducts = async (page = 1, title = '', statusF = '', sortF = '') => {
+  const loadProducts = async (page = 1, title = '', statusF = '', sortF = '', manufacturer = '', priceFrom = '', priceTo = '', quantity = '') => {
     try {
       setCurrentPage(page)
       const params = {
@@ -139,6 +143,26 @@ const ProductList = () => {
       }
       // When sortF is empty, isAscending is undefined -> backend sorts by createdAt desc (default)
       
+      // Manufacturer filter
+      if (manufacturer && manufacturer.trim()) {
+        params.manufacturer = manufacturer.trim()
+      }
+      
+      // Price range filter
+      if (priceFrom && !isNaN(priceFrom)) {
+        params.priceFrom = parseInt(priceFrom)
+      }
+      if (priceTo && !isNaN(priceTo)) {
+        params.priceTo = parseInt(priceTo)
+      }
+      
+      // Quantity filter
+      if (quantity === 'in-stock') {
+        params.hasStock = true
+      } else if (quantity === 'out-of-stock') {
+        params.hasStock = false
+      }
+      
       const result = await fetchProducts(params)
       
       if (!result || !result.success) {
@@ -156,7 +180,7 @@ const ProductList = () => {
     e.preventDefault()
     setSearchTerm(searchInput)
     setCurrentPage(1)
-    loadProducts(1, searchInput, statusFilter, sortOrder)
+    loadProducts(1, searchInput, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)
   }
 
   const handleClearSearch = () => {
@@ -164,19 +188,23 @@ const ProductList = () => {
     setSearchTerm('')
     setStatusFilter('')
     setSortOrder('')
+    setManufacturerFilter('')
+    setPriceFromFilter('')
+    setPriceToFilter('')
+    setQuantityFilter('')
     setCurrentPage(1)
-    loadProducts(1, '', '', '') // Reset to first page
+    loadProducts(1, '', '', '', '', '', '', '') // Reset to first page
   }
 
   const handleRefresh = () => {
-    loadProducts(currentPage, searchTerm, statusFilter, sortOrder)
+    loadProducts(currentPage, searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)
   }
 
   const handleStatusToggle = async (productId, currentStatus) => {
     try {
       const result = await toggleProductStatus(productId, currentStatus)
       if (result && result.success) {
-        loadProducts(currentPage, searchTerm, statusFilter, sortOrder)
+        loadProducts(currentPage, searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)
         addToast('Cập nhật trạng thái thành công', 'success')
       } else {
         addToast('Lỗi khi cập nhật trạng thái', 'error')
@@ -194,7 +222,7 @@ const ProductList = () => {
       const result = await deleteProduct(deleteModal.product.id)
       if (result && result.success) {
         setDeleteModal({ visible: false, product: null })
-        loadProducts(currentPage, searchTerm, statusFilter, sortOrder)
+        loadProducts(currentPage, searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)
         addToast('Xóa sản phẩm thành công', 'success')
       } else {
         addToast('Lỗi khi xóa sản phẩm', 'error')
@@ -293,7 +321,7 @@ const ProductList = () => {
                         <CButton type="submit" color="primary" disabled={loading}>
                           <CIcon icon={cilSearch} />
                         </CButton>
-                        {(searchInput || statusFilter || sortOrder) && (
+                        {(searchInput || statusFilter || sortOrder || manufacturerFilter || priceFromFilter || priceToFilter || quantityFilter) && (
                           <CButton 
                             type="button" 
                             color="secondary" 
@@ -312,9 +340,9 @@ const ProductList = () => {
                         >
                           <CIcon icon={cilFilter} className="me-1" />
                           Bộ lọc
-                          {(searchTerm || statusFilter || sortOrder) && (
+                          {(searchTerm || statusFilter || sortOrder || manufacturerFilter || priceFromFilter || priceToFilter || quantityFilter) && (
                             <CBadge color="primary" className="ms-1">
-                              {[searchTerm, statusFilter, sortOrder].filter(Boolean).length}
+                              {[searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter].filter(Boolean).length}
                             </CBadge>
                           )}
                         </CButton>
@@ -349,13 +377,53 @@ const ProductList = () => {
                             <option value="price-desc">Giá cao đến thấp</option>
                           </CFormSelect>
                         </CCol>
+                        <CCol md={6}>
+                          <label className="form-label">Nhà sản xuất</label>
+                          <CFormInput
+                            type="text"
+                            value={manufacturerFilter}
+                            onChange={(e) => setManufacturerFilter(e.target.value)}
+                            placeholder="Nhập tên nhà sản xuất"
+                          />
+                        </CCol>
+                        <CCol md={6}>
+                          <label className="form-label">Tình trạng tồn kho</label>
+                          <CFormSelect
+                            value={quantityFilter || ''}
+                            onChange={(e) => setQuantityFilter(e.target.value)}
+                          >
+                            <option value="">Tất cả</option>
+                            <option value="in-stock">Còn hàng</option>
+                            <option value="out-of-stock">Hết hàng</option>
+                          </CFormSelect>
+                        </CCol>
+                        <CCol md={6}>
+                          <label className="form-label">Giá từ</label>
+                          <CFormInput
+                            type="number"
+                            value={priceFromFilter}
+                            onChange={(e) => setPriceFromFilter(e.target.value)}
+                            placeholder="Giá tối thiểu"
+                            min="0"
+                          />
+                        </CCol>
+                        <CCol md={6}>
+                          <label className="form-label">Giá đến</label>
+                          <CFormInput
+                            type="number"
+                            value={priceToFilter}
+                            onChange={(e) => setPriceToFilter(e.target.value)}
+                            placeholder="Giá tối đa"
+                            min="0"
+                          />
+                        </CCol>
                       </CRow>
                     </CCardBody>
                   </CCard>
                 </CCollapse>
 
                 {/* Active Filters Display */}
-                {(searchTerm || statusFilter || sortOrder) && (
+                {(searchTerm || statusFilter || sortOrder || manufacturerFilter || priceFromFilter || priceToFilter || quantityFilter) && (
                   <div className="mt-3 p-3 bg-info bg-opacity-10 border border-info border-opacity-25 rounded">
                     <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
                       <small className="text-info fw-bold me-2">Đang lọc theo:</small>
@@ -372,6 +440,26 @@ const ProductList = () => {
                       {sortOrder && (
                         <CBadge color="info" className="px-2 py-1">
                           Sắp xếp: {sortOrder === 'price-asc' ? 'Giá thấp → cao' : sortOrder === 'price-desc' ? 'Giá cao → thấp' : 'Mặc định'}
+                        </CBadge>
+                      )}
+                      {manufacturerFilter && (
+                        <CBadge color="info" className="px-2 py-1">
+                          NSX: {manufacturerFilter}
+                        </CBadge>
+                      )}
+                      {quantityFilter && (
+                        <CBadge color="info" className="px-2 py-1">
+                          Tồn kho: {quantityFilter === 'in-stock' ? 'Còn hàng' : 'Hết hàng'}
+                        </CBadge>
+                      )}
+                      {priceFromFilter && (
+                        <CBadge color="info" className="px-2 py-1">
+                          Từ: {parseInt(priceFromFilter).toLocaleString('vi-VN')}đ
+                        </CBadge>
+                      )}
+                      {priceToFilter && (
+                        <CBadge color="info" className="px-2 py-1">
+                          Đến: {parseInt(priceToFilter).toLocaleString('vi-VN')}đ
                         </CBadge>
                       )}
                     </div>
@@ -404,7 +492,7 @@ const ProductList = () => {
                 <LoadingSpinner text="Đang tải sản phẩm..." />
               ) : !products || products.length === 0 ? (
                 <ProductEmptyState 
-                  isSearching={!!searchTerm || !!statusFilter || !!sortOrder}
+                  isSearching={!!searchTerm || !!statusFilter || !!sortOrder || !!manufacturerFilter || !!priceFromFilter || !!priceToFilter || !!quantityFilter}
                   onCreateNew={() => navigate('/products/create')}
                   onRefresh={handleRefresh}
                 />
@@ -413,29 +501,28 @@ const ProductList = () => {
                   <CTable hover responsive>
                     <CTableHead>
                       <CTableRow>
-                        <CTableHeaderCell scope="col" style={{ width: '120px' }} className="text-center">Hình ảnh</CTableHeaderCell>
+                        <CTableHeaderCell scope="col" style={{ width: '80px' }}>Hình ảnh</CTableHeaderCell>
                         <CTableHeaderCell scope="col">Tên sản phẩm</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '150px' }} className="text-end">Giá</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '100px' }} className="text-center">Số lượng</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '120px' }} className="text-center">Trạng thái</CTableHeaderCell>
-                        <CTableHeaderCell scope="col" style={{ width: '100px' }} className="text-center">Thao tác</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Giá</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Số lượng</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Trạng thái</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Thao tác</CTableHeaderCell>
                       </CTableRow>
                     </CTableHead>
                     <CTableBody>
                       {products.map((product) => (
                         <CTableRow key={product?.id || Math.random()}>
-                          <CTableDataCell className="text-center align-middle">
+                          <CTableDataCell>
                             <div 
                               style={{ 
-                                width: '80px', 
-                                height: '80px', 
+                                width: '60px', 
+                                height: '60px', 
                                 display: 'flex', 
                                 alignItems: 'center', 
                                 justifyContent: 'center',
                                 backgroundColor: '#f8f9fa',
                                 borderRadius: '4px',
-                                overflow: 'hidden',
-                                margin: '0 auto'
+                                overflow: 'hidden'
                               }}
                             >
                               {product?.thumbnailUrl || (product?.images && product.images.length > 0 && product.images[0]?.imageUrl) ? (
@@ -469,34 +556,25 @@ const ProductList = () => {
                               </div>
                             </div>
                           </CTableDataCell>
-                          <CTableDataCell className="align-middle">
+                          <CTableDataCell>
                             <strong>{product?.title || 'N/A'}</strong>
                           </CTableDataCell>
-                          <CTableDataCell className="text-end align-middle">
-                            <div>
-                              <strong className="text-success">
-                                {formatPrice(product?.priceNew)}
-                              </strong>
-                              {product?.priceOld && product?.priceOld !== product?.priceNew && (
-                                <div>
-                                  <small className="text-muted text-decoration-line-through">
-                                    {formatPrice(product?.priceOld)}
-                                  </small>
-                                </div>
-                              )}
-                            </div>
+                          <CTableDataCell>
+                            <strong className="text-success">
+                              {formatPrice(product?.priceNew)}
+                            </strong>
                           </CTableDataCell>
-                          <CTableDataCell className="text-center align-middle">
+                          <CTableDataCell>
                             <CBadge color={(product?.quantity || 0) > 0 ? 'success' : 'danger'}>
                               {product?.quantity || 0}
                             </CBadge>
                           </CTableDataCell>
-                          <CTableDataCell className="text-center align-middle">
+                          <CTableDataCell>
                             <CBadge color={product?.active ? 'success' : 'danger'}>
                               {product?.active ? 'Hoạt động' : 'Tạm dừng'}
                             </CBadge>
                           </CTableDataCell>
-                          <CTableDataCell className="text-center align-middle">
+                          <CTableDataCell>
                             <CDropdown>
                               <CDropdownToggle color="ghost" caret={false} disabled={loading}>
                                 <CIcon icon={cilOptions} />
@@ -540,7 +618,7 @@ const ProductList = () => {
                       <CPagination aria-label="Page navigation">
                         <CPaginationItem
                           disabled={!pagination.hasPrevious}
-                          onClick={() => pagination.hasPrevious && loadProducts(pagination.currentPage - 1, searchTerm, statusFilter, sortOrder)}
+                          onClick={() => pagination.hasPrevious && loadProducts(pagination.currentPage - 1, searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)}
                         >
                           Trước
                         </CPaginationItem>
@@ -565,7 +643,7 @@ const ProductList = () => {
                               <CPaginationItem
                                 key={i}
                                 active={i === currentPage}
-                                onClick={() => loadProducts(i, searchTerm, statusFilter, sortOrder)}
+                                onClick={() => loadProducts(i, searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)}
                               >
                                 {i}
                               </CPaginationItem>
@@ -577,7 +655,7 @@ const ProductList = () => {
                         
                         <CPaginationItem
                           disabled={!pagination.hasNext}
-                          onClick={() => pagination.hasNext && loadProducts(pagination.currentPage + 1, searchTerm, statusFilter, sortOrder)}
+                          onClick={() => pagination.hasNext && loadProducts(pagination.currentPage + 1, searchTerm, statusFilter, sortOrder, manufacturerFilter, priceFromFilter, priceToFilter, quantityFilter)}
                         >
                           Sau
                         </CPaginationItem>

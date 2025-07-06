@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react'
-import productService from '../services/product.service'
+import brandService from '../services/brand.service'
 import { useApiCall } from './useApiCall'
 
 /**
- * Custom hook for product management operations
+ * Custom hook for brand management operations
  */
-export const useProducts = () => {
-  const [products, setProducts] = useState([])
+export const useBrands = () => {
+  const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -19,19 +19,17 @@ export const useProducts = () => {
   const { execute: callApi } = useApiCall()
 
   /**
-   * Fetch products with pagination and filters
+   * Fetch brands with pagination and filters
    */
-  const fetchProducts = useCallback(async (params = {}) => {
+  const fetchBrands = useCallback(async (params = {}) => {
     setLoading(true)
     try {
-      const response = await callApi(() => productService.getProductsCMS(params))
+      const response = await callApi(() => brandService.getBrands(params))
       
       if (response.success && response.data) {
-        // Backend returns ApiResponse<PageResponse<List<ProductResponse>>>
-        // response.data is PageResponse<List<ProductResponse>>
-        const pageData = response.data
+        const pageData = response.data.data
         
-        setProducts(pageData.content || [])
+        setBrands(pageData.content || [])
         setPagination({
           currentPage: pageData.currentPage || 1,
           totalPages: pageData.totalPages || 0,
@@ -42,10 +40,10 @@ export const useProducts = () => {
         
         return { success: true, data: pageData }
       }
-
+      
       return { success: false, error: response.error }
     } catch (error) {
-      console.error('Error fetching products:', error)
+      console.error('Error fetching brands:', error)
       return { success: false, error }
     } finally {
       setLoading(false)
@@ -53,91 +51,11 @@ export const useProducts = () => {
   }, [callApi])
 
   /**
-   * Create new product
+   * Get all brands without pagination
    */
-  const createProduct = useCallback(async (formData) => {
+  const getBrands = useCallback(async () => {
     try {
-      const response = await callApi(
-        () => productService.createProduct(formData),
-        {
-          successMessage: 'Tạo sản phẩm thành công',
-          showSuccessNotification: true,
-        }
-      )
-      
-      return response
-    } catch (error) {
-      console.error('Error creating product:', error)
-      return { success: false, error }
-    }
-  }, [callApi])
-
-  /**
-   * Update existing product
-   */
-  const updateProduct = useCallback(async (id, formData) => {
-    try {
-      const response = await callApi(
-        () => productService.updateProduct(id, formData),
-        {
-          successMessage: 'Cập nhật sản phẩm thành công',
-          showSuccessNotification: true,
-        }
-      )
-      
-      return response
-    } catch (error) {
-      console.error('Error updating product:', error)
-      return { success: false, error }
-    }
-  }, [callApi])
-
-  /**
-   * Delete product
-   */
-  const deleteProduct = useCallback(async (id) => {
-    try {
-      const response = await callApi(
-        () => productService.deleteProduct(id),
-        {
-          successMessage: 'Xóa sản phẩm thành công',
-          showSuccessNotification: true,
-        }
-      )
-      
-      return response
-    } catch (error) {
-      console.error('Error deleting product:', error)
-      return { success: false, error }
-    }
-  }, [callApi])
-
-  /**
-   * Toggle product status
-   */
-  const toggleProductStatus = useCallback(async (id, currentStatus) => {
-    try {
-      const response = await callApi(
-        () => productService.updateProductStatus(id, !currentStatus),
-        {
-          successMessage: 'Cập nhật trạng thái thành công',
-          showSuccessNotification: true,
-        }
-      )
-      
-      return response
-    } catch (error) {
-      console.error('Error toggling product status:', error)
-      return { success: false, error }
-    }
-  }, [callApi])
-
-  /**
-   * Get single product by ID
-   */
-  const getProductById = useCallback(async (id) => {
-    try {
-      const response = await callApi(() => productService.getProductById(id))
+      const response = await callApi(() => brandService.getAllBrands())
       
       if (response.success && response.data) {
         return { success: true, data: response.data.data }
@@ -145,7 +63,85 @@ export const useProducts = () => {
       
       return { success: false, error: response.error }
     } catch (error) {
-      console.error('Error fetching product:', error)
+      console.error('Error fetching all brands:', error)
+      return { success: false, error }
+    }
+  }, [callApi])
+
+  /**
+   * Create new brand
+   */
+  const createBrand = useCallback(async (brandData) => {
+    try {
+      const response = await callApi(
+        () => brandService.createBrand(brandData),
+        {
+          successMessage: 'Tạo thương hiệu thành công',
+          showSuccessNotification: true,
+        }
+      )
+      
+      return response
+    } catch (error) {
+      console.error('Error creating brand:', error)
+      return { success: false, error }
+    }
+  }, [callApi])
+
+  /**
+   * Update existing brand
+   */
+  const updateBrand = useCallback(async (id, brandData) => {
+    try {
+      const response = await callApi(
+        () => brandService.updateBrand(id, brandData),
+        {
+          successMessage: 'Cập nhật thương hiệu thành công',
+          showSuccessNotification: true,
+        }
+      )
+      
+      return response
+    } catch (error) {
+      console.error('Error updating brand:', error)
+      return { success: false, error }
+    }
+  }, [callApi])
+
+  /**
+   * Delete brand
+   */
+  const deleteBrand = useCallback(async (id) => {
+    try {
+      const response = await callApi(
+        () => brandService.deleteBrand(id),
+        {
+          successMessage: 'Xóa thương hiệu thành công',
+          showSuccessNotification: true,
+        }
+      )
+      
+      return response
+    } catch (error) {
+      console.error('Error deleting brand:', error)
+      return { success: false, error }
+    }
+  }, [callApi])
+
+  /**
+   * Get single brand by ID
+   */
+  const getBrandById = useCallback(async (id) => {
+    try {
+      const response = await callApi(() => brandService.getBrandById(id))
+      
+      if (response.success && response.data) {
+        return { success: true, data: response.data.data }
+      }
+      
+      return { success: false, error: response.error }
+    } catch (error) {
+      console.error('Error fetching brand:', error)
       return { success: false, error }
     }
   }, [callApi])
@@ -154,30 +150,30 @@ export const useProducts = () => {
    * Refresh current page
    */
   const refresh = useCallback(async (params = {}) => {
-    return await fetchProducts({
+    return await fetchBrands({
       pageIndex: pagination.currentPage,
       pageSize: 10,
       ...params,
     })
-  }, [fetchProducts, pagination.currentPage])
+  }, [fetchBrands, pagination.currentPage])
 
   return {
     // State
-    products,
+    brands,
     loading,
     pagination,
     
     // Actions
-    fetchProducts,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    toggleProductStatus,
-    getProductById,
+    fetchBrands,
+    getBrands,
+    createBrand,
+    updateBrand,
+    deleteBrand,
+    getBrandById,
     refresh,
     
     // Utils
-    setProducts,
+    setBrands,
     setPagination,
   }
 }

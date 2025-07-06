@@ -41,7 +41,7 @@ class OrderService {
      */
     async updateOrderStatus(id, status) {
         try {
-            const response = await api.put(ENDPOINTS.ORDERS.UPDATE_STATUS, null, {
+            const response = await api.put(ENDPOINTS.ORDERS.UPDATE_STATUS(id), null, {
                 params: { status }
             });
             return apiUtils.fromAxiosResponse(response);

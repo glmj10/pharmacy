@@ -30,6 +30,19 @@ class CategoryService {
     }
 
     /**
+     * Get all product categories
+     * @returns {Promise<ApiResponse>}
+     */
+    async getAllProductCategories() {
+        try {
+            const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL);
+            return apiUtils.fromAxiosResponse(response);
+        } catch (error) {
+            throw apiUtils.fromAxiosError(error);
+        }
+    }
+
+    /**
      * Get category by ID
      * @param {string|number} id - Category ID
      * @returns {Promise<ApiResponse>}
@@ -82,6 +95,19 @@ class CategoryService {
     async deleteCategory(id) {
         try {
             const response = await api.delete(`/categories/${id}`);
+            return apiUtils.fromAxiosResponse(response);
+        } catch (error) {
+            throw apiUtils.fromAxiosError(error);
+        }
+    }
+
+    /**
+     * Get all categories without pagination
+     * @returns {Promise<ApiResponse>}
+     */
+    async getAllCategories() {
+        try {
+            const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
