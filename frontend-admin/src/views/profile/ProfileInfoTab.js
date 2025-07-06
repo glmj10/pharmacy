@@ -14,7 +14,7 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilUser, cilEnvelopeOpen, cilPhone, cilLocationPin, cilSave, cilX } from '@coreui/icons';
-import authService from '../../services/auth/auth.service';
+import authService from '../../services/auth.service';
 import { storage } from '../../utils/storage';
 import { dispatchUserInfoUpdated } from '../../utils/userInfoEvents';
 /**

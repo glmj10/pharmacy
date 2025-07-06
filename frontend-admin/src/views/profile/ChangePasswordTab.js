@@ -13,7 +13,7 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilSave, cilX } from '@coreui/icons';
-import authService from '../../services/auth/auth.service';
+import authService from '../../services/auth.service';
 /**
  * Tab đổi mật khẩu
  * Cho phép người dùng thay đổi mật khẩu

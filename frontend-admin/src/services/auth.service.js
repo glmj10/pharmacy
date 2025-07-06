@@ -1,6 +1,6 @@
-import api from '../../config/api';
-import { ENDPOINTS } from '../../config/constants';
-import { apiUtils } from '../../utils/apiUtils';
+import api from '../config/api';
+import { ENDPOINTS } from '../config/constants';
+import { apiUtils } from '../utils/apiUtils';
 
 class AuthService {
     /**

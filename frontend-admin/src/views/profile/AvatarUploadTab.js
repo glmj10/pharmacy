@@ -12,7 +12,7 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilCamera, cilCloudUpload, cilSave, cilX } from '@coreui/icons';
 import UserAvatar from '../../components/common/UserAvatar';
-import authService from '../../services/auth/auth.service';
+import authService from '../../services/auth.service';
 import userService from '../../services/user.service';
 import { storage } from '../../utils/storage';
 import { dispatchUserInfoUpdated } from '../../utils/userInfoEvents';

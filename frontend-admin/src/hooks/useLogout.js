@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 import { tokenUtils } from '../utils/token';
 import { globalLogoutHandler } from '../utils/globalLogout';
-import authService from '../services/auth/auth.service';
+import authService from '../services/auth.service';
 import { dispatchUserInfoCleared } from '../utils/userInfoEvents';
 
 /**
