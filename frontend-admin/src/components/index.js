@@ -7,6 +7,7 @@ import AppSidebar from './AppSidebar'
 import LogoutButton from './common/LogoutButton'
 import LogoutConfirmationModal from './common/LogoutConfirmationModal'
 import UserAvatar from './common/UserAvatar'
+import GlobalToaster from './GlobalToaster'
 
 export {
   AppBreadcrumb,
@@ -18,4 +19,5 @@ export {
   LogoutButton,
   LogoutConfirmationModal,
   UserAvatar,
+  GlobalToaster,
 }

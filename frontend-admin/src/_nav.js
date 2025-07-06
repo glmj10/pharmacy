@@ -9,6 +9,7 @@ import {
   cilFolder,
   cilBuilding,
   cilEnvelopeClosed,
+  cilBug,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -98,6 +99,20 @@ const _nav = [
     name: 'Liên hệ',
     to: '/contacts',
     icon: <CIcon icon={cilEnvelopeClosed} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavTitle,
+    name: 'Test & Debug',
+  },
+  {
+    component: CNavItem,
+    name: 'Toast Demo',
+    to: '/test/toast-demo',
+    icon: <CIcon icon={cilBug} customClassName="nav-icon" />,
+    badge: {
+      color: 'warning',
+      text: 'TEST',
+    },
   },
 ]
 

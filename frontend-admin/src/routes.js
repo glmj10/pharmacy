@@ -14,6 +14,9 @@ const ContactList = React.lazy(() => import('./views/admin/contacts/ContactList'
 const BlogList = React.lazy(() => import('./views/admin/blogs/BlogList'))
 const BlogForm = React.lazy(() => import('./views/admin/blogs/BlogForm'))
 
+// Test Views
+const ToastDemo = React.lazy(() => import('./views/test/ToastDemo'))
+
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/profile', name: 'Profile', element: Profile },
@@ -47,6 +50,9 @@ const routes = [
   { path: '/blogs/list', name: 'Danh sách bài viết', element: BlogList },
   { path: '/blogs/create', name: 'Thêm bài viết', element: BlogForm },
   { path: '/blogs/edit/:id', name: 'Chỉnh sửa bài viết', element: BlogForm },
+  
+  // Test Routes
+  { path: '/test/toast-demo', name: 'Test Toast & Token', element: ToastDemo },
 ]
 
 export default routes

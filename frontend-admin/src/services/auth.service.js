@@ -1,6 +1,7 @@
 import api from '../config/api';
 import { ENDPOINTS } from '../config/constants';
 import { apiUtils } from '../utils/apiUtils';
+import { tokenUtils } from '../utils/token';
 
 class AuthService {
     /**
@@ -60,11 +61,20 @@ class AuthService {
 
     /**
      * Refresh access token
+     * @param {string} currentToken - Current access token to refresh
      * @returns {Promise<ApiResponse>}
      */
-    async refreshToken() {
+    async refreshToken(currentToken = null) {
         try {
-            const response = await api.post(ENDPOINTS.AUTH.REFRESH_TOKEN);
+            // If no token provided, get from storage
+            const token = currentToken || tokenUtils.getAccessToken();
+            if (!token) {
+                throw new Error('No token available for refresh');
+            }
+
+            const response = await api.post(ENDPOINTS.AUTH.REFRESH_TOKEN, {
+                token: token
+            });
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);
