@@ -56,8 +56,8 @@ const Profile = () => {
 
   // Validation errors state
   const [validationErrors, setValidationErrors] = useState({});
-  const [passwordErrors, setPasswordErrors] = useState({});
-  const [profileErrors, setProfileErrors] = useState({});
+  const [setPasswordErrors] = useState({});
+  const [setProfileErrors] = useState({});
 
   // Clear validation errors for a field
   const clearFieldError = (fieldName, errorType = 'validationErrors') => {

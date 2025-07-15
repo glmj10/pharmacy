@@ -1,0 +1,49 @@
+/* src/components/ModalNotification/ModalNotification.css */
+.modal-notification-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-notification {
+  background: #fff;
+  padding: 20px 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.modal-notification h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: #333;
+}
+
+.modal-notification p {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.modal-notification button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modal-notification button:hover {
+  background-color: #0056b3;
+}

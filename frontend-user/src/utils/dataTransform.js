@@ -95,8 +95,6 @@ export const UserTransform = {
 export const AuthTransform = {
   // Transform login response từ backend
   transformLoginResponse: (apiResponse) => {
-    // Backend trả về: ApiResponse<AuthResponse>
-    // apiResponse = { status, message, data: { token }, timestamp }
     
     if (!apiResponse || !apiResponse.data) {
       throw new Error('Invalid login response structure');

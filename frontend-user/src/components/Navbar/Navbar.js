@@ -6,6 +6,7 @@ import { useCart } from '../../contexts/CartContext';
 import { categoryService } from '../../services/categoryService';
 import { modalEvents } from '../../utils/modalEvents';
 import CartModal from '../CartModal/CartModal';
+import ModalNotification from '../NotificationModal/NotificationModal';
 import {
   FaShoppingCart,
   FaHeart,
@@ -34,20 +35,16 @@ const Navbar = () => {
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
-  // Fetch categories from API
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
         const response = await categoryService.getAllCategories();
-        
-        // Handle ApiResponse<List<CategoryResponse>> structure
-        // Backend returns { status, message, data: List<CategoryResponse> }
         if (response?.data?.data && Array.isArray(response.data.data)) {
           setCategories(response.data.data);
         } else if (response?.data && Array.isArray(response.data)) {
-          // Fallback for direct array response
           setCategories(response.data);
         } else {
           console.warn('Unexpected categories response structure:', response);
@@ -60,7 +57,6 @@ const Navbar = () => {
         setCategoriesLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
@@ -74,7 +70,6 @@ const Navbar = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsSearching(true);
-      // Add a small delay to show the loading animation
       setTimeout(() => {
         navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
         setIsSearching(false);
@@ -82,23 +77,17 @@ const Navbar = () => {
     }
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const toggleUserMenu = () => {
-    setIsUserMenuOpen(!isUserMenuOpen);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
 
   const handleCartClick = (e) => {
     if (!isAuthenticated) {
-      if (e) e.preventDefault(); // Ngăn điều hướng nếu có event
+      if (e) e.preventDefault();
       modalEvents.requireLogin(() => {
         navigate('/cart');
       }, 'Bạn cần đăng nhập để xem giỏ hàng.');
       return false;
     }
-    // Nếu đã đăng nhập, cho phép điều hướng
     return true;
   };
 
@@ -111,6 +100,11 @@ const Navbar = () => {
       return false;
     }
     return true;
+  };
+
+  const handleNotificationClick = (e) => {
+    e.preventDefault();
+    setIsNotificationModalOpen(true);
   };
 
   return (
@@ -177,21 +171,18 @@ const Navbar = () => {
 
             {/* Right Icons */}
             <div className="navbar-icons">
-              <Link to="/notifications" className="icon-link">
+              <button onClick={handleNotificationClick} className="icon-link">
                 <FaBell />
                 <span className="notification-badge">2</span>
-              </Link>
-              
+              </button>
+
               {isAuthenticated ? (
                 <>
-                  <Link to="/wishlist" className="icon-link">
+                  <Link to="/wishlist" className="icon-link" onClick={handleWishlistClick}>
                     <FaHeart />
                   </Link>
-                  
-                  <button 
-                    onClick={() => setIsCartModalOpen(true)} 
-                    className="icon-link cart-link"
-                  >
+
+                  <button onClick={() => setIsCartModalOpen(true)} className="icon-link cart-link">
                     <FaShoppingCart />
                     {getCartItemCount() > 0 && (
                       <span className="cart-badge">{getCartItemCount()}</span>
@@ -199,36 +190,21 @@ const Navbar = () => {
                   </button>
 
                   <div className="user-menu">
-                    <button 
-                      onClick={toggleUserMenu}
-                      className="user-menu-btn-main"
-                    >
+                    <button onClick={toggleUserMenu} className="user-menu-btn-main">
                       <FaUserCircle />
                       <span className="user-name">{user?.fullName || 'Tài khoản'}</span>
                     </button>
-                    
                     {isUserMenuOpen && (
                       <div className="user-menu-dropdown">
-                        <Link 
-                          to="/profile" 
-                          className="dropdown-item"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
+                        <Link to="/profile" className="dropdown-item" onClick={() => setIsUserMenuOpen(false)}>
                           <FaUser />
                           Thông tin cá nhân
                         </Link>
-                        <Link 
-                          to="/orders" 
-                          className="dropdown-item"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
+                        <Link to="/orders" className="dropdown-item" onClick={() => setIsUserMenuOpen(false)}>
                           <FaClipboardList />
                           Đơn hàng của tôi
                         </Link>
-                        <button 
-                          onClick={handleLogout}
-                          className="dropdown-item logout-btn"
-                        >
+                        <button onClick={handleLogout} className="dropdown-item logout-btn">
                           <FaSignOutAlt />
                           Đăng xuất
                         </button>
@@ -246,29 +222,21 @@ const Navbar = () => {
                   </button>
 
                   <div className="auth-section-main">
-                    <button onClick={openLoginModal} className="auth-btn-main">
-                      Đăng nhập
-                    </button>
-                    <button onClick={openRegisterModal} className="auth-btn-main register">
-                      Đăng ký
-                    </button>
+                    <button onClick={openLoginModal} className="auth-btn-main">Đăng nhập</button>
+                    <button onClick={openRegisterModal} className="auth-btn-main register">Đăng ký</button>
                   </div>
                 </>
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button 
-              className="mobile-menu-btn"
-              onClick={toggleMenu}
-            >
+            <button className="mobile-menu-btn" onClick={toggleMenu}>
               {isMenuOpen ? <FaTimes /> : <FaBars />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Categories Menu */}
+      {/* Categories */}
       <div className="navbar-categories">
         <div className="container">
           <div className="categories-content">
@@ -283,11 +251,7 @@ const Navbar = () => {
                 <div className="categories-loading">Đang tải...</div>
               ) : (
                 categories.slice(0, 5).map((category) => (
-                  <Link 
-                    key={category.id} 
-                    to={`/products?category=${category.slug}`} 
-                    className="category-link"
-                  >
+                  <Link key={category.id} to={`/products?category=${category.slug}`} className="category-link">
                     {category.name}
                   </Link>
                 ))
@@ -317,16 +281,15 @@ const Navbar = () => {
           </div>
 
           <div className="mobile-nav">
-            {/* Categories in mobile */}
             <div className="mobile-categories">
               <h4>Danh mục sản phẩm</h4>
               {categoriesLoading ? (
                 <div className="categories-loading">Đang tải...</div>
               ) : (
                 categories.slice(0, 5).map((category) => (
-                  <Link 
+                  <Link
                     key={category.id}
-                    to={`/products?category=${category.slug}`} 
+                    to={`/products?category=${category.slug}`}
                     className="mobile-nav-link category-mobile"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -335,102 +298,51 @@ const Navbar = () => {
                 ))
               )}
             </div>
-            
-            <Link 
-              to="/products" 
-              className="mobile-nav-link"
-              onClick={() => setIsMenuOpen(false)}
-            >
+
+            <Link to="/products" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
               Tất cả sản phẩm
             </Link>
-            
+
             {isAuthenticated ? (
               <>
-                <Link 
-                  to="/wishlist" 
-                  className="mobile-nav-link"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                <Link to="/wishlist" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
                   <FaHeart />
                   Yêu thích
                 </Link>
-                
-                <Link 
-                  to="/cart" 
-                  className="mobile-nav-link"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                <Link to="/cart" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
                   <FaShoppingCart />
                   Giỏ hàng
-                  {getCartItemCount() > 0 && (
-                    <span className="cart-badge">{getCartItemCount()}</span>
-                  )}
+                  {getCartItemCount() > 0 && <span className="cart-badge">{getCartItemCount()}</span>}
                 </Link>
-
-                <Link 
-                  to="/profile" 
-                  className="mobile-nav-link"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
                   <FaUser />
                   Thông tin cá nhân
                 </Link>
-
-                <Link 
-                  to="/orders" 
-                  className="mobile-nav-link"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                <Link to="/orders" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
                   <FaClipboardList />
                   Đơn hàng của tôi
                 </Link>
-
-                <button 
-                  onClick={handleLogout}
-                  className="mobile-nav-link logout-btn"
-                >
+                <button onClick={handleLogout} className="mobile-nav-link logout-btn">
                   <FaSignOutAlt />
                   Đăng xuất
                 </button>
               </>
             ) : (
               <>
-                <button 
+                <button
                   onClick={() => {
-                    if (isAuthenticated) {
-                      navigate('/cart');
-                    } else {
-                      openLoginModal(() => {
-                        navigate('/cart');
-                      });
-                    }
+                    openLoginModal(() => navigate('/cart'));
                     setIsMenuOpen(false);
                   }}
                   className="mobile-nav-link"
                 >
                   <FaShoppingCart />
                   Giỏ hàng
-                  {getCartItemCount() > 0 && (
-                    <span className="cart-badge">{getCartItemCount()}</span>
-                  )}
                 </button>
-                
-                <button 
-                  onClick={() => {
-                    openLoginModal();
-                    setIsMenuOpen(false);
-                  }}
-                  className="mobile-nav-link auth-btn"
-                >
+                <button onClick={() => { openLoginModal(); setIsMenuOpen(false); }} className="mobile-nav-link auth-btn">
                   Đăng nhập
                 </button>
-                <button 
-                  onClick={() => {
-                    openRegisterModal();
-                    setIsMenuOpen(false);
-                  }}
-                  className="mobile-nav-link auth-btn"
-                >
+                <button onClick={() => { openRegisterModal(); setIsMenuOpen(false); }} className="mobile-nav-link auth-btn">
                   Đăng ký
                 </button>
               </>
@@ -439,11 +351,9 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Cart Modal */}
-      <CartModal 
-        isOpen={isCartModalOpen} 
-        onClose={() => setIsCartModalOpen(false)} 
-      />
+      {/* Modals */}
+      <CartModal isOpen={isCartModalOpen} onClose={() => setIsCartModalOpen(false)} />
+      <ModalNotification isOpen={isNotificationModalOpen} onClose={() => setIsNotificationModalOpen(false)} />
     </nav>
   );
 };

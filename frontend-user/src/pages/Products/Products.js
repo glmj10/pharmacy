@@ -398,7 +398,6 @@ const Products = () => {
                   const newCategorySlug = filters.categorySlug === category.slug ? '' : category.slug;
                   handleFilterChange('categorySlug', newCategorySlug);
                   
-                  // Fetch child categories if selecting a new category
                   if (newCategorySlug) {
                     fetchChildCategories(newCategorySlug);
                   } else {

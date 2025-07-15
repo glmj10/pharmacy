@@ -39,6 +39,14 @@ const CartModal = ({ isOpen, onClose }) => {
     };
   }, [isOpen, onClose, fetchCart]);
 
+  useEffect(() => {
+    if (safeCartItems.length > 0) {
+      setSelectedItems(safeCartItems.filter(item => item.selected && !item.isOutOfStock).map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
+  }, [items]);
+
   const handleSelectItem = (itemId) => {
     // Lấy trạng thái hiện tại của item từ safeCartItems
     const item = safeCartItems.find(i => i.id === itemId);

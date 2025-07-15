@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { modalEvents } from '../utils/modalEvents';
+import { authService } from './authService';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
 
@@ -24,24 +25,72 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Không hiển thị thông báo lỗi nếu đang gọi logout
-      const isLogoutRequest = error.config?.url?.includes('/auth/logout');
-      
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Chỉ hiển thị thông báo nếu không phải logout
-      if (!isLogoutRequest) {
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+      } else {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers.Authorization = 'Bearer ' + token;
+            return api(originalRequest);
+          })
+          .catch(err => Promise.reject(err));
+      }
+
+
+      try {
+        const expiredToken = localStorage.getItem('token');
+        const res = await authService.refreshToken({
+          token: expiredToken
+        });
+
+        const newToken = res.token;
+
+        localStorage.setItem('token', newToken);
+        api.defaults.headers.common['Authorization'] = 'Bearer ' + newToken;
+        processQueue(null, newToken);
+
+        originalRequest.headers.Authorization = 'Bearer ' + newToken;
+        return api(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         modalEvents.triggerAuthExpired('token_expired', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
-  }
-);
+  });
+
 
 export default api;

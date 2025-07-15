@@ -52,5 +52,14 @@ export const authService = {
 
   isAuthenticated: () => {
     return !!localStorage.getItem('token');
+  },
+
+  refreshToken: async (refreshData) => {
+    const response = await api.post('/auth/refresh-token', refreshData);
+    if (!response.data || !response.data.data || !response.data.data.token) {
+      throw new Error('Token không hợp lệ');
+    }
+    
+    return AuthTransform(response.data);
   }
 };
