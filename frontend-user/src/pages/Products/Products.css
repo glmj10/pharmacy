@@ -442,6 +442,15 @@
   transform: scale(1.1);
 }
 
+.action-btn.active {
+  background: var(--primary-600);
+  color: white;
+}
+
+.action-btn.active:hover {
+  background: var(--primary-700);
+}
+
 .product-content {
   padding: var(--spacing-lg);
 }

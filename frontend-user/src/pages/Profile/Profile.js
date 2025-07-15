@@ -1,52 +1,212 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { profileService } from '../../services/profileService';
+import { userService } from '../../services/userService';
+import { ProfileTransform, UserTransform, ErrorTransform } from '../../utils/dataTransform';
+import { ApiUtils } from '../../utils/apiUtils';
+import { useLocalStorageDebug } from '../../hooks/useLocalStorageDebug';
 import { toast } from 'react-toastify';
+import { 
+  FaUser, 
+  FaEdit, 
+  FaTrash, 
+  FaPlus, 
+  FaSave, 
+  FaTimes, 
+  FaCamera,
+  FaLock,
+  FaMapMarkerAlt,
+  FaPhone
+} from 'react-icons/fa';
 import './Profile.css';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+  const [activeTab, setActiveTab] = useState('personal');
+  const [loading, setLoading] = useState(false);
+  const [profilePicLoading, setProfilePicLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Debug localStorage in development
+  useLocalStorageDebug();
+
+  // Personal Information State
+  const [personalInfo, setPersonalInfo] = useState({
+    username: '',
     email: '',
-    phone: '',
-    address: '',
-    city: '',
-    zipCode: '',
-    dateOfBirth: ''
+    profilePic: ''
   });
+
+  // Password Change State
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
 
+  // Profiles (Shipping addresses) State
+  const [profiles, setProfiles] = useState([]);
+  const [editingProfile, setEditingProfile] = useState(null);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    fullName: '',
+    phoneNumber: '',
+    address: ''
+  });
+
+  // Validation errors state
+  const [validationErrors, setValidationErrors] = useState({});
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [profileErrors, setProfileErrors] = useState({});
+
+  // Clear validation errors for a field
+  const clearFieldError = (fieldName, errorType = 'validationErrors') => {
+    const setErrorState = {
+      validationErrors: setValidationErrors,
+      passwordErrors: setPasswordErrors,
+      profileErrors: setProfileErrors
+    }[errorType];
+
+    if (setErrorState) {
+      setErrorState(prev => ({
+        ...prev,
+        [fieldName]: undefined
+      }));
+    }
+  };
+
+  // Initialize personal info when user changes
   useEffect(() => {
     if (user) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+      setPersonalInfo({
+        username: user.username || '',
         email: user.email || '',
-        phone: user.phone || '',
-        address: user.address || '',
-        city: user.city || '',
-        zipCode: user.zipCode || '',
-        dateOfBirth: user.dateOfBirth || ''
+        profilePic: user.profilePic || ''
       });
     }
   }, [user]);
 
-  const handleInputChange = (e) => {
+  // Fetch user profiles on component mount
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
+
+  const fetchProfiles = async () => {
+    try {
+      const response = await profileService.getUserProfiles();
+      // Backend returns ApiResponse<List<ProfileResponse>>
+      if (response?.data) {
+        setProfiles(response.data);
+      } else if (Array.isArray(response)) {
+        setProfiles(response);
+      }
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
+      toast.error('Có lỗi xảy ra khi tải danh sách địa chỉ');
+    }
+  };
+
+  // Handle personal info update
+  const handlePersonalInfoChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setPersonalInfo(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
+  const handleUpdatePersonalInfo = async () => {
+    // Validate username
+    if (!personalInfo.username || personalInfo.username.trim() === '') {
+      toast.error('Tên đăng nhập không được để trống');
+      return;
+    }
+
+    if (personalInfo.username.length < 3) {
+      toast.error('Tên đăng nhập phải có ít nhất 3 ký tự');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Only update username, not email
+      const response = await userService.updateUser({ 
+        username: personalInfo.username.trim(),
+        email: personalInfo.email
+      });
+      
+      // Backend returns ApiResponse<UserResponse>
+      if (response?.data) {
+        await updateUser(response.data);
+        toast.success('Cập nhật thông tin thành công!');
+      }
+    } catch (error) {
+      console.error('Error updating personal info:', error);
+      
+      // Extract validation errors from backend
+      const fieldErrors = ErrorTransform.transformValidationErrors(error);
+      
+      if (Object.keys(fieldErrors).length > 0) {
+        // Set field-specific errors
+        setValidationErrors(fieldErrors);
+        toast.error('Vui lòng kiểm tra lại thông tin đã nhập');
+      } else {
+        // General error message
+        const errorMessage = ErrorTransform.transformErrorMessage(error);
+        toast.error(errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle profile picture upload
+  const handleProfilePicChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file hình ảnh');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File không được lớn hơn 5MB');
+      return;
+    }
+
+    try {
+      setProfilePicLoading(true);
+      
+      const response = await userService.updateProfilePicture(file);
+      
+      // Backend returns ApiResponse<UserResponse>
+      if (response?.data) {
+        setPersonalInfo(prev => ({
+          ...prev,
+          profilePic: response.data.profilePic
+        }));
+        
+        await updateUser({
+          ...user,
+          profilePic: response.data.profilePic
+        });
+        
+        toast.success('Cập nhật ảnh đại diện thành công!');
+      }
+    } catch (error) {
+      // Enhanced error handling
+      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật ảnh đại diện';
+      toast.error(errorMessage);
+      console.error('Error updating profile picture:', error);
+    } finally {
+      setProfilePicLoading(false);
+    }
+  };
+
+  // Handle password change
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordData(prev => ({
@@ -55,222 +215,405 @@ const Profile = () => {
     }));
   };
 
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleUpdatePassword = async () => {
+    // Use validation from utils
+    const validation = UserTransform.validatePasswordForm(passwordData);
     
-    try {
-      const updatedUser = await profileService.updateProfile(formData);
-      updateUser(updatedUser);
-      toast.success('Cập nhật thông tin thành công!');
-    } catch (error) {
-      toast.error('Cập nhật thông tin thất bại: ' + error.message);
-    } finally {
-      setLoading(false);
+    if (!validation.isValid) {
+      validation.errors.forEach(error => toast.error(error));
+      return;
     }
-  };
 
-  const handlePasswordUpdate = async (e) => {
-    e.preventDefault();
-    
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Mật khẩu mới không khớp!');
-      return;
-    }
-    
-    if (passwordData.newPassword.length < 6) {
-      toast.error('Mật khẩu mới phải có ít nhất 6 ký tự!');
-      return;
-    }
-    
-    setLoading(true);
-    
     try {
-      await profileService.changePassword(passwordData);
-      toast.success('Đổi mật khẩu thành công!');
+      setLoading(true);
+      const response = await userService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
+      
+      toast.success('Đổi mật khẩu thành công!');
     } catch (error) {
-      toast.error('Đổi mật khẩu thất bại: ' + error.message);
+      // Enhanced error handling
+      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi đổi mật khẩu. Vui lòng kiểm tra lại mật khẩu hiện tại.';
+      toast.error(errorMessage);
+      console.error('Error changing password:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle profile form
+  const handleProfileFormChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddProfile = () => {
+    setProfileForm({
+      fullName: '',
+      phoneNumber: '',
+      address: ''
+    });
+    setEditingProfile(null);
+    setShowProfileForm(true);
+  };
+
+  const handleEditProfile = (profile) => {
+    setProfileForm({
+      fullName: profile.fullName || '',
+      phoneNumber: profile.phoneNumber || '',
+      address: profile.address || ''
+    });
+    setEditingProfile(profile);
+    setShowProfileForm(true);
+  };
+
+  const handleSaveProfile = async () => {
+    // Use validation from utils
+    const validation = ProfileTransform.validateProfileForm(profileForm);
+    
+    if (!validation.isValid) {
+      validation.errors.forEach(error => toast.error(error));
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      if (editingProfile) {
+        // Update existing profile
+        const response = await profileService.updateProfile(editingProfile.id, profileForm);
+        if (response?.data || response?.status === 200) {
+          toast.success('Cập nhật địa chỉ thành công!');
+        }
+      } else {
+        // Create new profile
+        const response = await profileService.createProfile(profileForm);
+        if (response?.data || response?.status === 201) {
+          toast.success('Thêm địa chỉ mới thành công!');
+        }
+      }
+      
+      await fetchProfiles();
+      setShowProfileForm(false);
+    } catch (error) {
+      // Enhanced error handling
+      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi lưu địa chỉ';
+      toast.error(errorMessage);
+      console.error('Error saving profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProfile = async (profileId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await profileService.deleteProfile(profileId);
+      // Backend returns ApiResponse<Void> với status 200
+      if (response?.status === 200 || response) {
+        await fetchProfiles();
+        toast.success('Xóa địa chỉ thành công!');
+      }
+    } catch (error) {
+      // Enhanced error handling
+      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi xóa địa chỉ';
+      toast.error(errorMessage);
+      console.error('Error deleting profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const tabs = [
+    { id: 'personal', label: 'Thông tin cá nhân', icon: FaUser },
+    { id: 'addresses', label: 'Địa chỉ giao hàng', icon: FaMapMarkerAlt },
+    { id: 'password', label: 'Đổi mật khẩu', icon: FaLock }
+  ];
+
   return (
-    <div className="profile-container">
-      <div className="profile-header">
-        <h1>Thông tin tài khoản</h1>
-        <p>Quản lý thông tin cá nhân và bảo mật tài khoản</p>
-      </div>
+    <div className="profile-page">
+      <div className="container">
+        <div className="profile-header">
+          <h1>Tài khoản của tôi</h1>
+          <p>Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
+        </div>
 
-      <div className="profile-tabs">
-        <button
-          className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
-          onClick={() => setActiveTab('profile')}
-        >
-          Thông tin cá nhân
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'password' ? 'active' : ''}`}
-          onClick={() => setActiveTab('password')}
-        >
-          Đổi mật khẩu
-        </button>
-      </div>
+        <div className="profile-content">
+          {/* Sidebar */}
+          <div className="profile-sidebar">
+            <div className="user-avatar">
+              <div className="avatar-container">
+                <img 
+                  src={personalInfo.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(personalInfo.username || 'User')}&background=667eea&color=fff&size=120`} 
+                  alt="Avatar"
+                  className="avatar-img"
+                />
+                <button 
+                  className="avatar-edit-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={profilePicLoading}
+                >
+                  <FaCamera />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePicChange}
+                  style={{ display: 'none' }}
+                />
+              </div>
+              <div className="user-info">
+                <h3>{personalInfo.username || 'Người dùng'}</h3>
+                <p>{personalInfo.email}</p>
+              </div>
+            </div>
 
-      <div className="profile-content">
-        {activeTab === 'profile' && (
-          <div className="profile-form-container">
-            <form onSubmit={handleProfileUpdate} className="profile-form">
-              <div className="form-row">
+            <nav className="profile-nav">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <tab.icon />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Main Content */}
+          <div className="profile-main">
+            {activeTab === 'personal' && (
+              <div className="tab-content">
+                <div className="tab-header">
+                  <h2>Thông tin cá nhân</h2>
+                  <p>Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
+                </div>
+
                 <div className="form-group">
-                  <label htmlFor="firstName">Họ</label>
+                  <label>Tên đăng nhập</label>
                   <input
                     type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
+                    name="username"
+                    value={personalInfo.username}
+                    onChange={(e) => {
+                      handlePersonalInfoChange(e);
+                      clearFieldError('username');
+                    }}
+                    placeholder="Nhập tên đăng nhập"
+                    minLength="3"
+                    className={ErrorTransform.hasFieldError(validationErrors, 'username') ? 'error' : ''}
+                    required
+                  />
+                  {ErrorTransform.hasFieldError(validationErrors, 'username') ? (
+                    <div className="error-message">
+                      {ErrorTransform.getFirstFieldError(validationErrors, 'username')}
+                    </div>
+                  ) : (
+                    <small>Tên đăng nhập phải có ít nhất 3 ký tự</small>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={personalInfo.email}
+                    disabled
+                    className="disabled"
+                  />
+                  <small>Email không thể thay đổi</small>
+                </div>
+
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleUpdatePersonalInfo}
+                  disabled={loading}
+                >
+                  {loading ? 'Đang cập nhật...' : 'Cập nhật thông tin'}
+                </button>
+              </div>
+            )}
+
+            {activeTab === 'addresses' && (
+              <div className="tab-content">
+                <div className="tab-header">
+                  <h2>Địa chỉ giao hàng</h2>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={handleAddProfile}
+                  >
+                    <FaPlus /> Thêm địa chỉ mới
+                  </button>
+                </div>
+
+                {showProfileForm && (
+                  <div className="profile-form">
+                    <h3>{editingProfile ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới'}</h3>
+                    
+                    <div className="form-group">
+                      <label>Họ và tên *</label>
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={profileForm.fullName}
+                        onChange={handleProfileFormChange}
+                        placeholder="Nhập họ và tên"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Số điện thoại *</label>
+                      <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={profileForm.phoneNumber}
+                        onChange={handleProfileFormChange}
+                        placeholder="Nhập số điện thoại (10-15 số)"
+                        pattern="[0-9+\-\s\(\)]{10,15}"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Địa chỉ *</label>
+                      <textarea
+                        name="address"
+                        value={profileForm.address}
+                        onChange={handleProfileFormChange}
+                        placeholder="Nhập địa chỉ chi tiết"
+                        rows="3"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-actions">
+                      <button 
+                        className="btn btn-primary"
+                        onClick={handleSaveProfile}
+                        disabled={loading}
+                      >
+                        <FaSave /> {loading ? 'Đang lưu...' : 'Lưu'}
+                      </button>
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={() => setShowProfileForm(false)}
+                      >
+                        <FaTimes /> Hủy
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="profiles-list">
+                  {profiles.length === 0 ? (
+                    <div className="empty-state">
+                      <FaMapMarkerAlt />
+                      <h3>Chưa có địa chỉ giao hàng</h3>
+                      <p>Thêm địa chỉ giao hàng để dễ dàng đặt hàng</p>
+                    </div>
+                  ) : (
+                    profiles.map(profile => (
+                      <div key={profile.id} className="profile-card">
+                        <div className="profile-info">
+                          <h4>{profile.fullName}</h4>
+                          <p><FaPhone /> {profile.phoneNumber}</p>
+                          <p><FaMapMarkerAlt /> {profile.address}</p>
+                        </div>
+                        <div className="profile-actions">
+                          <button 
+                            className="btn btn-outline"
+                            onClick={() => handleEditProfile(profile)}
+                          >
+                            <FaEdit /> Sửa
+                          </button>
+                          <button 
+                            className="btn btn-danger"
+                            onClick={() => handleDeleteProfile(profile.id)}
+                          >
+                            <FaTrash /> Xóa
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'password' && (
+              <div className="tab-content">
+                <div className="tab-header">
+                  <h2>Đổi mật khẩu</h2>
+                  <p>Để bảo mật tài khoản, vui lòng không chia sẻ mật khẩu cho người khác</p>
+                </div>
+
+                <div className="form-group">
+                  <label>Mật khẩu hiện tại *</label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập mật khẩu hiện tại"
                     required
                   />
                 </div>
+
                 <div className="form-group">
-                  <label htmlFor="lastName">Tên</label>
+                  <label>Mật khẩu mới *</label>
                   <input
-                    type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
+                    type="password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+                    minLength="6"
                     required
                   />
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="phone">Số điện thoại</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="address">Địa chỉ</label>
-                <textarea
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  rows="3"
-                />
-              </div>
-
-              <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="city">Thành phố</label>
+                  <label>Xác nhận mật khẩu mới *</label>
                   <input
-                    type="text"
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
+                    type="password"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập lại mật khẩu mới"
+                    minLength="6"
+                    required
                   />
                 </div>
-                <div className="form-group">
-                  <label htmlFor="zipCode">Mã bưu điện</label>
-                  <input
-                    type="text"
-                    id="zipCode"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
 
-              <div className="form-group">
-                <label htmlFor="dateOfBirth">Ngày sinh</label>
-                <input
-                  type="date"
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={handleInputChange}
-                />
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleUpdatePassword}
+                  disabled={loading}
+                >
+                  {loading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
+                </button>
               </div>
-
-              <button type="submit" className="update-btn" disabled={loading}>
-                {loading ? 'Đang cập nhật...' : 'Cập nhật thông tin'}
-              </button>
-            </form>
+            )}
           </div>
-        )}
-
-        {activeTab === 'password' && (
-          <div className="password-form-container">
-            <form onSubmit={handlePasswordUpdate} className="password-form">
-              <div className="form-group">
-                <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
-                <input
-                  type="password"
-                  id="currentPassword"
-                  name="currentPassword"
-                  value={passwordData.currentPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="newPassword">Mật khẩu mới</label>
-                <input
-                  type="password"
-                  id="newPassword"
-                  name="newPassword"
-                  value={passwordData.newPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Xác nhận mật khẩu mới</label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </div>
-
-              <button type="submit" className="update-btn" disabled={loading}>
-                {loading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
-              </button>
-            </form>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

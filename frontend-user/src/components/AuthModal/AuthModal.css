@@ -1,3 +1,41 @@
+/* CSS Variables for AuthModal */
+:root {
+  --primary-color: #16a34a;
+  --secondary-color: #22c55e;
+  --primary-hover: #15803d;
+  --text-color: #1e293b;
+  --text-muted: #64748b;
+  --error-color: #ef4444;
+  --success-color: #22c55e;
+  --background-color: #ffffff;
+  --border-color: #e2e8f0;
+}
+
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.auth-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+}
+
 .auth-modal-content {
   width: 100%;
   max-width: 520px;
@@ -10,6 +48,30 @@
   padding: 1rem 2rem 0.75rem;
   background: linear-gradient(135deg, #f8fffe 0%, #e8f5f3 100%);
   border-bottom: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #64748b;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #334155;
 }
 
 .auth-logo {
@@ -123,22 +185,41 @@
 .form-group input {
   width: 100%;
   padding: 0.875rem 1rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #e2e8f0 !important;
   border-radius: 10px;
   font-size: 1rem;
   transition: all 0.3s ease;
-  background: white;
+  background: #ffffff !important;
+  color: #1e293b !important;
   box-sizing: border-box;
+}
+
+/* Override browser autofill styles */
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus,
+.form-group input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #1e293b !important;
+  background-color: white !important;
+  color: #1e293b !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+/* Ensure no dark mode interference */
+.form-group input {
+  color-scheme: light !important;
+  border: 2px solid #e2e8f0 !important;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1) !important;
 }
 
 .form-group input::placeholder {
-  color: var(--text-muted);
+  color: #94a3b8 !important;
 }
 
 .form-options {

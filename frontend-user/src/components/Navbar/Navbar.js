@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAuthModal } from '../../contexts/AuthModalContext';
 import { useCart } from '../../contexts/CartContext';
 import { categoryService } from '../../services/categoryService';
-import Modal from '../Modal/Modal';
-import AuthModal from '../AuthModal/AuthModal';
+import { modalEvents } from '../../utils/modalEvents';
+import CartModal from '../CartModal/CartModal';
 import {
   FaShoppingCart,
   FaHeart,
@@ -23,16 +24,16 @@ import './Navbar.css';
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
+  const { openLoginModal, openRegisterModal } = useAuthModal();
   const { getCartItemCount } = useCart();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalType, setAuthModalType] = useState('login'); // 'login' or 'register'
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
 
   // Fetch categories from API
   useEffect(() => {
@@ -89,13 +90,27 @@ const Navbar = () => {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
 
-  const openAuthModal = (type = 'login') => {
-    setAuthModalType(type);
-    setIsAuthModalOpen(true);
+  const handleCartClick = (e) => {
+    if (!isAuthenticated) {
+      if (e) e.preventDefault(); // Ngăn điều hướng nếu có event
+      modalEvents.requireLogin(() => {
+        navigate('/cart');
+      }, 'Bạn cần đăng nhập để xem giỏ hàng.');
+      return false;
+    }
+    // Nếu đã đăng nhập, cho phép điều hướng
+    return true;
   };
 
-  const closeAuthModal = () => {
-    setIsAuthModalOpen(false);
+  const handleWishlistClick = (e) => {
+    if (!isAuthenticated) {
+      if (e) e.preventDefault();
+      modalEvents.requireLogin(() => {
+        navigate('/wishlist');
+      }, 'Bạn cần đăng nhập để xem danh sách yêu thích.');
+      return false;
+    }
+    return true;
   };
 
   return (
@@ -173,12 +188,15 @@ const Navbar = () => {
                     <FaHeart />
                   </Link>
                   
-                  <Link to="/cart" className="icon-link cart-link">
+                  <button 
+                    onClick={() => setIsCartModalOpen(true)} 
+                    className="icon-link cart-link"
+                  >
                     <FaShoppingCart />
                     {getCartItemCount() > 0 && (
                       <span className="cart-badge">{getCartItemCount()}</span>
                     )}
-                  </Link>
+                  </button>
 
                   <div className="user-menu">
                     <button 
@@ -220,18 +238,18 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
-                  <Link to="/cart" className="icon-link cart-link">
+                  <button onClick={handleCartClick} className="icon-link cart-link">
                     <FaShoppingCart />
                     {getCartItemCount() > 0 && (
                       <span className="cart-badge">{getCartItemCount()}</span>
                     )}
-                  </Link>
+                  </button>
 
                   <div className="auth-section-main">
-                    <button onClick={() => openAuthModal('login')} className="auth-btn-main">
+                    <button onClick={openLoginModal} className="auth-btn-main">
                       Đăng nhập
                     </button>
-                    <button onClick={() => openAuthModal('register')} className="auth-btn-main register">
+                    <button onClick={openRegisterModal} className="auth-btn-main register">
                       Đăng ký
                     </button>
                   </div>
@@ -379,7 +397,27 @@ const Navbar = () => {
               <>
                 <button 
                   onClick={() => {
-                    openAuthModal('login');
+                    if (isAuthenticated) {
+                      navigate('/cart');
+                    } else {
+                      openLoginModal(() => {
+                        navigate('/cart');
+                      });
+                    }
+                    setIsMenuOpen(false);
+                  }}
+                  className="mobile-nav-link"
+                >
+                  <FaShoppingCart />
+                  Giỏ hàng
+                  {getCartItemCount() > 0 && (
+                    <span className="cart-badge">{getCartItemCount()}</span>
+                  )}
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    openLoginModal();
                     setIsMenuOpen(false);
                   }}
                   className="mobile-nav-link auth-btn"
@@ -388,7 +426,7 @@ const Navbar = () => {
                 </button>
                 <button 
                   onClick={() => {
-                    openAuthModal('register');
+                    openRegisterModal();
                     setIsMenuOpen(false);
                   }}
                   className="mobile-nav-link auth-btn"
@@ -400,15 +438,12 @@ const Navbar = () => {
           </div>
         </div>
       )}
-      
-      {/* Auth Modal */}
-      <Modal 
-        isOpen={isAuthModalOpen} 
-        onClose={closeAuthModal}
-        size="md"
-      >
-        <AuthModal onClose={closeAuthModal} initialType={authModalType} />
-      </Modal>
+
+      {/* Cart Modal */}
+      <CartModal 
+        isOpen={isCartModalOpen} 
+        onClose={() => setIsCartModalOpen(false)} 
+      />
     </nav>
   );
 };

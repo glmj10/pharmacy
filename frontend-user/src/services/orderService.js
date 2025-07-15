@@ -6,8 +6,8 @@ export const orderService = {
     return response.data;
   },
 
-  getMyOrders: async () => {
-    const response = await api.get('/orders/my-orders');
+  getMyOrders: async (pageIndex = 1, pageSize = 5, status) => {
+    const response = await api.get(`/orders/my-orders?pageIndex=${pageIndex}&pageSize=${pageSize}&status=${status}`);
     return response.data;
   },
 

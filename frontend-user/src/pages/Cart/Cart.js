@@ -6,36 +6,47 @@ import './Cart.css';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cartItems, updateQuantity, removeFromCart, clearCart, loading } = useCart();
+  const { items, updateCartItem, removeFromCart, clearCart, loading, updateCartItemStatus, updateAllCartItemsStatus, fetchCart } = useCart();
   const { user } = useAuth();
   const [selectedItems, setSelectedItems] = useState([]);
-
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
+    // Sync selectedItems with backend selection status
+    setSelectedItems(safeCartItems.filter(item => item.selected).map(item => item.id));
+  }, [items]);
+
+  // Safe fallback for cartItems
+  const safeCartItems = items || [];
+
+  // Không cần useEffect để mở modal nữa vì logic đã được xử lý ở Navbar
 
   const handleSelectItem = (itemId) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
+    const item = safeCartItems.find(i => i.id === itemId);
+    const newSelected = !item.selected;
+    updateCartItemStatus(itemId, newSelected)
+      .then(() => {
+        fetchCart();
+      })
+      .catch((error) => {
+        console.error('Error updating item selected status:', error);
+      });
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.length === cartItems.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(cartItems.map(item => item.id));
-    }
+    const allSelected = safeCartItems.length > 0 && safeCartItems.every(item => item.selected);
+    updateAllCartItemsStatus(!allSelected)
+      .then(() => {
+        fetchCart();
+      })
+      .catch((error) => {
+        console.error('Error updating all items selected status:', error);
+      });
   };
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
     try {
-      await updateQuantity(itemId, newQuantity);
+      await updateCartItem(itemId, newQuantity);
+      fetchCart();
     } catch (error) {
       console.error('Error updating quantity:', error);
     }
@@ -44,7 +55,7 @@ const Cart = () => {
   const handleRemoveItem = async (itemId) => {
     try {
       await removeFromCart(itemId);
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
+      fetchCart();
     } catch (error) {
       console.error('Error removing item:', error);
     }
@@ -52,10 +63,9 @@ const Cart = () => {
 
   const handleRemoveSelected = async () => {
     if (selectedItems.length === 0) return;
-    
     try {
       await Promise.all(selectedItems.map(itemId => removeFromCart(itemId)));
-      setSelectedItems([]);
+      fetchCart();
     } catch (error) {
       console.error('Error removing selected items:', error);
     }
@@ -65,7 +75,7 @@ const Cart = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm khỏi giỏ hàng?')) {
       try {
         await clearCart();
-        setSelectedItems([]);
+        fetchCart();
       } catch (error) {
         console.error('Error clearing cart:', error);
       }
@@ -73,12 +83,12 @@ const Cart = () => {
   };
 
   const calculateSelectedTotal = () => {
-    return cartItems
-      .filter(item => selectedItems.includes(item.id))
+    return safeCartItems
+      .filter(item => item.selected)
       .reduce((total, item) => {
-        const price = item.product.discount > 0 
-          ? item.product.price * (1 - item.product.discount / 100)
-          : item.product.price;
+        const price = item.priceAtAddition !== undefined
+          ? item.priceAtAddition
+          : item.product.priceNew;
         return total + (price * item.quantity);
       }, 0);
   };
@@ -96,7 +106,7 @@ const Cart = () => {
       return;
     }
     
-    const selectedProducts = cartItems.filter(item => selectedItems.includes(item.id));
+    const selectedProducts = safeCartItems.filter(item => selectedItems.includes(item.id));
     navigate('/checkout', { state: { selectedItems: selectedProducts } });
   };
 
@@ -114,10 +124,10 @@ const Cart = () => {
       <div className="container">
         <div className="cart-header">
           <h1>Giỏ hàng của bạn</h1>
-          <p>{cartItems.length} sản phẩm</p>
+          <p>{safeCartItems.length} sản phẩm</p>
         </div>
 
-        {cartItems.length === 0 ? (
+        {safeCartItems.length === 0 ? (
           <div className="empty-cart">
             <i className="fas fa-shopping-cart"></i>
             <h2>Giỏ hàng trống</h2>
@@ -134,10 +144,10 @@ const Cart = () => {
                 <div className="select-all">
                   <input
                     type="checkbox"
-                    checked={selectedItems.length === cartItems.length}
+                    checked={selectedItems.length === safeCartItems.length && safeCartItems.length > 0}
                     onChange={handleSelectAll}
                   />
-                  <span>Chọn tất cả ({cartItems.length})</span>
+                  <span>Chọn tất cả ({safeCartItems.length})</span>
                 </div>
                 <div className="cart-actions">
                   {selectedItems.length > 0 && (
@@ -153,75 +163,71 @@ const Cart = () => {
 
               {/* Cart Items List */}
               <div className="cart-items-list">
-                {cartItems.map(item => (
-                  <div key={item.id} className="cart-item">
+                {safeCartItems.map(item => (
+                  <div key={item.id} className={`cart-item${item.isOutOfStock ? ' out-of-stock' : ''}`}>
                     <div className="item-select">
                       <input
                         type="checkbox"
-                        checked={selectedItems.includes(item.id)}
+                        checked={item.selected}
                         onChange={() => handleSelectItem(item.id)}
+                        disabled={item.isOutOfStock}
                       />
                     </div>
-                    
+
                     <div className="item-image">
                       <img
-                        src={item.product.image || '/api/placeholder/100/100'}
-                        alt={item.product.name}
+                        src={item.product.thumbnailUrl || '/api/placeholder/100/100'}
+                        alt={item.product.title}
                         onClick={() => navigate(`/products/${item.product.id}`)}
                         onError={(e) => {
                           e.target.src = '/api/placeholder/100/100';
                         }}
                       />
                     </div>
-                    
+
                     <div className="item-info">
                       <h3 onClick={() => navigate(`/products/${item.product.id}`)}>
-                        {item.product.name}
+                        {item.product.title}
                       </h3>
-                      <p className="item-category">{item.product.categoryName}</p>
+                      <p className="item-category">{item.product.type}</p>
                       <div className="item-price">
-                        {item.product.discount > 0 ? (
-                          <>
-                            <span className="original-price">
-                              {formatPrice(item.product.price)}
-                            </span>
-                            <span className="discounted-price">
-                              {formatPrice(item.product.price * (1 - item.product.discount / 100))}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="current-price">
-                            {formatPrice(item.product.price)}
+                        <span className="original-price">
+                          {formatPrice(item.priceAtAddition ?? item.product.priceOld)}
+                        </span>
+                        <span className="current-price">
+                          {formatPrice(item.product.priceNew)}
+                        </span>
+                        {item.priceDifferent !== 0 && (
+                          <span className="price-different">
+                            {item.priceChangeType === 'INCREASE' ? '+' : '-'}{formatPrice(Math.abs(item.priceDifferent))}
                           </span>
                         )}
                       </div>
+                      {item.isOutOfStock && (
+                        <div className="out-of-stock-label">Hết hàng</div>
+                      )}
                     </div>
-                    
+
                     <div className="item-quantity">
                       <button
                         onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
+                        disabled={item.quantity <= 1 || item.isOutOfStock}
                       >
                         -
                       </button>
                       <span>{item.quantity}</span>
                       <button
                         onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                        disabled={item.quantity >= item.product.quantity}
+                        disabled={item.quantity >= item.product.quantity || item.isOutOfStock}
                       >
                         +
                       </button>
                     </div>
-                    
+
                     <div className="item-total">
-                      {formatPrice(
-                        (item.product.discount > 0 
-                          ? item.product.price * (1 - item.product.discount / 100)
-                          : item.product.price
-                        ) * item.quantity
-                      )}
+                      {formatPrice((item.priceAtAddition ?? item.product.priceNew) * item.quantity)}
                     </div>
-                    
+
                     <button
                       className="remove-item-btn"
                       onClick={() => handleRemoveItem(item.id)}

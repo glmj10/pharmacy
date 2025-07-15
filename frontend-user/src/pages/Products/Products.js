@@ -3,7 +3,10 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import brandService from '../../services/brandService';
+import { wishlistService } from '../../services/wishlistService';
 import { useCart } from '../../contexts/CartContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAuthAction } from '../../hooks/useAuthAction';
 import { FaShoppingCart, FaHeart, FaEye, FaChevronRight, FaHome } from 'react-icons/fa';
 import './Products.css';
 
@@ -29,6 +32,11 @@ const Products = () => {
 
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { executeWithAuth } = useAuthAction();
+
+  // State cho wishlist
+  const [wishlistItems, setWishlistItems] = useState([]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -177,6 +185,27 @@ const Products = () => {
     }
   }, [currentPage, itemsPerPage, filters]);
 
+  const fetchWishlist = useCallback(async () => {
+    if (!user) {
+      setWishlistItems([]);
+      return;
+    }
+    
+    try {
+      const response = await wishlistService.getWishlist();
+      if (response?.data && Array.isArray(response.data)) {
+        setWishlistItems(response.data.map(item => item.productId || item.id));
+      } else if (Array.isArray(response)) {
+        setWishlistItems(response.map(item => item.productId || item.id));
+      } else {
+        setWishlistItems([]);
+      }
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+      setWishlistItems([]);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -199,6 +228,11 @@ const Products = () => {
     }
   }, [filters.categorySlug, categories, fetchChildCategories]);
 
+  // Fetch wishlist when user logs in or out
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
+
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -212,13 +246,29 @@ const Products = () => {
     setSearchParams(newParams);
   };
 
-  const handleAddToCart = async (product) => {
+  const handleAddToCart = executeWithAuth(async (product) => {
     try {
       await addToCart(product.id, 1);
     } catch (error) {
       console.error('Error adding to cart:', error);
     }
-  };
+  });
+
+  const handleWishlistToggle = executeWithAuth(async (product) => {
+    try {
+      const isInWishlist = wishlistItems.includes(product.id);
+      
+      if (isInWishlist) {
+        await wishlistService.removeFromWishlist(product.id);
+        setWishlistItems(prev => prev.filter(id => id !== product.id));
+      } else {
+        await wishlistService.addToWishlist(product.id);
+        setWishlistItems(prev => [...prev, product.id]);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+    }
+  });
 
   const handleProductClick = (productSlug) => {
     navigate(`/products/${productSlug}`);
@@ -536,7 +586,14 @@ const Products = () => {
                           )}
                         </div>
                         <div className="product-actions">
-                          <button className="action-btn">
+                          <button 
+                            className={`action-btn ${wishlistItems.includes(product.id) ? 'active' : ''}`}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              handleWishlistToggle(product); 
+                            }}
+                            title={wishlistItems.includes(product.id) ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                          >
                             <FaHeart />
                           </button>
                           <button className="action-btn" onClick={(e) => { e.stopPropagation(); handleProductClick(product.slug); }}>

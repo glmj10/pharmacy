@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import { modalEvents } from '../../utils/modalEvents';
 import {
   FaEye,
   FaEyeSlash,
@@ -38,8 +39,13 @@ const Register = () => {
       // Remove confirmPassword from data before sending
       const { confirmPassword, ...userData } = data;
       await registerUser(userData);
-      toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
-      navigate('/login');
+      toast.success('Đăng ký thành công! Modal đăng nhập sẽ mở để bạn đăng nhập.');
+      
+      // Use modal events utility
+      modalEvents.triggerOpenLoginModal('Đăng ký thành công! Vui lòng đăng nhập.');
+      
+      // Quay về trang chủ
+      navigate('/');
     } catch (error) {
       console.error('Register error:', error);
       toast.error(

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAuthAction } from '../../hooks/useAuthAction';
 import { wishlistService } from '../../services/wishlistService';
 import { FaChevronRight, FaHome } from 'react-icons/fa';
 import './ProductDetail.css';
@@ -26,6 +27,7 @@ const ProductDetail = () => {
 
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { executeWithAuth } = useAuthAction();
 
   // Use useMemo to safely compute productImages
   const productImages = useMemo(() => {
@@ -112,21 +114,16 @@ const ProductDetail = () => {
     }, 100); // Đợi 100ms để DOM render xong
   }, [product?.description, showFullDescription]);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = executeWithAuth(async () => {
     try {
       await addToCart(product.id, quantity);
       setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);
     }
-  };
+  });
 
-  const handleWishlistToggle = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
+  const handleWishlistToggle = executeWithAuth(async () => {
     try {
       if (isInWishlist) {
         await wishlistService.removeFromWishlist(product.id);
@@ -138,7 +135,7 @@ const ProductDetail = () => {
     } catch (error) {
       console.error('Error toggling wishlist:', error);
     }
-  };
+  });
 
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change;

@@ -983,3 +983,16 @@
     transform: translateY(0);
   }
 }
+
+/* Cart Modal Button Styling */
+.cart-link {
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.cart-link:focus {
+  outline: none;
+}
