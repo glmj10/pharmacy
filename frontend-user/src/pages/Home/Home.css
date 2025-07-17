@@ -609,6 +609,11 @@
   height: 100%;
 }
 
+
+.slick-list {
+  padding: 0.2rem;
+}
+
 /* Slick slider custom styles */
 .slick-dots {
   bottom: -50px;

@@ -11,103 +11,118 @@ import { FaShoppingCart, FaHeart, FaEye, FaChevronRight, FaHome } from 'react-ic
 import './Products.css';
 
 const Products = () => {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [childCategories, setChildCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
     title: searchParams.get('title') || '',
-    categorySlug: searchParams.get('categorySlug') || '',
-    brandSlug: searchParams.get('brandSlug') || '',
     priceFrom: searchParams.get('priceFrom') || '',
     priceTo: searchParams.get('priceTo') || '',
-    isAscending: searchParams.get('isAscending') !== null ? searchParams.get('isAscending') === 'true' : null
+    isAscending: searchParams.get('isAscending') !== null ? searchParams.get('isAscending') === 'true' : null,
+    brand: searchParams.get('brand') || '',
+    category: searchParams.get('category') || ''
   });
+
+  // Đồng bộ filters với searchParams khi URL thay đổi (ví dụ khi click từ Navbar hoặc refresh)
+  useEffect(() => {
+    setFilters({
+      title: searchParams.get('title') || '',
+      priceFrom: searchParams.get('priceFrom') || '',
+      priceTo: searchParams.get('priceTo') || '',
+      isAscending: searchParams.get('isAscending') !== null ? searchParams.get('isAscending') === 'true' : null,
+      brand: searchParams.get('brand') || '',
+      category: searchParams.get('category') || ''
+    });
+  }, [searchParams]);
+
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]); // Danh sách tất cả các danh mục cấp cao nhất với các con của chúng
+  const [categoriesToDisplayInGrid, setCategoriesToDisplayInGrid] = useState([]); // Danh sách các danh mục HIỆN TẠI để hiển thị trong lưới
+  const [childCategoriesForBreadcrumb, setChildCategoriesForBreadcrumb] = useState([]); // Danh sách các con của danh mục cha được chọn (dùng cho breadcrumb, không nhất thiết là cho grid)
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 12; // 12 products per page as requested
+  const itemsPerPage = 12;
 
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { executeWithAuth } = useAuthAction();
 
-  // State cho wishlist
   const [wishlistItems, setWishlistItems] = useState([]);
 
+  // Hàm này bây giờ sẽ chuẩn hóa cấu trúc category để luôn có `children` array
   const fetchCategories = useCallback(async () => {
     try {
       const response = await categoryService.getAllCategories();
-      
-      // Handle ApiResponse<List<CategoryResponse>> structure
-      // categoryService.getAllCategories() returns response.data
+      let fetchedCategories = [];
       if (response?.data && Array.isArray(response.data)) {
-        // Case: ApiResponse { data: List<CategoryResponse> }
-        setCategories(response.data);
+        fetchedCategories = response.data.map(cat => ({
+          ...cat,
+          children: cat.children || [] // Đảm bảo mỗi category object có thuộc tính 'children'
+        }));
       } else if (Array.isArray(response)) {
-        // Case: Direct array response
-        setCategories(response);
+        fetchedCategories = response.map(cat => ({
+          ...cat,
+          children: cat.children || []
+        }));
       } else {
         console.warn('Unexpected categories response structure:', response);
-        setCategories([]);
       }
+      setCategories(fetchedCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
       setCategories([]);
     }
   }, []);
 
+  // Hàm này chỉ còn phục vụ việc fetch children từ API, không trực tiếp set state hiển thị grid
+  const fetchChildrenFromApi = useCallback(async (parentSlug) => {
+    try {
+      const response = await categoryService.getCategoriesByParentSlug(parentSlug);
+      let children = [];
+      if (response?.data && Array.isArray(response.data)) {
+        children = response.data.flatMap(item => {
+          const parentId = item.parent ? item.parent.id : null;
+          return (item.children || []).map(child => ({
+            ...child,
+            parentId: parentId,
+            children: child.children || []
+          }));
+        });
+      } else if (Array.isArray(response)) {
+        children = response.flatMap(item => {
+          const parentId = item.parent ? item.parent.id : null;
+          return (item.children || []).map(child => ({
+            ...child,
+            parentId: parentId,
+            children: child.children || []
+          }));
+        });
+      } else {
+        console.warn('Unexpected child categories response structure:', response);
+      }
+      return children;
+    } catch (error) {
+      console.error('Error fetching child categories:', error);
+      return [];
+    }
+  }, []);
+
   const fetchBrands = useCallback(async () => {
     try {
       const response = await brandService.getAllBrands();
-      
-      console.log('Brands response:', response);
-      
-      // Handle ApiResponse<List<BrandResponse>> structure
-      // brandService.getAllBrands() returns response.data
       if (response?.data && Array.isArray(response.data)) {
-        // Case: ApiResponse { data: List<BrandResponse> }
-        console.log('Using response.data:', response.data);
         setBrands(response.data);
       } else if (Array.isArray(response)) {
-        // Case: Direct array response
-        console.log('Using response:', response);
         setBrands(response);
       } else {
         console.warn('Unexpected brands response structure:', response);
-        console.log('Setting empty brands array');
         setBrands([]);
       }
     } catch (error) {
       console.error('Error fetching brands:', error);
       setBrands([]);
-    }
-  }, []);
-
-  const fetchChildCategories = useCallback(async (parentSlug) => {
-    try {
-      const response = await categoryService.getCategoriesByParentSlug(parentSlug);
-      
-      // Handle ApiResponse<List<CategoryParentAndChildResponse>> structure
-      // categoryService.getCategoriesByParentSlug() returns response.data
-      if (response?.data && Array.isArray(response.data)) {
-        // Extract all children from all parent-child pairs
-        const allChildren = response.data.flatMap(item => item.children || []);
-        setChildCategories(allChildren);
-      } else if (Array.isArray(response)) {
-        // Direct array response
-        const allChildren = response.flatMap(item => item.children || []);
-        setChildCategories(allChildren);
-      } else {
-        console.warn('Unexpected child categories response structure:', response);
-        setChildCategories([]);
-      }
-    } catch (error) {
-      console.error('Error fetching child categories:', error);
-      setChildCategories([]);
     }
   }, []);
 
@@ -118,63 +133,47 @@ const Products = () => {
         pageIndex: currentPage,
         pageSize: itemsPerPage,
         title: filters.title,
-        categorySlug: filters.categorySlug,
-        brandSlug: filters.brandSlug,
         priceFrom: filters.priceFrom ? parseInt(filters.priceFrom) : undefined,
         priceTo: filters.priceTo ? parseInt(filters.priceTo) : undefined,
-        isAscending: filters.isAscending
+        isAscending: filters.isAscending,
+        brand: filters.brand,
+        category: filters.category
       };
-      
-      // Remove undefined/empty values
+
       Object.keys(params).forEach(key => {
         if (params[key] === undefined || params[key] === '' || params[key] === null) {
           delete params[key];
         }
       });
-      
+
       const response = await productService.getAllProducts(params);
-      
-      console.log('Products API response:', response);
-      console.log('Response structure:', response);
-      console.log('Response keys:', Object.keys(response || {}));
-      
-      // Handle different response structures
+
       let productsData;
       let totalPagesData;
       let totalElementsData;
-      
+
       if (response && response.data && response.data.content) {
-        // Case: ApiResponse { data: PageResponse { content: [...], totalPages, totalElements } }
         productsData = response.data.content;
         totalPagesData = response.data.totalPages;
         totalElementsData = response.data.totalElements;
-        console.log('Using response.data structure');
       } else if (response && response.content) {
-        // Case: PageResponse { content: [...], totalPages, totalElements }
         productsData = response.content;
         totalPagesData = response.totalPages;
         totalElementsData = response.totalElements;
-        console.log('Using direct response structure');
       } else if (Array.isArray(response)) {
-        // Case: Array of products (fallback)
         productsData = response;
         totalPagesData = 1;
         totalElementsData = response.length;
-        console.log('Using array response structure');
       } else {
         console.warn('Unexpected products response structure:', response);
         productsData = [];
         totalPagesData = 1;
         totalElementsData = 0;
       }
-      
+
       setProducts(productsData || []);
       setTotalItems(totalElementsData || 0);
       setTotalPages(totalPagesData || 1);
-      
-      console.log('Set products:', (productsData || []).length);
-      console.log('Set totalPages:', totalPagesData);
-      console.log('Set totalItems:', totalElementsData);
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
@@ -190,7 +189,6 @@ const Products = () => {
       setWishlistItems([]);
       return;
     }
-    
     try {
       const response = await wishlistService.getWishlist();
       if (response?.data && Array.isArray(response.data)) {
@@ -218,33 +216,101 @@ const Products = () => {
     fetchBrands();
   }, [fetchBrands]);
 
-  // Load child categories if current categorySlug is a parent category
+  // NEW useEffect to manage `categoriesToDisplayInGrid` and `childCategoriesForBreadcrumb`
   useEffect(() => {
-    if (filters.categorySlug && categories.length > 0) {
-      const isParentCategory = categories.some(cat => cat.slug === filters.categorySlug);
-      if (isParentCategory) {
-        fetchChildCategories(filters.categorySlug);
-      }
+    if (categories.length === 0) {
+      return; // Đợi categories được load hoàn chỉnh
     }
-  }, [filters.categorySlug, categories, fetchChildCategories]);
 
-  // Fetch wishlist when user logs in or out
+    const manageCategoryDisplay = async () => {
+      const currentSelectedCategorySlug = filters.category;
+
+      if (!currentSelectedCategorySlug) {
+        // Case 1: Không có danh mục nào được chọn (trạng thái ban đầu hoặc reset)
+        setCategoriesToDisplayInGrid(categories.slice(0, 8)); // Hiển thị 8 danh mục cha đầu tiên
+        setChildCategoriesForBreadcrumb([]); // Xóa danh mục con cho breadcrumb
+        return;
+      }
+
+      // Tìm danh mục đang được chọn (có thể là cha hoặc con)
+      let selectedCategoryObject = categories.find(cat => cat.slug === currentSelectedCategorySlug);
+      let isTopLevelCategory = !!selectedCategoryObject;
+
+      if (!selectedCategoryObject) { // Nếu không tìm thấy ở cấp cao nhất, tìm trong tất cả các danh mục con
+        for (const parentCat of categories) {
+          const foundChild = (parentCat.children || []).find(child => child.slug === currentSelectedCategorySlug);
+          if (foundChild) {
+            selectedCategoryObject = { ...foundChild, parentId: parentCat.id }; // Gắn parentId vào đây!
+            isTopLevelCategory = false;
+            break;
+          }
+        }
+      }
+
+      if (!selectedCategoryObject) {
+        // Slug không hợp lệ hoặc danh mục không tồn tại
+        setCategoriesToDisplayInGrid([]); // Ẩn grid
+        setChildCategoriesForBreadcrumb([]);
+        return;
+      }
+
+      // Quyết định những danh mục nào sẽ hiển thị trong lưới VÀ dữ liệu cho breadcrumb
+      if (selectedCategoryObject.children && selectedCategoryObject.children.length > 0) {
+        // Case A: Danh mục được chọn CÓ danh mục con
+        // -> Hiển thị các con trực tiếp của nó trong grid
+        const children = await fetchChildrenFromApi(selectedCategoryObject.slug);
+        setCategoriesToDisplayInGrid(children);
+        setChildCategoriesForBreadcrumb(children); // Cập nhật cho breadcrumb
+      } else {
+        // Case B: Danh mục được chọn KHÔNG CÓ danh mục con (là leaf node)
+        // -> Ẩn grid theo yêu cầu mới
+        setCategoriesToDisplayInGrid([]);
+
+        // childCategoriesForBreadcrumb vẫn cần chứa các anh chị em của nó
+        // nếu nó là một danh mục con để breadcrumb có thể hiển thị đường dẫn đầy đủ
+        if (!isTopLevelCategory && selectedCategoryObject.parentId) {
+          const parentOfSelectedChild = categories.find(p => p.id === selectedCategoryObject.parentId);
+          if (parentOfSelectedChild) {
+            const siblings = await fetchChildrenFromApi(parentOfSelectedChild.slug);
+            setChildCategoriesForBreadcrumb(siblings); // Populate siblings for breadcrumb
+          } else {
+            setChildCategoriesForBreadcrumb([]);
+          }
+        } else {
+          // Nếu là top-level leaf hoặc không có parentId (lỗi dữ liệu), chỉ set bản thân nó vào breadcrumb
+          // hoặc clear nếu không muốn hiển thị sibling nào.
+          // Ở đây, tôi sẽ set nó vào để breadcrumb vẫn hiển thị được item này nếu nó là leaf node top-level.
+          setChildCategoriesForBreadcrumb([selectedCategoryObject]);
+        }
+      }
+    };
+
+    manageCategoryDisplay();
+
+  }, [filters.category, categories, fetchChildrenFromApi]);
+
   useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
 
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
+  const handleFilterChange = useCallback((keyOrObject, value) => {
+    let newFilters;
+    if (typeof keyOrObject === 'object' && keyOrObject !== null) {
+      newFilters = { ...filters, ...keyOrObject };
+    } else {
+      newFilters = { ...filters, [keyOrObject]: value };
+    }
     setFilters(newFilters);
     setCurrentPage(1);
-    
-    // Update URL params
+
     const newParams = new URLSearchParams();
     Object.entries(newFilters).forEach(([k, v]) => {
-      if (v) newParams.set(k, v);
+      if (v !== undefined && v !== null && v !== '') {
+        newParams.set(k, v);
+      }
     });
     setSearchParams(newParams);
-  };
+  }, [filters, setSearchParams]);
 
   const handleAddToCart = executeWithAuth(async (product) => {
     try {
@@ -257,7 +323,7 @@ const Products = () => {
   const handleWishlistToggle = executeWithAuth(async (product) => {
     try {
       const isInWishlist = wishlistItems.includes(product.id);
-      
+
       if (isInWishlist) {
         await wishlistService.removeFromWishlist(product.id);
         setWishlistItems(prev => prev.filter(id => id !== product.id));
@@ -338,28 +404,55 @@ const Products = () => {
     );
   };
 
-  // Get current category name for breadcrumb
-  const getCurrentCategoryName = () => {
-    if (!filters.categorySlug) return null;
-    
-    // First check in main categories
-    const currentCategory = categories.find(cat => cat.slug === filters.categorySlug);
-    if (currentCategory) {
-      return currentCategory.name;
-    }
-    
-    // Then check in child categories
-    const currentChildCategory = childCategories.find(cat => cat.slug === filters.categorySlug);
-    if (currentChildCategory) {
-      return currentChildCategory.name;
-    }
-    
-    return null;
-  };
+  const getBreadcrumbPath = useCallback(() => {
+    if (!filters.category) return [];
 
-  const renderBreadcrumb = () => {
-    const categoryName = getCurrentCategoryName();
-    
+    const breadcrumbItems = [];
+
+    // Tìm danh mục active hiện tại.
+    // Đầu tiên tìm trong `categories` (cấp cao nhất)
+    let currentActiveCategory = categories.find(cat => cat.slug === filters.category);
+
+    // Nếu không tìm thấy ở cấp cao nhất, tìm trong `childCategoriesForBreadcrumb`
+    // (Đây là nơi chứa danh mục đang được chọn nếu nó là con, cùng với các anh chị em của nó,
+    // và đảm bảo có parentId)
+    if (!currentActiveCategory) {
+      currentActiveCategory = childCategoriesForBreadcrumb.find(cat => cat.slug === filters.category);
+    }
+
+    // Fallback: Nếu vẫn không tìm thấy, thử tìm lại từ tất cả các children của `categories`
+    // (trong trường hợp `childCategoriesForBreadcrumb` chưa kịp cập nhật hoặc lỗi)
+    if (!currentActiveCategory && categories.length > 0) {
+      for (const parentCat of categories) {
+        const foundChild = (parentCat.children || []).find(child => child.slug === filters.category);
+        if (foundChild) {
+          currentActiveCategory = { ...foundChild, parentId: parentCat.id }; // Đảm bảo parentId được thêm vào
+          break;
+        }
+      }
+    }
+
+    if (currentActiveCategory) {
+      // Nếu danh mục active có parentId (là danh mục con)
+      if (currentActiveCategory.parentId) {
+        const parent = categories.find(cat => cat.id === currentActiveCategory.parentId);
+        if (parent) {
+          breadcrumbItems.push({ name: parent.name, slug: parent.slug });
+        } else {
+          console.warn("[getBreadcrumbPath] Parent not found for child category:", currentActiveCategory.name);
+        }
+      }
+      // Thêm danh mục active hiện tại
+      breadcrumbItems.push({ name: currentActiveCategory.name, slug: currentActiveCategory.slug });
+    } else {
+      console.warn("[getBreadcrumbPath] No active category found for slug:", filters.category);
+    }
+
+    return breadcrumbItems;
+  }, [filters.category, categories, childCategoriesForBreadcrumb]);
+
+  const renderBreadcrumb = useCallback(() => {
+    const breadcrumbPath = getBreadcrumbPath();
     return (
       <nav className="breadcrumb">
         <Link to="/" className="breadcrumb-item">
@@ -367,18 +460,27 @@ const Products = () => {
           Trang chủ
         </Link>
         <FaChevronRight className="breadcrumb-separator" />
-        <Link to="/products" className="breadcrumb-item">
+        <Link to="/products" className="breadcrumb-item" onClick={() => handleFilterChange('category', '')}>
           Sản phẩm
         </Link>
-        {categoryName && (
-          <>
+        {breadcrumbPath.map((item, idx) => (
+          <React.Fragment key={idx}>
             <FaChevronRight className="breadcrumb-separator" />
-            <span className="breadcrumb-item active">{categoryName}</span>
-          </>
-        )}
+            {idx === breadcrumbPath.length - 1 ? (
+              <span className="breadcrumb-item active">{item.name}</span>
+            ) : (
+              <Link
+                to={`/products?category=${item.slug}`}
+                className="breadcrumb-item"
+              >
+                {item.name}
+              </Link>
+            )}
+          </React.Fragment>
+        ))}
       </nav>
     );
-  };
+  }, [getBreadcrumbPath, handleFilterChange]);
 
   return (
     <div className="products-page">
@@ -387,57 +489,81 @@ const Products = () => {
         {renderBreadcrumb()}
 
         {/* Categories Section */}
-        <div className="categories-section">
-          <h2>Danh mục sản phẩm</h2>
-          <div className="categories-grid">
-            {categories.slice(0, 8).map(category => (
-              <div 
-                key={category.id} 
-                className={`category-card ${filters.categorySlug === category.slug ? 'active' : ''}`}
-                onClick={() => {
-                  const newCategorySlug = filters.categorySlug === category.slug ? '' : category.slug;
-                  handleFilterChange('categorySlug', newCategorySlug);
-                  
-                  if (newCategorySlug) {
-                    fetchChildCategories(newCategorySlug);
-                  } else {
-                    setChildCategories([]);
-                  }
-                }}
-              >
-                <div className="category-thumbnail">
-                  <img 
-                    src={category.thumbnail || '/api/placeholder/140/140'} 
-                    alt={category.name}
-                    onError={(e) => {
-                      e.target.src = '/api/placeholder/140/140';
-                    }}
-                  />
+
+        {categoriesToDisplayInGrid.length > 0 && ( // MỚI: Điều kiện hiển thị lưới danh mục dựa trên categoriesToDisplayInGrid
+          <div className="categories-section">
+            <h2>Danh mục sản phẩm</h2>
+            <div className="categories-grid">
+              {categoriesToDisplayInGrid.map(category => (
+                <div
+                  key={category.id}
+                  className={`category-card ${filters.category === category.slug ? 'active' : ''}`}
+                  onClick={() => {
+                    const isActive = filters.category === category.slug;
+
+                    if (isActive) {
+                      // Logic deselect: Quay về danh mục cha hoặc trang tất cả sản phẩm
+                      let newCategorySlug = '';
+                      if (category.parentId) { // Nếu là danh mục con (có parentId)
+                        const parent = categories.find(p => p.id === category.parentId);
+                        if (parent) {
+                          newCategorySlug = parent.slug;
+                        } else {
+                          console.warn(`Deselecting child category: ${category.name}, but parent not found. Resetting filter to all products.`);
+                        }
+                      } else { // Nếu là danh mục cấp cao nhất (không có parentId)
+                        // Hiện tại không có trường hợp này trong categoriesToDisplayInGrid,
+                        // nhưng vẫn giữ để phòng hờ hoặc nếu logic thay đổi.
+                        console.log(`Deselecting top-level category: ${category.name}. Going back to all products.`);
+                      }
+                      handleFilterChange('category', newCategorySlug);
+
+                    } else {
+                      // Logic select: Chọn danh mục mới
+                      handleFilterChange('category', category.slug);
+                    }
+                  }}
+                >
+                  <div className="category-thumbnail">
+                    <img
+                      src={category.thumbnail || '/api/placeholder/140/140'}
+                      alt={category.name}
+                      onError={(e) => {
+                        e.target.src = '/api/placeholder/140/140';
+                      }}
+                    />
+                  </div>
+                  <h3>{category.name}</h3>
                 </div>
-                <h3>{category.name}</h3>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+
+        )}
 
         <div className="products-content">
           {/* Filters Sidebar */}
           <div className="filters-sidebar">
             <div className="filter-section">
               <h3>Thiết lập lại</h3>
-              <button 
+              <button
                 className="apply-filters-btn"
                 onClick={() => {
+                  const currentCategory = filters.category;
                   setFilters({
                     title: '',
-                    categorySlug: '',
-                    brandSlug: '',
+                    category: currentCategory,
+                    brand: '',
                     priceFrom: '',
                     priceTo: '',
                     isAscending: null
                   });
-                  setChildCategories([]);
-                  setSearchParams(new URLSearchParams());
+
+                  const newParams = new URLSearchParams();
+                  if (currentCategory) {
+                    newParams.set('category', currentCategory);
+                  }
+                  setSearchParams(newParams);
                 }}
               >
                 Xóa tất cả bộ lọc
@@ -457,13 +583,13 @@ const Products = () => {
             <div className="filter-section">
               <h3>Sắp xếp theo:</h3>
               <div className="sort-buttons">
-                <button 
+                <button
                   className={`sort-btn ${filters.isAscending === true ? 'active' : ''}`}
                   onClick={() => handleFilterChange('isAscending', true)}
                 >
                   Giá tăng dần
                 </button>
-                <button 
+                <button
                   className={`sort-btn ${filters.isAscending === false ? 'active' : ''}`}
                   onClick={() => handleFilterChange('isAscending', false)}
                 >
@@ -475,38 +601,34 @@ const Products = () => {
             <div className="filter-section">
               <h3>Khoảng giá</h3>
               <div className="price-range-buttons">
-                <button 
+                <button
                   className={`price-range-btn ${filters.priceFrom === '0' && filters.priceTo === '100000' ? 'active' : ''}`}
                   onClick={() => {
-                    handleFilterChange('priceFrom', '0');
-                    handleFilterChange('priceTo', '100000');
+                    handleFilterChange({ priceFrom: '0', priceTo: '100000' });
                   }}
                 >
                   Dưới 100.000 ₫
                 </button>
-                <button 
+                <button
                   className={`price-range-btn ${filters.priceFrom === '100000' && filters.priceTo === '300000' ? 'active' : ''}`}
                   onClick={() => {
-                    handleFilterChange('priceFrom', '100000');
-                    handleFilterChange('priceTo', '300000');
+                    handleFilterChange({ priceFrom: '100000', priceTo: '300000' });
                   }}
                 >
                   100.000 ₫ - 300.000 ₫
                 </button>
-                <button 
+                <button
                   className={`price-range-btn ${filters.priceFrom === '300000' && filters.priceTo === '500000' ? 'active' : ''}`}
                   onClick={() => {
-                    handleFilterChange('priceFrom', '300000');
-                    handleFilterChange('priceTo', '500000');
+                    handleFilterChange({ priceFrom: '300000', priceTo: '500000' });
                   }}
                 >
                   300.000 ₫ - 500.000 ₫
                 </button>
-                <button 
+                <button
                   className={`price-range-btn ${filters.priceFrom === '500000' && filters.priceTo === '' ? 'active' : ''}`}
                   onClick={() => {
-                    handleFilterChange('priceFrom', '500000');
-                    handleFilterChange('priceTo', '');
+                    handleFilterChange({ priceFrom: '500000', priceTo: '' });
                   }}
                 >
                   Trên 500.000 ₫
@@ -529,10 +651,9 @@ const Products = () => {
                   className="price-input"
                 />
               </div>
-              <button 
+              <button
                 className="apply-filters-btn"
                 onClick={() => {
-                  // Trigger refetch with current filters
                   fetchProducts();
                 }}
               >
@@ -543,8 +664,8 @@ const Products = () => {
             <div className="filter-section">
               <h3>Thương hiệu</h3>
               <select
-                value={filters.brandSlug}
-                onChange={(e) => handleFilterChange('brandSlug', e.target.value)}
+                value={filters.brand}
+                onChange={(e) => handleFilterChange('brand', e.target.value)}
                 className="filter-select"
               >
                 <option value="">Tất cả thương hiệu</option>
@@ -585,11 +706,11 @@ const Products = () => {
                           )}
                         </div>
                         <div className="product-actions">
-                          <button 
+                          <button
                             className={`action-btn ${wishlistItems.includes(product.id) ? 'active' : ''}`}
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              handleWishlistToggle(product); 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleWishlistToggle(product);
                             }}
                             title={wishlistItems.includes(product.id) ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
                           >

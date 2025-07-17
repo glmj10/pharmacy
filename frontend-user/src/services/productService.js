@@ -7,8 +7,8 @@ export const productService = {
       pageIndex: params.pageIndex || params.page || 1,
       pageSize: params.pageSize || params.limit || 10,
       title: params.title || params.search,
-      categorySlug: params.categorySlug,
-      brandSlug: params.brandSlug,
+      category: params.category,
+      brand: params.brand,
       priceFrom: params.priceFrom,
       priceTo: params.priceTo,
       isAscending: params.isAscending
