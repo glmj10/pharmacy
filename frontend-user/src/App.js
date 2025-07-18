@@ -8,6 +8,8 @@ import { CartProvider } from './contexts/CartContext';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
+
+// Import các trang hiện có
 import Home from './pages/Home/Home';
 import Products from './pages/Products/Products';
 import ProductDetail from './pages/Products/ProductDetail';
@@ -19,6 +21,10 @@ import OrderDetail from './pages/Orders/OrderDetail';
 import Wishlist from './pages/Wishlist/Wishlist';
 import VnpayReturnPage from './pages/Payment/VnpayReturnPage';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+
+// Import các trang Blog mới
+import Blog from './pages/Blogs/Blog'; // Trang danh sách blog
+import BlogDetail from './pages/Blogs/BlogDetail'; // Trang chi tiết blog
 
 function App() {
   return (
@@ -35,6 +41,9 @@ function App() {
                     <Route path="/products" element={<Products />} />
                     <Route path="/products/:slug" element={<ProductDetail />} />
                     
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogDetail />} />
+
                     <Route path="/cart" element={
                       <ProtectedRoute>
                         <Cart />

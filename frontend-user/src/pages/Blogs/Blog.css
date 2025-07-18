@@ -1,0 +1,156 @@
+/* src/pages/BlogPage/BlogPage.css */
+.blog-page {
+  padding: var(--spacing-xl) 0;
+  background-color: var(--gray-50);
+  min-height: calc(100vh - 100px); /* Đảm bảo đủ chiều cao cho trang */
+}
+
+.blog-page-title {
+  font-size: 2.25rem;
+  color: var(--primary-600);
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  font-weight: 800;
+}
+
+.blog-filters {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap; /* Cho phép bộ lọc xuống dòng trên màn hình nhỏ */
+}
+
+.blog-search-form {
+  position: relative;
+  display: flex;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-width: 400px;
+  flex-grow: 1; /* Cho phép nó mở rộng */
+}
+
+.blog-search-input {
+  flex: 1;
+  padding: 10px 15px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: var(--gray-700);
+}
+
+.blog-search-input::placeholder {
+  color: var(--gray-400);
+}
+
+.blog-search-btn {
+  background: var(--primary-600);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blog-search-btn:hover {
+  background: var(--primary-700);
+}
+
+.blog-category-select {
+  padding: 10px 15px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  background-color: white;
+  font-size: 1rem;
+  color: var(--gray-700);
+  cursor: pointer;
+  outline: none;
+  appearance: none; /* Xóa mũi tên mặc định */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%, 0 0;
+  background-size: 1.5em auto;
+  min-width: 180px; /* Đảm bảo đủ rộng */
+}
+
+.blog-category-select:focus {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+}
+
+
+.blog-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* 3 cột trên màn hình lớn, tự động điều chỉnh */
+  gap: var(--spacing-lg);
+}
+
+.loading-indicator,
+.error-message,
+.no-results {
+  text-align: center;
+  padding: var(--spacing-xl);
+  font-size: 1.1rem;
+  color: var(--gray-500);
+}
+
+.error-message {
+  color: var(--error);
+  font-weight: 600;
+}
+
+/* Responsive adjustments for BlogPage */
+@media (max-width: 768px) {
+  .blog-page-title {
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .blog-filters {
+    flex-direction: column; /* Xếp bộ lọc theo chiều dọc */
+    gap: var(--spacing-md);
+  }
+
+  .blog-search-form {
+    width: 100%;
+    max-width: none; /* Cho phép nó chiếm toàn bộ chiều rộng */
+  }
+
+  .blog-category-select {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .blog-list-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Điều chỉnh cho màn hình nhỏ hơn */
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .blog-page {
+    padding: var(--spacing-lg) 0;
+  }
+  .blog-page-title {
+    font-size: 1.5rem;
+  }
+  .blog-search-input,
+  .blog-category-select {
+    font-size: 0.95rem;
+    padding: 8px 12px;
+  }
+  .blog-search-btn {
+    padding: 8px 12px;
+  }
+  .blog-list-grid {
+    grid-template-columns: 1fr; /* Một cột trên màn hình nhỏ nhất */
+    gap: var(--spacing-md);
+  }
+}

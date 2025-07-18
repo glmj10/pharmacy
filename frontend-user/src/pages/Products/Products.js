@@ -765,7 +765,6 @@ const Products = () => {
 
                 {totalPages > 1 && (
                   <>
-                    {console.log('Rendering pagination - totalPages:', totalPages, 'currentPage:', currentPage)}
                     {renderPagination()}
                   </>
                 )}

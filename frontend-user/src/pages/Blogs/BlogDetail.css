@@ -1,0 +1,190 @@
+/* src/pages/BlogDetail/BlogDetail.css */
+
+/* Nền và padding chung cho trang */
+.blog-detail-page {
+  padding: var(--spacing-xl) 0;
+  background-color: var(--gray-50); /* Sử dụng biến màu từ theme */
+  min-height: calc(100vh - 100px); /* Đảm bảo đủ chiều cao cho trang */
+}
+
+/* Phần tiêu đề và metadata */
+.blog-detail-header {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.blog-detail-title {
+  font-size: 2.5rem; /* Kích thước tiêu đề lớn */
+  color: var(--primary-700); /* Màu chủ đạo */
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.3;
+  font-weight: 800; /* Tiêu đề in đậm */
+}
+
+.blog-detail-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md); /* Khoảng cách giữa ngày và danh mục */
+  color: var(--gray-500); /* Màu chữ metadata */
+  font-size: 0.95rem;
+}
+
+.blog-detail-meta span {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs); /* Khoảng cách giữa icon và chữ */
+}
+
+.meta-category-link {
+  color: var(--primary-600); /* Màu liên kết danh mục */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.meta-category-link:hover {
+  text-decoration: underline; /* Hiệu ứng gạch chân khi hover */
+}
+
+/* Hình ảnh thumbnail */
+.blog-detail-thumbnail {
+  width: 100%;
+  max-width: 800px; /* Giới hạn chiều rộng hình ảnh để không quá lớn */
+  margin: var(--spacing-lg) auto; /* Căn giữa và khoảng cách */
+  border-radius: var(--radius-md); /* Bo góc */
+  overflow: hidden;
+  box-shadow: var(--shadow-md); /* Đổ bóng nhẹ */
+}
+
+.blog-detail-thumbnail img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* Nội dung bài viết (render từ HTML thô) */
+.blog-detail-content {
+  background-color: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  line-height: 1.8; /* Khoảng cách dòng dễ đọc */
+  color: var(--gray-700);
+  font-size: 1.05rem;
+}
+
+/* Định kiểu cho các thẻ HTML bên trong nội dung (ví dụ: h1, p, ul, img) */
+.blog-detail-content h1,
+.blog-detail-content h2,
+.blog-detail-content h3,
+.blog-detail-content h4,
+.blog-detail-content h5,
+.blog-detail-content h6 {
+  color: var(--gray-800);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+  font-weight: 700;
+}
+
+.blog-detail-content h1 { font-size: 2em; }
+.blog-detail-content h2 { font-size: 1.75em; }
+.blog-detail-content h3 { font-size: 1.5em; }
+.blog-detail-content h4 { font-size: 1.25em; }
+.blog-detail-content p {
+  margin-bottom: var(--spacing-md);
+}
+.blog-detail-content ul,
+.blog-detail-content ol {
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-lg); /* Thụt vào cho list */
+}
+.blog-detail-content li {
+  margin-bottom: var(--spacing-xs);
+}
+.blog-detail-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: var(--spacing-md) auto; /* Căn giữa hình ảnh trong nội dung */
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+.blog-detail-content a {
+  color: var(--primary-600);
+  text-decoration: underline;
+}
+.blog-detail-content a:hover {
+  color: var(--primary-700);
+}
+
+/* Phần footer của trang chi tiết */
+.blog-detail-footer {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+}
+
+.back-to-blog-list {
+  display: inline-flex; /* Cho phép icon và chữ nằm cùng hàng */
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: var(--primary-100);
+  color: var(--primary-600);
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-full); /* Nút bo tròn */
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.back-to-blog-list:hover {
+  background: var(--primary-200);
+  transform: translateY(-2px); /* Hiệu ứng nhấc nhẹ */
+}
+
+/* Kiểu cho thông báo tải, lỗi, không tìm thấy */
+.loading-indicator,
+.error-message,
+.no-blog-found {
+  text-align: center;
+  padding: var(--spacing-xl);
+  font-size: 1.1rem;
+  color: var(--gray-500);
+}
+
+.error-message {
+  color: var(--error);
+  font-weight: 600;
+}
+
+/* Responsive adjustments for BlogDetail */
+@media (max-width: 768px) {
+  .blog-detail-title {
+    font-size: 1.75rem; /* Nhỏ hơn trên tablet */
+  }
+  .blog-detail-meta {
+    flex-direction: column; /* Xếp ngày và danh mục theo chiều dọc */
+    gap: var(--spacing-xs);
+  }
+  .blog-detail-content {
+    padding: var(--spacing-md);
+    font-size: 1rem;
+  }
+  /* Điều chỉnh kích thước tiêu đề trong nội dung */
+  .blog-detail-content h1 { font-size: 1.75em; }
+  .blog-detail-content h2 { font-size: 1.5em; }
+  .blog-detail-content h3 { font-size: 1.25em; }
+  .blog-detail-content h4 { font-size: 1.1em; }
+}
+
+@media (max-width: 480px) {
+  .blog-detail-title {
+    font-size: 1.5rem; /* Nhỏ hơn nữa trên mobile */
+  }
+  .blog-detail-meta {
+    font-size: 0.85rem;
+  }
+  .blog-detail-content {
+    padding: var(--spacing-sm);
+  }
+}

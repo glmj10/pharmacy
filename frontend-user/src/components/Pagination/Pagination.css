@@ -1,0 +1,92 @@
+/* src/components/Pagination/Pagination.css */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-sm);
+}
+
+.pagination-btn {
+  background: var(--primary-600);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--primary-700);
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.pagination-pages {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.pagination-page-number {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
+  padding: 10px 15px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  min-width: 40px; /* Đảm bảo chiều rộng nhất quán */
+  text-align: center;
+}
+
+.pagination-page-number:hover:not(.active) {
+  background: var(--primary-50);
+  color: var(--primary-600);
+}
+
+.pagination-page-number.active {
+  background: var(--primary-600);
+  color: white;
+  border-color: var(--primary-600);
+  font-weight: 600;
+  cursor: default;
+}
+
+.pagination-ellipsis {
+    padding: 0 5px;
+    color: var(--gray-500);
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments for Pagination */
+@media (max-width: 480px) {
+  .pagination {
+    gap: var(--spacing-xs);
+    flex-wrap: wrap; /* Cho phép các nút phân trang xuống dòng */
+  }
+
+  .pagination-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  .pagination-page-number {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 35px;
+  }
+  .pagination-pages {
+    flex-wrap: wrap; /* Cho phép các số trang xuống dòng */
+    justify-content: center;
+  }
+}

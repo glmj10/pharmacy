@@ -1,3 +1,62 @@
+/* Variables */
+:root {
+  --primary-600: #16A34A;
+  --primary-700: #15803d;
+  --primary-500: #22c55e;
+  --primary-100: #dcfce7;
+  --primary-50: #f0fdf4;
+  --primary-200: #a7f3d0;
+
+  --gray-700: #374151;
+  --gray-400: #9ca3af;
+  --gray-300: #d1d5db;
+  --gray-200: #e5e7eb;
+  --gray-100: #f3f4f6;
+  --gray-50: #f9fafb;
+
+  --error: #ef4444;
+  --border-color: #e0e0e0;
+
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Text colors - assuming common variables, adjust if your project uses different names */
+  --text-primary: var(--gray-700);
+  --text-secondary: var(--gray-500);
+}
+
+/* Core container for responsive layout */
+.container {
+  max-width: 1200px; /* Sets a maximum width for the content */
+  margin: 0 auto; /* Centers the container horizontally */
+  padding: 0 1rem; /* Adds horizontal padding for smaller screens to prevent content from touching edges */
+}
+
+/* Adjust container padding for larger screens for better aesthetics */
+@media (min-width: 768px) {
+  .container {
+    padding: 0 1.5rem; /* Slightly more padding on wider screens */
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    padding: 0 2rem; /* Even more padding for very wide screens, or keep 1.5rem if preferred */
+  }
+}
+
 .navbar {
   background: white;
   box-shadow: var(--shadow-md);
@@ -32,6 +91,8 @@
   gap: var(--spacing-lg);
   color: white;
   font-size: 0.875rem;
+  overflow: hidden; /* Ensure text clips if it overflows */
+  white-space: nowrap; /* Keep text on a single line */
 }
 
 .promotion-text span {
@@ -49,6 +110,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
+  flex-shrink: 0; /* Prevent from shrinking on smaller screens */
 }
 
 .location-info,
@@ -58,6 +120,7 @@
   gap: var(--spacing-xs);
   color: white;
   font-size: 0.875rem;
+  white-space: nowrap; /* Prevent these infos from wrapping */
 }
 
 .auth-section {
@@ -106,6 +169,7 @@
   text-decoration: none;
   color: var(--primary-600);
   font-weight: 700;
+  flex-shrink: 0; /* Prevent logo from shrinking */
 }
 
 .logo-icon {
@@ -117,6 +181,7 @@
   background: var(--primary-600);
   border-radius: var(--radius-lg);
   color: white;
+  flex-shrink: 0;
 }
 
 .logo-cross {
@@ -127,6 +192,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  white-space: nowrap; /* Keep logo text on single lines */
 }
 
 .logo-name {
@@ -281,6 +347,7 @@
   height: 50px;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0; /* Prevent search button from shrinking */
 }
 
 .search-btn:hover {
@@ -320,6 +387,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  flex-shrink: 0; /* Prevent icons from shrinking */
 }
 
 .icon-link {
@@ -370,13 +438,16 @@
 }
 
 .category-menu {
-  display: flex;
-  align-items: center;
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0; /* Prevent category menu from shrinking */
 }
 
 .category-btn {
   display: flex;
   align-items: center;
+  /* Add margin-right to create space for arrow icon */
+  margin-right: var(--spacing-sm); /* Adjusted margin for arrow space */
   gap: var(--spacing-sm);
   background: var(--primary-600);
   color: white;
@@ -386,10 +457,191 @@
   cursor: pointer;
   font-weight: 500;
   transition: background 0.3s ease;
+  font-size: 1rem;
 }
+
+.category-btn span {
+  /* No special styles needed here, adjust gap in button */
+}
+
+.category-btn svg { /* Target both FaBars and FaChevronRight within the button */
+  font-size: 1.1rem;
+  transition: transform 0.3s ease; /* Add transition for rotation */
+}
+
+/* Style for FaChevronRight when dropdown is open */
+.category-btn .dropdown-arrow {
+  margin-left: auto; /* Push to the right */
+  transform: rotate(90deg); /* Initial position for closed dropdown, pointing right */
+}
+
+.category-btn .dropdown-arrow.rotated { /* Class applied when dropdown is open */
+  transform: rotate(-90deg); /* Rotate to point up */
+}
+
 
 .category-btn:hover {
   background: var(--primary-700);
+}
+
+/* Styles for the multi-level category dropdown content */
+.category-dropdown-content {
+  position: absolute;
+  background-color: #ffffff;
+  width: 900px; /* NEW: Increased total width for both panels (approx 300px + 600px) */
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1000;
+  left: 0;
+  top: 100%;
+  border-radius: 4px;
+  padding: 0;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  display: flex;
+  max-height: 500px;
+  overflow: hidden;
+  animation: slideDown 0.3s ease;
+}
+
+.category-dropdown-content .main-category-list {
+  flex-shrink: 0;
+  width: 20rem; /* NEW: Increased width for the main category list (left panel) */
+  padding: 10px 0;
+  border-right: 1px solid #eee;
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.category-dropdown-content .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 16px; /* Adjusted padding */
+  text-decoration: none;
+  color: #333;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+
+.category-dropdown-content .dropdown-item:hover,
+.category-dropdown-content .dropdown-item.active {
+  background-color: var(--primary-50);
+  color: var(--primary-600);
+}
+
+.category-dropdown-content .category-thumbnail-img {
+  width: 50px; /* NEW: Increased size for thumbnails */
+  height: 50px; /* NEW: Increased size for thumbnails */
+  object-fit: contain;
+  margin-right: 10px; /* NEW: Adjusted spacing */
+  border-radius: var(--radius-sm);
+}
+
+.category-dropdown-content .dropdown-arrow-static { /* Renamed for clarity, was just .dropdown-arrow previously */
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--gray-400);
+}
+
+.category-dropdown-content .dropdown-loading {
+  padding: 12px 16px;
+  text-align: center;
+  color: #666;
+}
+
+/* Styles for the sub-category list (right panel) */
+.sub-category-list {
+  flex-grow: 1;
+  min-width: 600px; /* NEW: Increased minimum width for sub-category list (right panel) */
+  max-width: 600px; /* Explicit max-width for consistency */
+  background-color: #f9f9f9;
+  padding: 10px 16px; /* Outer padding of the right panel */
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.sub-category-list h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 10px;
+}
+
+/* NEW: Grid for sub-category items */
+.sub-category-list .sub-category-items-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 columns */
+  gap: var(--spacing-md); /* Gap between grid items, adjusted for visual */
+  padding-bottom: var(--spacing-sm); /* Add padding at bottom of grid */
+}
+
+.sub-category-list .sub-dropdown-item {
+  display: flex;
+  flex-direction: column; /* Stack image and text vertically */
+  align-items: center; /* Center content horizontally */
+  text-align: center; /* Center text */
+  padding: var(--spacing-sm); /* Padding inside each grid item/card */
+  text-decoration: none;
+  color: #555;
+  white-space: normal; /* Allow text to wrap on multiple lines */
+  font-size: 0.85rem; /* Adjusted font size for sub-items */
+  border: 1px solid var(--gray-100); /* Subtle border */
+  border-radius: var(--radius-sm);
+  background-color: white;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); /* Very light shadow */
+  transition: all 0.2s ease;
+  height: 100%; /* Ensure all cards in a row have same height */
+  justify-content: flex-start; /* Align content to top */
+}
+
+.sub-category-list .sub-dropdown-item:hover {
+  background-color: var(--primary-50);
+  color: var(--primary-600);
+  transform: translateY(-2px); /* Slight lift effect */
+  box-shadow: var(--shadow-md); /* More pronounced shadow on hover */
+}
+
+.sub-category-list .sub-dropdown-item .category-thumbnail-img {
+  width: 50px; /* Consistent with main categories */
+  height: 50px;
+  object-fit: contain;
+  margin-right: 0; /* Remove horizontal margin */
+  margin-bottom: var(--spacing-sm); /* Add vertical margin below image */
+}
+
+/* Style for "Xem tất cả [Category Name]" link in sub-category list */
+.sub-category-list .view-all-sub-categories-link {
+  border-top: 1px solid #eee;
+  margin-top: 10px;
+  padding: 10px 16px; /* Consistent with sub-category-list outer padding */
+  font-weight: bold;
+  color: var(--primary-600);
+  text-align: center;
+  display: block;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sub-category-list .view-all-sub-categories-link:hover {
+  background-color: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.sub-category-list.no-sub-categories {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+.sub-category-list.no-sub-categories p {
+    color: var(--gray-500);
+    margin-bottom: 15px;
 }
 
 .category-links {
@@ -550,7 +802,7 @@
   display: none;
   background: none;
   border: none;
-  color: #3e72b5;
+  color: #3e72b5; /* This color isn't defined in variables. Consider adding it or using an existing gray. */
   font-size: 1.25rem;
   cursor: pointer;
   padding: var(--spacing-sm);
@@ -563,7 +815,7 @@
 }
 
 .mobile-menu {
-  display: none;
+  display: none; /* Controlled by JS to be block when open */
   position: absolute;
   top: 100%;
   left: 0;
@@ -572,7 +824,7 @@
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   box-shadow: var(--shadow-xl);
   padding: var(--spacing-md);
-  z-index: 1000;
+  z-index: 1001;
   animation: slideDown 0.3s ease;
 }
 
@@ -647,6 +899,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   margin-left: var(--spacing-md);
+  flex-shrink: 0; /* Prevent auth buttons from shrinking */
 }
 
 .auth-btn-main {
@@ -697,6 +950,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   margin-left: var(--spacing-md);
+  flex-shrink: 0; /* Prevent user menu button from shrinking */
 }
 
 .user-menu-btn-main:hover {
@@ -836,6 +1090,21 @@
   .category-link:nth-child(n+5) {
     display: none;
   }
+
+  /* Adjust dropdown width for smaller desktops */
+  .category-dropdown-content {
+    width: 650px; /* Example: 250px for main + 400px for sub */
+  }
+  .category-dropdown-content .main-category-list {
+    width: 250px;
+  }
+  .category-dropdown-content .sub-category-list {
+    min-width: 400px;
+    max-width: 400px;
+  }
+  .sub-category-list .sub-category-items-grid {
+    grid-template-columns: repeat(4, 1fr); /* Adjust to 4 columns */
+  }
 }
 
 @media (max-width: 1024px) {
@@ -867,11 +1136,40 @@
   .user-name {
     display: none;
   }
+
+  /* Further adjust dropdown for smaller screens */
+  .category-dropdown-content {
+    width: 550px; /* Example: 220px for main + 330px for sub */
+  }
+  .category-dropdown-content .main-category-list {
+    width: 220px;
+  }
+  .category-dropdown-content .sub-category-list {
+    min-width: 330px;
+    max-width: 330px;
+  }
+  .sub-category-list .sub-category-items-grid {
+    grid-template-columns: repeat(3, 1fr); /* Adjust to 3 columns */
+  }
 }
 
 @media (max-width: 900px) {
   .category-link:nth-child(n+3) {
     display: none;
+  }
+
+  .category-dropdown-content {
+    width: 500px; /* Example: 200px for main + 300px for sub */
+  }
+  .category-dropdown-content .main-category-list {
+    width: 200px;
+  }
+  .category-dropdown-content .sub-category-list {
+    min-width: 300px;
+    max-width: 300px;
+  }
+  .sub-category-list .sub-category-items-grid {
+    grid-template-columns: repeat(2, 1fr); /* Adjust to 2 columns */
   }
 }
 
@@ -893,7 +1191,7 @@
   }
   
   .mobile-menu {
-    display: block;
+    display: block; /* Overrides the default display: none; when activated by JS */
   }
   
   .navbar-search {
@@ -929,6 +1227,12 @@
   
   .promotion-text span:nth-child(n+4) {
     display: none;
+  }
+  
+  .location-info,
+  .phone-info {
+    /* Hide on very small screens if space is critical */
+    display: none; 
   }
 }
 
@@ -991,10 +1295,9 @@
   cursor: pointer;
   font-family: inherit;
   font-size: inherit;
+  padding: 0; /* Remove default button padding */
 }
 
 .cart-link:focus {
   outline: none;
 }
-
-
