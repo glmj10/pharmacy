@@ -48,19 +48,16 @@ const AuthModal = () => {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate username
     if (registerData.username.length < 3) {
       toast.error('Tên đăng nhập phải có ít nhất 3 ký tự!');
       return;
     }
     
-    // Validate password
     if (registerData.password.length < 6) {
       toast.error('Mật khẩu phải có ít nhất 6 ký tự!');
       return;
     }
     
-    // Validate confirm password
     if (registerData.password !== registerData.confirmPassword) {
       toast.error('Mật khẩu xác nhận không khớp!');
       return;
@@ -69,6 +66,7 @@ const AuthModal = () => {
     setLoading(true);
     
     try {
+      console.log('Registering with data:', registerData);
       await register(registerData);
       toast.success('Đăng ký thành công!');
       handleAuthSuccess();

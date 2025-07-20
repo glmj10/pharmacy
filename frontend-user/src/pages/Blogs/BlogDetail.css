@@ -2,9 +2,8 @@
 
 /* Nền và padding chung cho trang */
 .blog-detail-page {
-  padding: var(--spacing-xl) 0;
-  background-color: var(--gray-50); /* Sử dụng biến màu từ theme */
-  min-height: calc(100vh - 100px); /* Đảm bảo đủ chiều cao cho trang */
+  background-color: var(--gray-50);
+  min-height: calc(100vh - 100px); 
 }
 
 /* Phần tiêu đề và metadata */

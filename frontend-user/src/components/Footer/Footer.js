@@ -61,6 +61,26 @@ const Footer = () => {
                 <p>Được tin tưởng bởi hàng triệu khách hàng</p>
               </div>
             </div>
+        {/* New Feature Item 1 */}
+        <div className="feature-item">
+          <div className="feature-icon">
+            <FaEnvelope />
+          </div>
+          <div className="feature-content">
+            <h4>Hỗ Trợ Email</h4>
+            <p>Phản hồi nhanh qua email, hỗ trợ mọi thắc mắc</p>
+          </div>
+        </div>
+        {/* New Feature Item 2 */}
+        <div className="feature-item">
+          <div className="feature-icon">
+            <FaMapMarkerAlt />
+          </div>
+          <div className="feature-content">
+            <h4>Hệ Thống Toàn Quốc</h4>
+            <p>Phủ sóng rộng khắp các tỉnh thành Việt Nam</p>
+          </div>
+        </div>
           </div>
         </div>
       </div>
@@ -135,16 +155,13 @@ const Footer = () => {
             <div className="footer-section">
               <h3 className="footer-title">Thông Tin Liên Hệ</h3>
               <div className="contact-info">
-                <div className="contact-item">
-                  <FaMapMarkerAlt className="contact-icon" />
+                <div className="contact">
                   <span>123 Đường ABC, Quận 1, TP.HCM</span>
                 </div>
-                <div className="contact-item">
-                  <FaPhoneAlt className="contact-icon" />
+                <div className="contact">
                   <span>1800-1234 (Miễn phí)</span>
                 </div>
-                <div className="contact-item">
-                  <FaEnvelope className="contact-icon" />
+                <div className="contact">
                   <span>info@nhathuoc.com</span>
                 </div>
               </div>

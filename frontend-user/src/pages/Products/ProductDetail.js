@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAuthAction } from '../../hooks/useAuthAction';
 import { wishlistService } from '../../services/wishlistService';
 import { FaChevronRight, FaHome } from 'react-icons/fa';
+import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -167,6 +168,12 @@ const ProductDetail = () => {
       </nav>
     );
   };
+  
+  const breadcrumbItems = [
+    { label: 'Trang chủ', path: '/', icon: <FaHome /> },
+    { label: 'Sản phẩm', path: '/products' },
+    { label: product?.title || 'Chi tiết sản phẩm' }
+  ];
 
   // Auto slideshow effect
   useEffect(() => {
@@ -249,7 +256,7 @@ const ProductDetail = () => {
     <div className="product-detail-page">
       <div className="container">
         {/* Breadcrumb Navigation */}
-        {renderBreadcrumb()}
+        <Breadcrumb items={breadcrumbItems} />
 
         {/* Product Detail */}
         <div className="product-detail">

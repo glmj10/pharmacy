@@ -8,7 +8,7 @@ const BlogCard = ({ blog }) => {
     return date.toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 

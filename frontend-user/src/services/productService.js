@@ -2,7 +2,6 @@ import api from './api';
 
 export const productService = {
   getAllProducts: async (params = {}) => {
-    // Backend expects pageIndex, pageSize, title, categorySlug, etc.
     const backendParams = {
       pageIndex: params.pageIndex || params.page || 1,
       pageSize: params.pageSize || params.limit || 10,
@@ -22,6 +21,11 @@ export const productService = {
     });
 
     const response = await api.get('/products', { params: backendParams });
+    return response.data;
+  },
+
+  getTop15ProductsByNumberOfLikes: async () => {
+    const response = await api.get('/products/top15');
     return response.data;
   },
 

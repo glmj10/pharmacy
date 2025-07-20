@@ -4,10 +4,6 @@ import { AuthTransform } from '../utils/dataTransform';
 export const authService = {
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
-    // Backend trả về: ApiResponse<AuthResponse>
-    // response.data = { status, message, data: { token }, timestamp }
-    
-    // Validate response structure
     if (!response.data || !response.data.data || !response.data.data.token) {
       throw new Error('Invalid login response from server');
     }
@@ -17,13 +13,11 @@ export const authService = {
 
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
-    // Backend trả về: ApiResponse<UserResponse>
     return response.data;
   },
 
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
-    // Backend trả về: ApiResponse<UserResponse>
     return response.data;
   },
 

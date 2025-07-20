@@ -5,8 +5,10 @@ import { useCart } from '../../contexts/CartContext';
 import { wishlistService } from '../../services/wishlistService';
 import { toast } from 'react-toastify';
 import './Wishlist.css';
+import ProductCard from '../../components/ProductCard/ProductCard';
 
 const Wishlist = () => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { user } = useAuth();
   const { addToCart } = useCart();
   const [wishlist, setWishlist] = useState([]);
@@ -21,10 +23,12 @@ const Wishlist = () => {
   const fetchWishlist = async () => {
     try {
       setLoading(true);
-      const data = await wishlistService.getWishlist();
-      setWishlist(data);
+      const response = await wishlistService.getWishlist();
+      const data = response.data;
+      setWishlist(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error('Không thể tải danh sách yêu thích: ' + error.message);
+      setWishlist([]);
     } finally {
       setLoading(false);
     }
@@ -33,7 +37,7 @@ const Wishlist = () => {
   const handleRemoveFromWishlist = async (productId) => {
     try {
       await wishlistService.removeFromWishlist(productId);
-      setWishlist(prev => prev.filter(item => item.product.id !== productId));
+      setWishlist(prev => prev.filter(item => item.id !== productId));
       toast.success('Đã xóa khỏi danh sách yêu thích!');
     } catch (error) {
       toast.error('Không thể xóa sản phẩm: ' + error.message);
@@ -52,12 +56,23 @@ const Wishlist = () => {
   const handleAddAllToCart = async () => {
     try {
       for (const item of wishlist) {
-        await addToCart(item.product, 1);
+        await addToCart(item, 1);
       }
       toast.success('Đã thêm tất cả sản phẩm vào giỏ hàng!');
     } catch (error) {
       toast.error('Không thể thêm tất cả sản phẩm vào giỏ hàng: ' + error.message);
     }
+  };
+
+  const handleClearWishlist = async () => {
+    try {
+      await wishlistService.clearWishlist();
+      setWishlist([]);
+      toast.success('Đã xóa toàn bộ danh sách yêu thích!');
+    } catch (error) {
+      toast.error('Không thể xóa toàn bộ danh sách: ' + error.message);
+    }
+    setShowConfirmModal(false);
   };
 
   const formatCurrency = (amount) => {
@@ -107,75 +122,30 @@ const Wishlist = () => {
         <div className="wishlist-grid">
           {wishlist.map(item => (
             <div key={item.id} className="wishlist-item">
-              <div className="item-image-container">
-                <img
-                  src={item.product.imageUrl || '/api/placeholder/200/200'}
-                  alt={item.product.name}
-                  className="item-image"
-                />
-                <button
-                  onClick={() => handleRemoveFromWishlist(item.product.id)}
-                  className="remove-btn"
-                  title="Xóa khỏi danh sách yêu thích"
-                >
-                  ×
-                </button>
-                {item.product.discount && (
-                  <div className="discount-badge">
-                    -{item.product.discount}%
-                  </div>
-                )}
-              </div>
-              
-              <div className="item-details">
-                <Link to={`/products/${item.product.id}`} className="item-title">
-                  {item.product.name}
-                </Link>
-                <p className="item-category">{item.product.category}</p>
-                <p className="item-description">{item.product.description}</p>
-                
-                <div className="item-price">
-                  {item.product.discount ? (
-                    <>
-                      <span className="discounted-price">
-                        {formatCurrency(item.product.price * (1 - item.product.discount / 100))}
-                      </span>
-                      <span className="original-price">
-                        {formatCurrency(item.product.price)}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="current-price">
-                      {formatCurrency(item.product.price)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="item-actions">
-                  <button
-                    onClick={() => handleAddToCart(item.product)}
-                    className="add-to-cart-btn"
-                    disabled={!item.product.inStock}
-                  >
-                    {item.product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
-                  </button>
-                  <Link to={`/products/${item.product.id}`} className="view-btn">
-                    Xem chi tiết
-                  </Link>
-                </div>
-
-                <div className="item-meta">
-                  <span className="added-date">
-                    Thêm vào: {new Date(item.createdAt).toLocaleDateString('vi-VN')}
-                  </span>
-                  <div className="stock-status">
-                    {item.product.inStock ? (
-                      <span className="in-stock">Còn hàng</span>
-                    ) : (
-                      <span className="out-of-stock">Hết hàng</span>
-                    )}
-                  </div>
-                </div>
+              <div style={{ position: 'relative' }}>
+        <ProductCard
+          product={{
+            id: item.id,
+            slug: item.slug || item.id,
+            thumbnailUrl: item.thumbnailUrl || item.imageUrl,
+            title: item.title || item.name,
+            priceNew: typeof item.priceNew === 'number'
+              ? item.priceNew
+              : (typeof item.price === 'number' ? item.price : undefined),
+            priceOld: typeof item.priceOld === 'number'
+              ? item.priceOld
+              : undefined,
+            inWishlist: true,
+            numberOfLikes: item.numberOfLikes,
+            quantity: typeof item.quantity === 'number'
+              ? item.quantity
+              : (item.inStock ? 1 : 0),
+          }}
+          formatPrice={formatCurrency}
+          onAddToCart={() => handleAddToCart(item)}
+          onWishlistToggle={() => handleRemoveFromWishlist(item.id)}
+          onProductClick={(slugOrId) => window.location.href = `/products/${item.slug || item.id}`}
+        />
               </div>
             </div>
           ))}
@@ -187,20 +157,13 @@ const Wishlist = () => {
           <div className="wishlist-summary">
             <h3>Tổng quan</h3>
             <p>Tổng cộng {wishlist.length} sản phẩm trong danh sách yêu thích</p>
-            <p>
-              Tổng giá trị: {formatCurrency(
-                wishlist.reduce((total, item) => {
-                  const price = item.product.discount 
-                    ? item.product.price * (1 - item.product.discount / 100)
-                    : item.product.price;
-                  return total + price;
-                }, 0)
-              )}
-            </p>
           </div>
           <div className="wishlist-actions">
             <button onClick={handleAddAllToCart} className="add-all-btn">
               Thêm tất cả vào giỏ hàng
+            </button>
+            <button onClick={() => setShowConfirmModal(true)} className="add-all-btn" style={{background: '#f44336', color: '#fff', minWidth: '160px'}}>
+              Xóa tất cả
             </button>
             <Link to="/products" className="continue-shopping-btn">
               Tiếp tục mua sắm
@@ -208,6 +171,19 @@ const Wishlist = () => {
           </div>
         </div>
       )}
+    {/* Modal xác nhận xóa tất cả wishlist */}
+    {showConfirmModal && (
+      <div className="modal-overlay" style={{position: 'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.3)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center'}}>
+        <div className="modal-content" style={{background:'#fff', borderRadius:'10px', padding:'2rem', minWidth:'320px', boxShadow:'0 2px 16px rgba(0,0,0,0.15)'}}>
+          <h2 style={{marginBottom:'1rem', color:'#f44336'}}>Xác nhận xóa tất cả</h2>
+          <p>Bạn có chắc chắn muốn xóa toàn bộ sản phẩm khỏi danh sách yêu thích?</p>
+          <div style={{display:'flex', gap:'1rem', marginTop:'2rem', justifyContent:'flex-end'}}>
+            <button className="add-all-btn" style={{background:'#f44336', color:'#fff', minWidth:'120px'}} onClick={handleClearWishlist}>Xóa tất cả</button>
+            <button className="add-all-btn" style={{background:'#ccc', color:'#333', minWidth:'120px'}} onClick={()=>setShowConfirmModal(false)}>Hủy</button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

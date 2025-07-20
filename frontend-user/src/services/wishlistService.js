@@ -7,12 +7,17 @@ export const wishlistService = {
   },
 
   addToWishlist: async (productId) => {
-    const response = await api.post('/wishlist', { productId });
+    const response = await api.post(`/wishlist?productId=${productId}`);
     return response.data;
   },
 
-  removeFromWishlist: async (wishlistId) => {
-    const response = await api.delete(`/wishlist/remove/${wishlistId}`);
+  removeFromWishlist: async (productId) => {
+    const response = await api.delete(`/wishlist/remove/${productId}`);
+    return response.data;
+  },
+
+  clearWishlist: async () => {
+    const response = await api.delete('/wishlist/clear');
     return response.data;
   }
 };

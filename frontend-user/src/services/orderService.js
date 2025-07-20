@@ -14,5 +14,10 @@ export const orderService = {
   getOrderDetail: async (orderId) => {
     const response = await api.get(`/orders/detail/${orderId}`);
     return response.data;
+  },
+
+  cancelOrder: async (orderId) => {
+    const response = await api.put(`/orders/cancel/${orderId}`);
+    return response.data;
   }
 };

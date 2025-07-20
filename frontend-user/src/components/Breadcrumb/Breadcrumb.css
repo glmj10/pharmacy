@@ -1,0 +1,55 @@
+/* src/components/Breadcrumb/Breadcrumb.css */
+.breadcrumb-nav {
+  padding: 15px 0;
+  font-size: 15px;
+  color: #6c757d;
+}
+
+.breadcrumb-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  color: #333; /* Màu chữ mặc định cho các mục */
+}
+
+.breadcrumb-link {
+  color: #333; /* Màu mặc định cho link, giống với text */
+  text-decoration: none; /* Bỏ gạch chân mặc định */
+  transition: color 0.2s ease-in-out;
+}
+
+.breadcrumb-link:hover {
+  color: #28a745; /* Màu xanh lá cây khi hover */
+  text-decoration: none; /* Bỏ gạch chân khi hover */
+}
+
+/* Styling cho mục breadcrumb cuối cùng (active item) */
+.breadcrumb-item.active span {
+  color: #28a745; /* Màu xanh lá cây cho mục hiện tại */
+  font-weight: 500;
+}
+
+/* Điều chỉnh CSS cho icon separator */
+.breadcrumb-separator {
+  margin: 0 8px; /* Khoảng cách giữa icon và text */
+  color: #6c757d; /* Màu của icon */
+  /* font-size có thể không cần nếu icon đã có kích thước hợp lý, hoặc đặt một giá trị nhỏ hơn */
+  font-size: 1em; /* Kích thước icon bằng kích thước text */
+  vertical-align: middle; /* Căn chỉnh dọc icon với text */
+  display: flex; /* Đảm bảo icon được căn giữa trong không gian của nó */
+  align-items: center;
+}
+
+.breadcrumb-icon {
+  margin-right: 5px;
+  display: inline-flex;
+  align-items: center;
+}

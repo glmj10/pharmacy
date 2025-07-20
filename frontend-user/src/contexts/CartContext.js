@@ -180,8 +180,19 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const getCartItemCount = () => {
-    return state.items.reduce((count, item) => count + item.quantity, 0);
+  const getCartItemCount = async () => {
+    if (!isAuthenticated) return 0;
+    try {
+      const response = await cartService.getTotalCartItems();
+      return response.data || 0;
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        toast.error('Bạn cần đăng nhập để xem giỏ hàng');
+        return 0;
+      }
+      toast.error('Có lỗi xảy ra khi lấy số lượng sản phẩm trong giỏ hàng');
+      return 0;
+    }
   };
 
   const updateAllCartItemsStatus = async (status) => {

@@ -14,6 +14,11 @@ export const cartService = {
     return response.data;
   },
 
+  getTotalCartItems: async () => {
+    const response = await api.get('/carts/item/totalItems');
+    return response.data;
+  },
+
   updateCartItem: async (itemId, quantity) => {
     const response = await api.put(`/carts/item/${itemId}?quantity=${quantity}`);
     return response.data;

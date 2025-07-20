@@ -88,6 +88,7 @@ body {
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+  --radius-full: 9999px; /* Thêm biến radius-full cho các nút bo tròn */
 
   /* Shadow */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -98,10 +99,24 @@ body {
 
 /* Utilities */
 .container {
-  max-width: 1200px;
+  max-width: 1200px; /* Giữ nguyên max-width chính */
   margin: 0 auto;
-  padding: 0 var(--spacing-md);
+  padding: 0 var(--spacing-md); /* Sử dụng biến spacing cho padding mặc định */
 }
+
+/* Điều chỉnh padding container cho các màn hình lớn hơn để tốt hơn cho Blog */
+@media (min-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-lg); /* Tăng padding ngang trên tablet và desktop */
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    padding: 0 var(--spacing-xl); /* Tăng padding ngang nữa trên màn hình rất lớn */
+  }
+}
+
 
 .flex {
   display: flex;
@@ -362,7 +377,7 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
   .container {
-    padding: 0 var(--spacing-sm);
+    padding: 0 var(--spacing-md); /* Điều chỉnh lại cho phù hợp với breakpoint này */
   }
 
   .card {
@@ -371,5 +386,12 @@ body {
 
   .btn {
     padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+/* Thêm breakpoint nhỏ hơn nếu cần cho mobile */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 var(--spacing-sm); /* Giảm padding trên màn hình rất nhỏ */
   }
 }

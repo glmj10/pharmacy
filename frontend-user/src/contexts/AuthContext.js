@@ -68,14 +68,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const apiResponse = await authService.login(credentials);
       
-      // Backend chỉ trả về token trong login response
-      // apiResponse = { status, message, data: { token }, timestamp }
-      
       if (apiResponse && apiResponse.data && apiResponse.data.token) {
-        // Lưu token
         localStorage.setItem('token', apiResponse.data.token);
         
-        // Gọi API để lấy thông tin user
         const userResponse = await authService.getCurrentUser();
         
         if (userResponse && userResponse.data) {
@@ -89,7 +84,6 @@ export const AuthProvider = ({ children }) => {
             },
           });
         } else {
-          // Nếu không lấy được user info, chỉ lưu token
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
@@ -107,6 +101,13 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: false });
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      // Xử lý lỗi trả về từ backend
+      if (error?.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      if (error?.message) {
+        throw new Error(error.message);
+      }
       throw error;
     }
   };
@@ -119,6 +120,12 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (error) {
       dispatch({ type: 'SET_LOADING', payload: false });
+      if (error?.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      if (error?.message) {
+        throw new Error(error.message);
+      }
       throw error;
     }
   };

@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
+import { contactService } from '../../services/contactService';
 import Slider from 'react-slick';
 import {
-  FaShoppingCart,
-  FaHeart,
-  FaEye,
   FaArrowRight,
   FaPhoneAlt,
   FaTruck,
@@ -24,6 +22,9 @@ import './Home.css';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
+import ProductCard from '../../components/ProductCard/ProductCard';
+import useProductInteractions from '../../hooks/useProductInteractions'; // <-- Import Custom Hook
+
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -38,18 +39,21 @@ const Home = () => {
   });
   const [contactLoading, setContactLoading] = useState(false);
   const [contactMessage, setContactMessage] = useState('');
+  const [contactSent, setContactSent] = useState(false);
+
+  const {
+    wishlistItems,
+    handleProductClick,
+    handleAddToCart,
+    handleWishlistToggle,
+  } = useProductInteractions();
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
-        const response = await productService.getAllProducts({ pageSize: 8 });
-        
-        // Handle ApiResponse<PageResponse<List<ProductResponse>>> structure
-        if (response?.data?.data?.content && Array.isArray(response.data.data.content)) {
-          setFeaturedProducts(response.data.data.content);
-        } else if (response?.data?.content && Array.isArray(response.data.content)) {
-          setFeaturedProducts(response.data.content);
-        } else if (response?.data && Array.isArray(response.data)) {
+        // Call the new API for top 15 products by number of likes
+        const response = await productService.getTop15ProductsByNumberOfLikes();
+        if (response?.data && Array.isArray(response.data)) {
           setFeaturedProducts(response.data);
         } else {
           console.warn('Unexpected products response structure:', response);
@@ -67,12 +71,9 @@ const Home = () => {
       try {
         const response = await categoryService.getAllCategories();
         
-        // Handle ApiResponse<List<CategoryResponse>> structure
-        // Backend returns { status, message, data: List<CategoryResponse> }
         if (response?.data?.data && Array.isArray(response.data.data)) {
           setCategories(response.data.data);
         } else if (response?.data && Array.isArray(response.data)) {
-          // Fallback for direct array response
           setCategories(response.data);
         } else {
           console.warn('Unexpected categories response structure:', response);
@@ -94,7 +95,7 @@ const Home = () => {
     {
       id: 1,
       name: 'Nguyễn Thị Lan',
-      avatar: '/api/placeholder/60/60',
+      avatar: '/assets/default-avatar.png',
       rating: 5,
       comment: 'Thuốc chính hãng, giao hàng nhanh, nhân viên tư vấn rất nhiệt tình.',
       location: 'TP.HCM'
@@ -102,7 +103,7 @@ const Home = () => {
     {
       id: 2,
       name: 'Trần Văn Minh',
-      avatar: '/api/placeholder/60/60',
+      avatar: '/assets/default-avatar.png',
       rating: 5,
       comment: 'Đã mua thuốc nhiều lần, chất lượng tốt, giá cả hợp lý.',
       location: 'Hà Nội'
@@ -110,7 +111,7 @@ const Home = () => {
     {
       id: 3,
       name: 'Phạm Thị Hoa',
-      avatar: '/api/placeholder/60/60',
+      avatar: '/assets/default-avatar.png',
       rating: 5,
       comment: 'Dịch vụ tuyệt vời, thuốc được giao đúng hẹn và đóng gói cẩn thận.',
       location: 'Đà Nẵng'
@@ -136,33 +137,12 @@ const Home = () => {
     e.preventDefault();
     setContactLoading(true);
     setContactMessage('');
-
     try {
-      const response = await fetch('/api/v1/contacts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(contactForm),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        setContactMessage('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
-        setContactForm({
-          fullName: '',
-          email: '',
-          phoneNumber: '',
-          address: '',
-          content: ''
-        });
-      } else {
-        setContactMessage(data.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
-      }
+      const response = await contactService.sendContact(contactForm);
+      setContactMessage('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
+      setContactSent(true);
     } catch (error) {
-      console.error('Error submitting contact form:', error);
-      setContactMessage('Có lỗi xảy ra, vui lòng thử lại sau.');
+      setContactMessage(error?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
     } finally {
       setContactLoading(false);
     }
@@ -261,7 +241,6 @@ const Home = () => {
 
   return (
     <div className="home">
-      {/* Hero Section */}
       <section className="hero">
         <div className="container">
           <div className="hero-content">
@@ -302,7 +281,7 @@ const Home = () => {
             <div className="hero-image">
               <div className="hero-image-container">
                 <img 
-                  src="/api/placeholder/600/400" 
+                  src="/assets/hero-image.png" 
                   alt="Nhà thuốc online" 
                   className="hero-img"
                 />
@@ -367,7 +346,7 @@ const Home = () => {
                 <div key={category.id} className="category-slide">
                   <Link
                     to={`/products?category=${category.slug}`}
-                    className="category-card"
+                    className="category-card-slide"
                   >
                     <div className="category-image">
                       <img 
@@ -409,53 +388,14 @@ const Home = () => {
             <Slider {...productSliderSettings}>
               {featuredProducts?.map((product) => (
                 <div key={product.id} className="product-slide">
-                  <div className="product-card">
-                    <div className="product-image">
-                      <img 
-                        src={product.thumbnailUrl || '/api/placeholder/300/300'} 
-                        alt={product.title} 
-                      />
-                      <div className="product-badges">
-                        {product.priceOld && product.priceNew && product.priceOld > product.priceNew && (
-                          <span className="badge badge-discount">
-                            -{Math.round((1 - product.priceNew / product.priceOld) * 100)}%
-                          </span>
-                        )}
-                      </div>
-                      <div className="product-actions">
-                        <button className="action-btn">
-                          <FaHeart />
-                        </button>
-                        <Link to={`/products/${product.slug}`} className="action-btn">
-                          <FaEye />
-                        </Link>
-                      </div>
-                    </div>
-                    <div className="product-content">
-                      <h3 className="product-name">{product.title}</h3>
-                      <p className="product-description">{product.description}</p>
-                      <div className="product-price">
-                        {product.priceOld && product.priceNew && product.priceOld > product.priceNew ? (
-                          <>
-                            <span className="current-price">
-                              {formatPrice(product.priceNew)}
-                            </span>
-                            <span className="original-price">
-                              {formatPrice(product.priceOld)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="current-price">
-                            {formatPrice(product.priceNew || product.priceOld)}
-                          </span>
-                        )}
-                      </div>
-                      <button className="btn btn-primary btn-sm add-to-cart">
-                        <FaShoppingCart />
-                        Thêm vào giỏ
-                      </button>
-                    </div>
-                  </div>
+                  <ProductCard
+                    product={product}
+                    formatPrice={formatPrice}
+                    onAddToCart={handleAddToCart}
+                    onWishlistToggle={handleWishlistToggle}
+                    onProductClick={handleProductClick}
+                    isWishlisted={wishlistItems.includes(product.id)}
+                  />
                 </div>
               ))}
             </Slider>
@@ -559,111 +499,111 @@ const Home = () => {
             </div>
             
             <div className="contact-form-wrapper">
-              <form className="contact-form" onSubmit={handleContactSubmit}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="fullName">
-                      <FaUser />
-                      Họ và tên *
-                    </label>
-                    <input
-                      type="text"
-                      id="fullName"
-                      name="fullName"
-                      value={contactForm.fullName}
-                      onChange={handleContactChange}
-                      placeholder="Nhập họ và tên"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="phoneNumber">
-                      <FaPhone />
-                      Số điện thoại *
-                    </label>
-                    <input
-                      type="tel"
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      value={contactForm.phoneNumber}
-                      onChange={handleContactChange}
-                      placeholder="Nhập số điện thoại"
-                      required
-                    />
-                  </div>
+              {contactSent ? (
+                <div className="contact-success">
+                  <h3>Cảm ơn bạn đã gửi thông tin liên hệ!</h3>
+                  <p>Chúng tôi sẽ phản hồi sớm nhất có thể qua email hoặc số điện thoại bạn đã cung cấp.</p>
                 </div>
-                
-                <div className="form-row">
+              ) : (
+                <form className="contact-form" onSubmit={handleContactSubmit}>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="fullName">
+                        <FaUser />
+                        Họ và tên *
+                      </label>
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        value={contactForm.fullName}
+                        onChange={handleContactChange}
+                        placeholder="Nhập họ và tên"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="phoneNumber">
+                        <FaPhone />
+                        Số điện thoại *
+                      </label>
+                      <input
+                        type="tel"
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        value={contactForm.phoneNumber}
+                        onChange={handleContactChange}
+                        placeholder="Nhập số điện thoại"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="email">
+                        <FaEnvelope />
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={contactForm.email}
+                        onChange={handleContactChange}
+                        placeholder="Nhập địa chỉ email"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="address">
+                        <FaMapMarkerAlt />
+                        Địa chỉ
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={contactForm.address}
+                        onChange={handleContactChange}
+                        placeholder="Nhập địa chỉ (tùy chọn)"
+                      />
+                    </div>
+                  </div>
                   <div className="form-group">
-                    <label htmlFor="email">
-                      <FaEnvelope />
-                      Email *
+                    <label htmlFor="content">
+                      <FaCommentDots />
+                      Nội dung *
                     </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={contactForm.email}
+                    <textarea
+                      id="content"
+                      name="content"
+                      value={contactForm.content}
                       onChange={handleContactChange}
-                      placeholder="Nhập địa chỉ email"
+                      placeholder="Nhập nội dung cần tư vấn..."
+                      rows="5"
                       required
-                    />
+                    ></textarea>
                   </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="address">
-                      <FaMapMarkerAlt />
-                      Địa chỉ
-                    </label>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={contactForm.address}
-                      onChange={handleContactChange}
-                      placeholder="Nhập địa chỉ (tùy chọn)"
-                    />
-                  </div>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="content">
-                    <FaCommentDots />
-                    Nội dung *
-                  </label>
-                  <textarea
-                    id="content"
-                    name="content"
-                    value={contactForm.content}
-                    onChange={handleContactChange}
-                    placeholder="Nhập nội dung cần tư vấn..."
-                    rows="5"
-                    required
-                  ></textarea>
-                </div>
-                
-                {contactMessage && (
-                  <div className={`contact-message ${contactMessage.includes('Cảm ơn') ? 'success' : 'error'}`}>
-                    {contactMessage}
-                  </div>
-                )}
-                
-                <button 
-                  type="submit" 
-                  className="btn btn-primary btn-lg contact-submit"
-                  disabled={contactLoading}
-                >
-                  {contactLoading ? 'Đang gửi...' : 'Gửi liên hệ'}
-                  <FaArrowRight />
-                </button>
-              </form>
+                  {contactMessage && (
+                    <div className={`contact-message ${contactMessage.includes('Cảm ơn') ? 'success' : 'error'}`}>
+                      {contactMessage}
+                    </div>
+                  )}
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary btn-lg contact-submit"
+                    disabled={contactLoading}
+                  >
+                    {contactLoading ? 'Đang gửi...' : 'Gửi liên hệ'}
+                    <FaArrowRight />
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="cta">
         <div className="container">
           <div className="cta-content">

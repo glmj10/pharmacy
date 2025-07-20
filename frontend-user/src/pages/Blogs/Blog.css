@@ -1,6 +1,203 @@
+/* --- Redesigned Blog Page Styles --- */
+
+.redesigned-blog-page {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f7f8fa;
+  min-height: 100vh;
+}
+
+.blog-hero-section {
+  position: relative;
+  width: 100%;
+  min-height: 260px;
+  background: linear-gradient(120deg, #4e9af1 0%, #6ed6a5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+.blog-hero-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+}
+.blog-hero-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.08);
+  z-index: 2;
+}
+.blog-hero-content {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  color: #fff;
+  padding: 32px 0 16px 0;
+}
+.blog-page-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.blog-page-desc {
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: #eaf6fb;
+  margin-bottom: 0;
+}
+
+.blog-main-content {
+  margin-top: 0;
+  padding-bottom: 32px;
+}
+
+.redesigned-blog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 18px 24px;
+  margin-bottom: 24px;
+}
+.redesigned-blog-search-form {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 420px;
+}
+.redesigned-blog-search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px 0 0 8px;
+  font-size: 1rem;
+  background: #f7f8fa;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.redesigned-blog-search-input:focus {
+  border-color: #4e9af1;
+}
+.redesigned-blog-search-btn {
+  background: #4e9af1;
+  color: #fff;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  padding: 0 18px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+.redesigned-blog-search-btn:hover {
+  background: #3578c6;
+}
+.blog-category-select-wrapper {
+  min-width: 180px;
+}
+.redesigned-blog-category-select {
+  width: 100%;
+  padding: 10px 33px;
+  border-radius: 8px;
+  border: 1px solid #dbeafe;
+  background: #f7f8fa;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.redesigned-blog-category-select:focus {
+  border-color: #6ed6a5;
+}
+
+.redesigned-blog-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+.redesigned-loading-indicator {
+  text-align: center;
+  color: #4e9af1;
+  font-size: 1.1rem;
+  margin: 32px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #eaf6fb;
+  border-top: 4px solid #4e9af1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.redesigned-error-message {
+  color: #e74c3c;
+  background: #fff0f0;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.redesigned-no-results {
+  color: #888;
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.blog-pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .redesigned-blog-list-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  .redesigned-blog-filters {
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .blog-hero-content {
+    padding: 18px 0 8px 0;
+  }
+  .blog-page-title {
+    font-size: 1.5rem;
+  }
+  .blog-page-desc {
+    font-size: 0.95rem;
+  }
+  .redesigned-blog-list-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
 /* src/pages/BlogPage/BlogPage.css */
 .blog-page {
-  padding: var(--spacing-xl) 0;
   background-color: var(--gray-50);
   min-height: calc(100vh - 100px); /* Đảm bảo đủ chiều cao cho trang */
 }
@@ -135,9 +332,6 @@
 }
 
 @media (max-width: 480px) {
-  .blog-page {
-    padding: var(--spacing-lg) 0;
-  }
   .blog-page-title {
     font-size: 1.5rem;
   }

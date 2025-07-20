@@ -28,9 +28,7 @@ const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { openLoginModal, openRegisterModal } = useAuthModal();
   const { getCartItemCount } = useCart();
-  const navigate = useNavigate();
-  const location = useLocation();
-
+  const [cartCount, setCartCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
@@ -41,6 +39,19 @@ const Navbar = () => {
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCount = async () => {
+      const count = await getCartItemCount();
+      if (isMounted) setCartCount(count);
+    };
+    fetchCount();
+    return () => { isMounted = false; };
+  }, [getCartItemCount, isAuthenticated, isCartModalOpen]);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  
   // State to track hovered category for sub-dropdown
   const [hoveredCategory, setHoveredCategory] = useState(null); // Stores the category object being hovered
 
@@ -154,10 +165,14 @@ const Navbar = () => {
 
   // Removed handleMainCategoryMouseLeave function completely as it's no longer needed on individual links.
 
-  // Helper to construct product filter link and close dropdown
-  const getProductLinkAndClose = useCallback((slug) => {
+  // Helper to construct category link based on type and close dropdown
+  const getCategoryLinkAndClose = useCallback((category) => {
+    let to = '/products?category=' + category.slug;
+    if (category.type === 'BLOG') {
+      to = '/blog?category=' + category.slug;
+    }
     return {
-      to: `/products?category=${slug}`,
+      to,
       onClick: () => {
         setIsCategoryDropdownOpen(false);
         setHoveredCategory(null);
@@ -195,11 +210,9 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Main Header */}
       <div className="navbar-main">
         <div className="container">
           <div className="navbar-content">
-            {/* Logo */}
             <Link to="/" className="navbar-logo">
               <div className="logo-icon">
                 <span className="logo-cross">⚕</span>
@@ -242,8 +255,8 @@ const Navbar = () => {
 
                   <button onClick={() => setIsCartModalOpen(true)} className="icon-link cart-link">
                     <FaShoppingCart />
-                    {getCartItemCount() > 0 && (
-                      <span className="cart-badge">{getCartItemCount()}</span>
+                    {cartCount > 0 && (
+                      <span className="cart-badge">{cartCount}</span>
                     )}
                   </button>
 
@@ -274,8 +287,8 @@ const Navbar = () => {
                 <>
                   <button onClick={handleCartClick} className="icon-link cart-link">
                     <FaShoppingCart />
-                    {getCartItemCount() > 0 && (
-                      <span className="cart-badge">{getCartItemCount()}</span>
+                    {cartCount > 0 && (
+                      <span className="cart-badge">{cartCount}</span>
                     )}
                   </button>
 
@@ -294,7 +307,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Categories Section (with new dropdown) */}
       <div className="navbar-categories">
         <div className="container">
           <div className="categories-content">
@@ -302,7 +314,6 @@ const Navbar = () => {
               <button className="category-btn" onClick={toggleCategoryDropdown}>
                 <FaBars />
                 <span>Danh mục</span>
-                {/* Updated FaChevronRight class for rotation */}
                 <FaChevronRight className={`dropdown-arrow ${isCategoryDropdownOpen ? 'rotated' : ''}`} /> 
               </button>
               {isCategoryDropdownOpen && (
@@ -311,29 +322,25 @@ const Navbar = () => {
                     {categoriesLoading ? (
                       <div className="dropdown-loading">Đang tải danh mục...</div>
                     ) : (
-                      categories.map((category) => (
-                        <Link
-                          key={category.id}
-                          {...getProductLinkAndClose(category.slug)}
-                          className={`dropdown-item ${hoveredCategory?.id === category.id ? 'active' : ''}`}
-                          onMouseEnter={() => handleMainCategoryMouseEnter(category)}
-                          // REMOVED: onMouseLeave from individual Link items
-                        >
-                          <img
-                            src={category.thumbnail || '/api/placeholder/40/40'}
-                            alt={category.name}
-                            className="category-thumbnail-img"
-                            onError={(e) => { e.target.src = '/api/placeholder/40/40'; }}
-                          />
-                          <span>{category.name}</span>
-                          {category.children && category.children.length > 0 && <FaChevronRight className="dropdown-arrow-static" />} {/* Static arrow */}
-                        </Link>
-                      ))
+                    categories.map((category) => (
+                      <Link
+                        key={category.id}
+                        {...getCategoryLinkAndClose(category)}
+                        className={`dropdown-item ${hoveredCategory?.id === category.id ? 'active' : ''}`}
+                        onMouseEnter={() => handleMainCategoryMouseEnter(category)}
+                      >
+                        <img
+                          src={category.thumbnail || '/api/placeholder/40/40'}
+                          alt={category.name}
+                          className="category-thumbnail-img"
+                          onError={(e) => { e.target.src = '/api/placeholder/40/40'; }}
+                        />
+                        <span>{category.name}</span>
+                        {category.children && category.children.length > 0 && <FaChevronRight className="dropdown-arrow-static" />}
+                      </Link>
+                    ))
                     )}
                   </div>
-
-                  {/* Right panel for sub-categories */}
-                  {/* Condition for showing sub-category list only if hoveredCategory has children */}
                   {hoveredCategory && hoveredCategory.children && hoveredCategory.children.length > 0 ? (
                     <div className="sub-category-list">
                       <h4>{hoveredCategory.name}</h4>
@@ -341,7 +348,7 @@ const Navbar = () => {
                         {hoveredCategory.children.map((subCategory) => (
                           <Link
                             key={subCategory.id}
-                            {...getProductLinkAndClose(subCategory.slug)}
+                            {...getCategoryLinkAndClose(subCategory)}
                             className="sub-dropdown-item"
                           >
                             <img
@@ -355,23 +362,19 @@ const Navbar = () => {
                         ))}
                       </div>
                       <Link
-                        {...getProductLinkAndClose(hoveredCategory.slug)}
+                        {...getCategoryLinkAndClose(hoveredCategory)}
                         className="view-all-sub-categories-link"
                       >
                         Xem tất cả {hoveredCategory.name}
                       </Link>
                     </div>
-                  ) : ( // Case: Hovered category has no children, so hide sub-panel or show message
-                      // If you want to explicitly hide the right panel in this case, remove this else block
-                      // and the outer ternary condition will handle it.
-                      // OR: if you want a "No sub-categories" message, keep this block.
-                      // For now, I'll keep the current behavior of showing "No sub-categories" message.
+                  ) : ( 
                     <div className="sub-category-list no-sub-categories">
                       <h4>{hoveredCategory ? hoveredCategory.name : 'Vui lòng chọn danh mục'}</h4>
                       <p>Không có danh mục con.</p>
                       {hoveredCategory && ( // Only show "Xem tất cả" if a category is actually hovered
                         <Link
-                          {...getProductLinkAndClose(hoveredCategory.slug)}
+                          {...getCategoryLinkAndClose(hoveredCategory)}
                           className="view-all-sub-categories-link"
                         >
                           Xem tất cả {hoveredCategory.name}
@@ -449,7 +452,7 @@ const Navbar = () => {
                 <Link to="/cart" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
                   <FaShoppingCart />
                   Giỏ hàng
-                  {getCartItemCount() > 0 && <span className="cart-badge">{getCartItemCount()}</span>}
+                  {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                 </Link>
                 <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
                   <FaUser />

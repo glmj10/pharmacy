@@ -221,7 +221,7 @@
   gap: var(--spacing-xl);
 }
 
-.category-card {
+.category-card-slide {
   background: white;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -231,7 +231,7 @@
   color: inherit;
 }
 
-.category-card:hover {
+.category-card-slide:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-xl);
 }
@@ -248,7 +248,7 @@
   transition: transform 0.3s ease;
 }
 
-.category-card:hover .category-image img {
+.category-card-slide:hover .category-image img {
   transform: scale(1.05);
 }
 
@@ -440,6 +440,34 @@
   text-align: center;
 }
 
+.section-footer .btn-outline {
+  border: 2px solid var(--primary-600);
+  color: var(--primary-600);
+  background: white;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.section-footer .btn-outline:hover {
+  background: var(--primary-600) !important;
+  color: #fff !important;
+  border-color: var(--primary-600) !important;
+}
+
+/* Hotline button style in hero section */
+.hero-buttons .btn-outline {
+  border: 2px solid var(--primary-600);
+  color: var(--primary-600);
+  background: white;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  font-weight: 600;
+  box-shadow: none;
+}
+.hero-buttons .btn-outline:hover {
+  background: var(--primary-600) !important;
+  color: #fff !important;
+  border-color: var(--primary-600) !important;
+}
+
+
 /* Testimonials Section */
 .testimonials {
   padding: var(--spacing-2xl) 0;
@@ -585,7 +613,7 @@
   padding: 0 var(--spacing-sm);
 }
 
-.category-slide .category-card {
+.category-slide .category-card-slide {
   margin: 0;
   height: 100%;
 }
@@ -977,6 +1005,17 @@
   resize: vertical;
   min-height: 120px;
   font-family: inherit;
+  background: #fff !important;
+  color: #222 !important;
+  border: 2px solid var(--gray-300) !important;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
 }
 
 .contact-message {
