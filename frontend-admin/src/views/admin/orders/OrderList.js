@@ -39,15 +39,6 @@ import {
   CToastHeader,
   CToaster,
   CCollapse,
-  CAccordion,
-  CAccordionItem,
-  CAccordionHeader,
-  CAccordionBody,
-  CNav,
-  CNavItem,
-  CNavLink,
-  CTabContent,
-  CTabPane,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -357,11 +348,10 @@ const OrderList = () => {
   }
 
   const getCustomerInfo = (order) => {
-    // Extract customer info from profile
-    const profile = order.profile || {}
     return {
-      name: profile.fullName || 'N/A',
-      phone: profile.phoneNumber || 'N/A',
+      name: order.customerName || 'N/A',
+      phone: order.customerPhoneNumber || 'N/A',
+      address: order.customerAddress || 'N/A',
     }
   }
 
@@ -495,7 +485,7 @@ THÔNG TIN KHÁCH HÀNG
 -------------------------------------------------------------------------------
 Tên khách hàng: ${customer.name}
 Số điện thoại: ${customer.phone}
-Địa chỉ: ${order.profile?.address || 'Không có địa chỉ'}
+Địa chỉ: ${customer.address || 'Không có địa chỉ'}
 
 -------------------------------------------------------------------------------
 THÔNG TIN ĐƠN HÀNG
@@ -1282,19 +1272,19 @@ Thời gian xuất: ${formatDate(new Date())}
                       </h6>
                     </CCardHeader>
                     <CCardBody>
-                      {detailModal.order.profile ? (
+                      {detailModal.order ? (
                         <div>
                           <p className="mb-2">
-                            <strong>Tên:</strong> {detailModal.order.profile.fullName}
+                            <strong>Tên:</strong> {detailModal.order.customerName || 'Không có tên'}
                           </p>
                           <p className="mb-2">
-                            <strong>SĐT:</strong> {detailModal.order.profile.phoneNumber}
+                            <strong>SĐT:</strong> {detailModal.order.customerPhoneNumber || 'Không có số điện thoại'}
                           </p>
                           <p className="mb-0">
                             <strong>Địa chỉ:</strong>
                             <br />
                             <span className="text-muted">
-                              {detailModal.order.profile.address || 'Không có địa chỉ'}
+                              {detailModal.order.customerAddress || 'Không có địa chỉ'}
                             </span>
                           </p>
                         </div>

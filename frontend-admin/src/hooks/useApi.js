@@ -1,11 +1,6 @@
 import { useState, useCallback } from 'react';
 import { apiUtils } from '../utils/apiUtils';
 
-/**
- * Custom hook for handling API calls with loading states and error handling
- * @param {Function} apiFunction - The API function to call
- * @returns {Object} - Object containing data, loading, error states and execute function
- */
 export const useApi = (apiFunction) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -49,10 +44,6 @@ export const useApi = (apiFunction) => {
     };
 };
 
-/**
- * Custom hook for handling authentication state
- * @returns {Object} - Auth state and functions
- */
 export const useAuth = () => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -65,12 +56,10 @@ export const useAuth = () => {
             if (response.isSuccess()) {
                 const { token, user: userData } = response.getData();
                 
-                // Store token
                 if (token) {
                     localStorage.setItem('accessToken', token);
                 }
                 
-                // Set user state
                 setUser(userData);
                 setIsAuthenticated(true);
                 
@@ -134,11 +123,6 @@ export const useAuth = () => {
     };
 };
 
-/**
- * Custom hook for handling form validation with API error responses
- * @param {Object} initialValues - Initial form values
- * @returns {Object} - Form state and handlers
- */
 export const useApiForm = (initialValues = {}) => {
     const [values, setValues] = useState(initialValues);
     const [errors, setErrors] = useState({});
@@ -147,7 +131,6 @@ export const useApiForm = (initialValues = {}) => {
     const setValue = useCallback((name, value) => {
         setValues(prev => ({ ...prev, [name]: value }));
         
-        // Clear error for this field
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: undefined }));
         }

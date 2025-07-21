@@ -77,7 +77,7 @@ class DashboardService {
      * @param {number} limit - Number of recent orders to fetch (not used as backend returns 5)
      * @returns {Promise<Array>}
      */
-    async getRecentOrders(limit = 5) {
+    async getRecentOrders() {
         try {
             // Use dedicated API endpoint for getting 5 newest orders
             const response = await api.get('/orders/statistic/newest');
@@ -87,10 +87,10 @@ class DashboardService {
             // Format orders for dashboard display
             const formattedOrders = orders.map(order => ({
                 id: order.id,
-                customerName: order.profile?.fullName || 'Khách hàng',
-                customerPhone: order.profile?.phoneNumber || '',
+                customerName: order.customerName || 'Khách hàng',
+                customerPhone: order.customerPhoneNumber || '',
                 totalAmount: order.totalPrice || 0,
-                status: order.orderStatus || 'PENDING',
+                status: order.status || 'PENDING',
                 paymentStatus: order.paymentStatus || 'PENDING',
                 createdAt: order.createdAt || new Date().toISOString(),
             }));

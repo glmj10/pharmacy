@@ -28,7 +28,6 @@ export const useApiCall = () => {
     try {
       const response = await apiCall();
 
-      // Validate response if needed
       if (validateResponse && response && !response.isSuccess()) {
         const errorMsg = errorMessage || response.message || 'Thao tác thất bại';
         if (showErrorNotification) {
@@ -40,7 +39,6 @@ export const useApiCall = () => {
         return { success: false, data: null, error: response };
       }
 
-      // Handle success
       if (showSuccessNotification && successMessage) {
         showSuccess(successMessage);
       }
@@ -77,9 +75,6 @@ export const useApiCall = () => {
   return { execute, loading };
 };
 
-/**
- * Hook for form submission with validation error handling
- */
 export const useFormSubmit = () => {
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
@@ -129,13 +124,11 @@ export const useFormSubmit = () => {
     } catch (error) {
       console.error('Form submit error:', error);
 
-      // Handle validation errors
       const fieldErrors = apiUtils.extractValidationErrors(error);
       if (Object.keys(fieldErrors).length > 0) {
         setValidationErrors(fieldErrors);
       }
 
-      // Show general error
       const errorMessage = apiUtils.getUserFriendlyErrorMessage(error);
       showError(errorMessage);
 

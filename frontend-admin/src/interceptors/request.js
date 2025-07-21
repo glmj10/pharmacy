@@ -7,11 +7,9 @@ export const requestInterceptor = (config) => {
         config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    // Don't set Content-Type for FormData - let browser handle it with boundary
     if (!(config.data instanceof FormData)) {
         config.headers['Content-Type'] = 'application/json';
     } else {
-        // For FormData, remove any existing Content-Type to let browser set it
         delete config.headers['Content-Type'];
     }
 

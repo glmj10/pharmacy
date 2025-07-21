@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { CKEditor } from '@ckeditor/ckeditor5-react'
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   CButton,
@@ -377,7 +379,7 @@ const ProductForm = () => {
             successMessage: 'Cập nhật sản phẩm thành công!',
             showSuccessNotification: true,
             onSuccess: () => {
-              navigate('/products')
+              navigate('/products/list')
             }
           }
         )
@@ -388,7 +390,7 @@ const ProductForm = () => {
             successMessage: 'Tạo sản phẩm thành công!',
             showSuccessNotification: true,
             onSuccess: () => {
-              navigate('/products')
+              navigate('/products/list')
             }
           }
         )
@@ -563,16 +565,19 @@ const ProductForm = () => {
                     )}
                   </div>
 
-                  {/* Description */}
+                  {/* Description with CKEditor */}
                   <div className="mb-3">
                     <CFormLabel htmlFor="description">Mô tả</CFormLabel>
-                    <CFormTextarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      rows={4}
-                      placeholder="Nhập mô tả sản phẩm"
+                    <CKEditor
+                      editor={ClassicEditor}
+                      data={formData.description}
+                      onChange={(event, editor) => {
+                        const data = editor.getData()
+                        setFormData(prev => ({
+                          ...prev,
+                          description: data
+                        }))
+                      }}
                     />
                   </div>
 
@@ -772,7 +777,6 @@ const ProductForm = () => {
                       onChange={handleImagesChange}
                     />
                     
-                    {/* Existing Images */}
                     {existingImages.length > 0 && (
                       <div className="mt-3">
                         <small className="text-muted">Hình ảnh hiện tại:</small>

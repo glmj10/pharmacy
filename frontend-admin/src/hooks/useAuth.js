@@ -19,9 +19,7 @@ export const useAuth = () => {
   };
 };
 
-/**
- * Higher Order Component để bảo vệ component
- */
+
 export const withAuth = (WrappedComponent, options = {}) => {
   return (props) => (
     <ProtectedRoute {...options}>

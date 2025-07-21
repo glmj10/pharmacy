@@ -56,6 +56,7 @@ const AdminDashboard = () => {
 
       // Load recent orders
       const ordersResponse = await dashboardService.getRecentOrders(5)
+      console.log("Recent orders response:", ordersResponse.data); 
       if (ordersResponse.success) {
         setRecentOrders(ordersResponse.data)
       }
