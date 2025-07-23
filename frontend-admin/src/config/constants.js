@@ -15,6 +15,8 @@ export const ENDPOINTS = {
         REGISTER: "/auth/register",
         INFO: "/auth/info",
         PASSWORD: "/auth/password",
+        FORGOT_PASSWORD: "/auth/forgot-password",
+        RESET_PASSWORD: "/auth/reset-password",
     },
     USERS: {
         GET_ALL: "/users",

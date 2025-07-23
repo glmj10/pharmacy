@@ -4,11 +4,6 @@ import { apiUtils } from '../utils/apiUtils';
 import { tokenUtils } from '../utils/token';
 
 class AuthService {
-    /**
-     * Register new user
-     * @param {Object} userData - User registration data
-     * @returns {Promise<ApiResponse>}
-     */
     async register(userData) {
         try {
             const response = await api.post(ENDPOINTS.AUTH.REGISTER, userData);
@@ -18,11 +13,6 @@ class AuthService {
         }
     }
 
-    /**
-     * Login user
-     * @param {Object} credentials - Login credentials {email/username, password}
-     * @returns {Promise<ApiResponse>}
-     */
     async login(credentials) {
         try {
             const response = await api.post(ENDPOINTS.AUTH.LOGIN, credentials);
@@ -32,11 +22,6 @@ class AuthService {
         }
     }
 
-    /**
- * Update current user profile
- * @param {FormData} profileData - Profile data (form-data with info and profilePic)
- * @returns {Promise<ApiResponse>}
- */
     async updateInfo(profileData) {
         try {
             const response = await api.put(ENDPOINTS.AUTH.INFO, profileData);
@@ -46,10 +31,6 @@ class AuthService {
         }
     }
 
-    /**
-     * Logout user
-     * @returns {Promise<ApiResponse>}
-     */
     async logout() {
         try {
             const response = await api.post(ENDPOINTS.AUTH.LOGOUT);
@@ -59,11 +40,6 @@ class AuthService {
         }
     }
 
-    /**
-     * Refresh access token
-     * @param {string} currentToken - Current access token to refresh
-     * @returns {Promise<ApiResponse>}
-     */
     async refreshToken(currentToken = null) {
         try {
             // If no token provided, get from storage
@@ -81,14 +57,32 @@ class AuthService {
         }
     }
 
-    /**
-     * Change password
-     * @param {Object} passwordData - Password change data
-     * @returns {Promise<ApiResponse>}
-     */
     async changePassword(passwordData) {
         try {
             const response = await api.put(ENDPOINTS.AUTH.PASSWORD, passwordData);
+            return apiUtils.fromAxiosResponse(response);
+        } catch (error) {
+            throw apiUtils.fromAxiosError(error);
+        }
+    }
+
+    async forgotPassword(confirmationData) {
+        try {
+            const response = await api.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, confirmationData);
+            return apiUtils.fromAxiosResponse(response);
+        } catch (error) {
+            throw apiUtils.fromAxiosError(error);
+        }
+    }
+
+    async resetPassword(resetData) {
+        try {
+            const { password, confirmPassword, token } = resetData;
+            const response = await api.put(ENDPOINTS.AUTH.RESET_PASSWORD, {
+                resetToken: token,
+                password,
+                confirmPassword
+            });
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);

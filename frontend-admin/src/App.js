@@ -25,8 +25,11 @@ const Login = React.lazy(() => import('./views/pages/login/Login'))
 const Register = React.lazy(() => import('./views/pages/register/Register'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
+
 const Page401 = React.lazy(() => import('./views/pages/error/page401'))
 const Page403 = React.lazy(() => import('./views/pages/error/page403'))
+const ForgotPassword = React.lazy(() => import('./views/pages/forgotPassword/forgotPassword'))
+const ResetPassword = React.lazy(() => import('./views/pages/resetPassword/resetPassword'))
 
 const AppRouter = () => {
   const navigate = useNavigate();
@@ -46,11 +49,12 @@ const AppRouter = () => {
     <Routes>
       <Route exact path="/login" name="Login Page" element={<Login />} />
       <Route exact path="/register" name="Register Page" element={<Register />} />
+      <Route exact path="/forgot-password" name="Forgot Password" element={<ForgotPassword />} />
+      <Route exact path="/reset-password" name="Reset Password" element={<ResetPassword />} />
       <Route exact path="/404" name="Page 404" element={<Page404 />} />
       <Route exact path="/500" name="Page 500" element={<Page500 />} />
       <Route exact path="/401" name="Page 401" element={<Page401 />} />
       <Route exact path="/403" name="Page 403" element={<Page403 />} />
-      
       <Route 
         path="*" 
         name="Home" 

@@ -138,6 +138,11 @@ const LoginImproved = () => {
                         {validationErrors.password.join(', ')}
                       </div>
                     )}
+                    <div className="mb-3 text-end">
+                      <Link to="/forgot-password" className="text-decoration-none text-primary small">
+                        Quên mật khẩu?
+                      </Link>
+                    </div>
 
                     <CRow>
                       <CCol xs={6}>
