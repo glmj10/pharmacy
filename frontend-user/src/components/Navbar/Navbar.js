@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAuthModal } from '../../contexts/AuthModalContext';
 import { useCart } from '../../contexts/CartContext';
 import { categoryService } from '../../services/categoryService';
+import { productService } from '../../services/productService';
 import { modalEvents } from '../../utils/modalEvents';
 import CartModal from '../CartModal/CartModal';
 import ModalNotification from '../NotificationModal/NotificationModal';
@@ -34,10 +35,14 @@ const Navbar = () => {
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [categories, setCategories] = useState([]); // All categories with nested children
+  const [categories, setCategories] = useState([]); 
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,8 +57,7 @@ const Navbar = () => {
   const location = useLocation();
 
   
-  // State to track hovered category for sub-dropdown
-  const [hoveredCategory, setHoveredCategory] = useState(null); // Stores the category object being hovered
+  const [hoveredCategory, setHoveredCategory] = useState(null); 
 
   const categoryDropdownRef = useRef(null);
 
@@ -65,7 +69,7 @@ const Navbar = () => {
         if (response?.data && Array.isArray(response.data)) {
           const processedCategories = response.data.map(cat => ({
             ...cat,
-            children: cat.children || [] // Ensure children array exists
+            children: cat.children || [] 
           }));
           setCategories(processedCategories);
         } else {
@@ -86,7 +90,7 @@ const Navbar = () => {
     const handleClickOutside = (event) => {
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target)) {
         setIsCategoryDropdownOpen(false);
-        setHoveredCategory(null); // Close sub-dropdown too
+        setHoveredCategory(null); 
       }
     };
 
@@ -96,13 +100,12 @@ const Navbar = () => {
     };
   }, [isCategoryDropdownOpen]);
 
-  // Close menus when location (URL) changes
   useEffect(() => {
     const closeAllMenus = () => {
       setIsMenuOpen(false);
       setIsUserMenuOpen(false);
       setIsCategoryDropdownOpen(false);
-      setHoveredCategory(null); // Ensure sub-dropdown is also closed
+      setHoveredCategory(null); 
     };
     closeAllMenus();
   }, [location]);
@@ -115,7 +118,7 @@ const Navbar = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
+    if (searchQuery) {
       setIsSearching(true);
       setTimeout(() => {
         navigate(`/products?title=${encodeURIComponent(searchQuery)}`);
@@ -158,14 +161,10 @@ const Navbar = () => {
     setIsNotificationModalOpen(true);
   };
 
-  // Handlers for main category items in dropdown
   const handleMainCategoryMouseEnter = (category) => {
     setHoveredCategory(category);
   };
 
-  // Removed handleMainCategoryMouseLeave function completely as it's no longer needed on individual links.
-
-  // Helper to construct category link based on type and close dropdown
   const getCategoryLinkAndClose = useCallback((category) => {
     let to = '/products?category=' + category.slug;
     if (category.type === 'BLOG') {
@@ -177,6 +176,46 @@ const Navbar = () => {
         setIsCategoryDropdownOpen(false);
         setHoveredCategory(null);
       }
+    };
+  }, []);
+
+  // Debounce search suggestions
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    setSuggestionsLoading(true);
+    const handler = setTimeout(async () => {
+      try {
+        const res = await productService.searchProducts(searchQuery);
+        if (res?.data.content && Array.isArray(res.data.content)) {
+          setSuggestions(res.data.content.slice(0, 8));
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch (err) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -224,13 +263,16 @@ const Navbar = () => {
             </Link>
 
             {/* Search Bar */}
-            <div className="navbar-search">
-              <form onSubmit={handleSearch} className={`search-form ${isSearching ? 'searching' : ''}`}>
+            <div className="navbar-search" ref={searchInputRef} style={{ position: 'relative' }}>
+              <form onSubmit={handleSearch} className={`search-form ${isSearching ? 'searching' : ''}`} autoComplete="off">
                 <input
                   type="text"
                   placeholder="Bạn đang tìm gì hôm nay..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
                   className="search-input"
                   disabled={isSearching}
                 />
@@ -238,6 +280,35 @@ const Navbar = () => {
                   <FaSearch />
                 </button>
               </form>
+              {showSuggestions && (
+                <div className="search-suggestions-dropdown" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', borderRadius: 4 }}>
+                  {suggestionsLoading ? (
+                    <div className="suggestion-loading" style={{ padding: '12px', textAlign: 'center' }}>Đang tìm kiếm...</div>
+                  ) : suggestions.length > 0 ? (
+                    <ul className="suggestion-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                      {suggestions.map(product => (
+                        <li key={product.id} className="suggestion-item" style={{ padding: '8px 16px', cursor: 'pointer', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center' }}
+                          onClick={() => {
+                            navigate(`/products/${product.slug}`);
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          <img src={product.thumbnailUrl} alt={product.title} style={{ width: 40, height: 40, objectFit: 'cover', marginRight: 12, borderRadius: 4 }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 500 }}>{product.title}</div>
+                            <div style={{ fontSize: 13, color: '#888' }}>
+                              <span style={{ textDecoration: 'line-through', marginRight: 8 }}>{product.priceOld?.toLocaleString()}₫</span>
+                              <span style={{ color: '#16A34A', fontWeight: 600 }}>{product.priceNew?.toLocaleString()}₫</span>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="suggestion-empty" style={{ padding: '12px', textAlign: 'center' }}>Không tìm thấy sản phẩm phù hợp.</div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Right Icons */}

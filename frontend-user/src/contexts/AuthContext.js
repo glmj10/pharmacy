@@ -101,7 +101,6 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: false });
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Xử lý lỗi trả về từ backend
       if (error?.response?.data?.message) {
         throw new Error(error.response.data.message);
       }
@@ -137,7 +136,6 @@ export const AuthProvider = ({ children }) => {
         toast.success(result.message);
       }
     } catch (error) {
-      // Bỏ qua lỗi logout vì đã xử lý trong authService
       console.log('Logout completed with cleanup');
     } finally {
       dispatch({ type: 'LOGOUT' });
@@ -148,7 +146,6 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await userService.updateUser(userData);
       if (response && response.data) {
-        // Update localStorage and state
         localStorage.setItem('user', JSON.stringify(response.data));
         dispatch({
           type: 'UPDATE_USER',
@@ -163,12 +160,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (confirmationData) => {
+    try {
+      const response = await authService.forgotPassword(confirmationData);
+      return response;
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (resetData) => {
+    try {
+      const response = await authService.resetPassword(resetData);
+      return response;
+    } catch (error) {
+      console.error('Reset password error:', error);
+      throw error;
+    }
+  };
+
   const value = {
     ...state,
     login,
     register,
     logout,
     updateUser,
+    forgotPassword,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -58,7 +58,6 @@ import { ProductEmptyState } from '../../../components/common/EmptyState'
 const ProductList = () => {
   const navigate = useNavigate()
   
-  // Search and filter states
   const [searchTerm, setSearchTerm] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -70,7 +69,6 @@ const ProductList = () => {
   const [toasts, setToasts] = useState([])
   const [showFilters, setShowFilters] = useState(false)
   
-  // Debounced search
   const [searchDebounce, setSearchDebounce] = useState(null)
   
   const {
@@ -86,7 +84,6 @@ const ProductList = () => {
     loadProducts(currentPage)
   }, [])
 
-  // Debounced search effect
   useEffect(() => {
     if (searchDebounce) {
       clearTimeout(searchDebounce)
@@ -95,7 +92,7 @@ const ProductList = () => {
     const timeout = setTimeout(() => {
       if (searchInput !== searchTerm) {
         setSearchTerm(searchInput)
-        setCurrentPage(1) // Reset to first page on search
+        setCurrentPage(1) 
         loadProducts(1, searchInput, statusFilter, sortOrder)
       }
     }, 500)
@@ -105,9 +102,8 @@ const ProductList = () => {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  // Filter change effects  
   useEffect(() => {
-    setCurrentPage(1) // Reset to first page on filter change
+    setCurrentPage(1) 
     loadProducts(1, searchTerm, statusFilter, sortOrder)
   }, [statusFilter, sortOrder])
 
@@ -119,25 +115,21 @@ const ProductList = () => {
         pageSize: pageSize,
       }
       
-      // Search by title
       if (title && title.trim()) {
         params.title = title.trim()
       }
       
-      // Status filter
       if (statusF === 'active') {
         params.isActive = true
       } else if (statusF === 'inactive') {
         params.isActive = false
       }
       
-      // Sort order - Backend sorts by price when isAscending is provided, by createdAt when null
       if (sortF === 'price-asc') {
-        params.isAscending = true  // Sort by price ascending
+        params.isAscending = true  
       } else if (sortF === 'price-desc') {
-        params.isAscending = false // Sort by price descending
+        params.isAscending = false 
       }
-      // When sortF is empty, isAscending is undefined -> backend sorts by createdAt desc (default)
       
       const result = await fetchProducts(params)
       
@@ -165,7 +157,7 @@ const ProductList = () => {
     setStatusFilter('')
     setSortOrder('')
     setCurrentPage(1)
-    loadProducts(1, '', '', '') // Reset to first page
+    loadProducts(1, '', '', '') 
   }
 
   const handleRefresh = () => {
@@ -205,7 +197,6 @@ const ProductList = () => {
     }
   }
 
-  // Toast management
   const addToast = useCallback((message, type = 'info') => {
     const toast = {
       id: Date.now(),

@@ -1,7 +1,6 @@
 import { FaShoppingCart, FaHeart, FaEye } from 'react-icons/fa';
 import './ProductCard.css'
 import { useState } from 'react';
-// ...existing code...
 
 const ProductCard = ({ product, formatPrice, onAddToCart, onWishlistToggle, onProductClick }) => {
   const [localWishlist, setLocalWishlist] = useState(product.inWishlist);

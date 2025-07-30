@@ -17,7 +17,6 @@ const AddressModal = ({ isOpen, onClose, onSelectAddress, currentSelectedAddress
   useEffect(() => {
     if (isOpen) {
       fetchAddresses();
-      // Reset form when modal opens
       setCurrentAddress({
         id: null,
         fullName: '',
@@ -32,9 +31,9 @@ const AddressModal = ({ isOpen, onClose, onSelectAddress, currentSelectedAddress
     setLoading(true);
     try {
       const response = await profileService.getUserProfiles();
-      setAddresses(response.data); // Giả sử response.data là một mảng các profiles
+      setAddresses(response.data); 
     } catch (error) {
-      toast.error('Không thể tải danh sách địa chỉ.');
+      console.error('Không thể tải danh sách địa chỉ.');
       console.error('Error fetching addresses:', error);
     } finally {
       setLoading(false);
@@ -65,23 +64,21 @@ const AddressModal = ({ isOpen, onClose, onSelectAddress, currentSelectedAddress
       } else {
         await profileService.createProfile({
           fullName: currentAddress.fullName,
-          phoneNumber: currentAddress.phoneNumber, // Truyền phone, profileService.js sẽ lo transform
+          phoneNumber: currentAddress.phoneNumber, 
           address: currentAddress.address
         });
         toast.success('Thêm địa chỉ mới thành công!');
       }
-      fetchAddresses(); // Refresh list
-      onAddressChange(); // Notify parent of change
-      // Reset form
+      fetchAddresses(); 
+      onAddressChange(); 
       setCurrentAddress({
         id: null,
         fullName: '',
-        phoneNumber: '', // Đảm bảo reset phoneNumber
+        phoneNumber: '', 
         address: ''
       });
       setIsEditing(false);
     } catch (error) {
-      toast.error(`Lỗi: ${error.message}`);
       console.error('Error saving address:', error);
     } finally {
       setLoading(false);
@@ -104,14 +101,12 @@ const AddressModal = ({ isOpen, onClose, onSelectAddress, currentSelectedAddress
       try {
         await profileService.deleteProfile(addressId);
         toast.success('Xóa địa chỉ thành công!');
-        fetchAddresses(); // Refresh list
-        onAddressChange(); // Notify parent of change
-        // Nếu địa chỉ bị xóa là địa chỉ đang được chọn, reset nó
+        fetchAddresses(); 
+        onAddressChange(); 
         if (currentSelectedAddressId === addressId) {
-          onSelectAddress(null); // Hoặc chọn địa chỉ mặc định/đầu tiên
+          onSelectAddress(null); 
         }
       } catch (error) {
-        toast.error(`Lỗi: ${error.message}`);
         console.error('Error deleting address:', error);
       } finally {
         setLoading(false);
@@ -151,7 +146,7 @@ const AddressModal = ({ isOpen, onClose, onSelectAddress, currentSelectedAddress
               <label>Số điện thoại:</label>
               <input
                 type="tel"
-                name="phoneNumber" // Use phoneNumber to match backend field
+                name="phoneNumber" 
                 value={currentAddress.phoneNumber}
                 onChange={handleInputChange}
                 required

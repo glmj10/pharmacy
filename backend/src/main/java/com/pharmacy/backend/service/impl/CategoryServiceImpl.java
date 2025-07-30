@@ -5,6 +5,7 @@ import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.CategoryParentAndChildResponse;
 import com.pharmacy.backend.dto.response.CategoryResponse;
 import com.pharmacy.backend.entity.Category;
+import com.pharmacy.backend.enums.CategoryTypeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.CategoryMapper;
 import com.pharmacy.backend.repository.CategoryRepository;
@@ -55,7 +56,13 @@ public class CategoryServiceImpl implements CategoryService {
         List<Category> childCategories = categoryRepository.findByParent(parentCategory);
 
         response.setChildren(childCategories.stream()
-                .map(categoryMapper::toCategoryResponse)
+                .map(
+                        category -> {
+                            CategoryResponse childResponse = categoryMapper.toCategoryResponse(category);
+                            childResponse.setParentId(parentCategory.getId());
+                            return childResponse;
+                        }
+                )
                 .toList());
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
@@ -158,6 +165,29 @@ public class CategoryServiceImpl implements CategoryService {
                 HttpStatus.OK.value(),
                 "Xóa danh mục thành công",
                 null
+        );
+    }
+
+    @Override
+    public ApiResponse<List<CategoryResponse>> getAllProductCategories() {
+        List<Category> categories = categoryRepository.findByType(CategoryTypeEnum.PRODUCT);
+        List<CategoryResponse> response = buildTree(categories);
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh mục sản phẩm thành công",
+                response
+        );
+    }
+
+
+    @Override
+    public ApiResponse<List<CategoryResponse>> getAllBlogCategories() {
+        List<Category> categories = categoryRepository.findByType(CategoryTypeEnum.BLOG);
+        List<CategoryResponse> response = buildTree(categories);
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh mục blog thành công",
+                response
         );
     }
 

@@ -29,11 +29,11 @@ public class ContactController {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @GetMapping
-    public ResponseEntity<PageResponse<List<ContactResponse>>> getContactMessages(@RequestParam(value = "pageIndex", defaultValue = "1") int pageIndex,
-                                                                                 @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
-                                                                                 @RequestParam(value = "status", required = false) Boolean status){
+    public ResponseEntity<ApiResponse<PageResponse<List<ContactResponse>>>> getContactMessages(@RequestParam(value = "pageIndex", defaultValue = "1") int pageIndex,
+                                                                                  @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                                                                  @RequestParam(value = "status", required = false) Boolean status){
         ApiResponse<PageResponse<List<ContactResponse>>> response = contactService.getContactMessages(pageIndex, pageSize, status);
-        return ResponseEntity.status(response.getStatus()).body(response.getData());
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")

@@ -78,7 +78,6 @@ const UserList = () => {
       
       const response = await callApi(() => userService.getUsers(params))
       if (response.success) {
-        // Handle both array and paginated response formats
         const usersData = Array.isArray(response.data) 
           ? response.data 
           : response.data.content || response.data.data || []
@@ -101,18 +100,16 @@ const UserList = () => {
     fetchRoles()
   }, [])
 
-  // Auto search when typing
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchTerm !== '') {
         setCurrentPage(1)
         fetchUsers(1, searchTerm)
       } else {
-        // If search is empty, fetch all users
         setCurrentPage(1)
         fetchUsers(1, '')
       }
-    }, 500) // Debounce 500ms
+    }, 500) 
 
     return () => clearTimeout(timeoutId)
   }, [searchTerm])
@@ -174,13 +171,11 @@ const UserList = () => {
   }
 
   const getRolesBadge = (roles) => {    
-    // Kiểm tra nếu roles không tồn tại
     if (!roles) {
       console.log('Roles is undefined/null');
       return <CBadge color="secondary">No roles</CBadge>;
     }
     
-    // Nếu roles là string (trường hợp role đơn)
     if (typeof roles === 'string') {
       return (
         <CBadge 
@@ -192,19 +187,16 @@ const UserList = () => {
       );
     }
     
-    // Nếu roles không phải array
     if (!Array.isArray(roles)) {
       console.log('Roles is not an array:', typeof roles, roles);
       return <CBadge color="secondary">Invalid roles</CBadge>;
     }
     
-    // Nếu array rỗng
     if (roles.length === 0) {
       return <CBadge color="secondary">No roles</CBadge>;
     }
     
     return roles.map((role, index) => {
-      // Xử lý trường hợp role là object có thuộc tính code
       const roleName = typeof role === 'object' && role.name ? role.name: 
                       typeof role === 'object' && role.name ? role.name : role;
       
@@ -220,16 +212,14 @@ const UserList = () => {
     });
   }
 
-  // Generate smart pagination with limited visible pages
   const generatePaginationItems = () => {
     const items = []
-    const maxVisiblePages = 5 // Maximum number of page buttons to show
+    const maxVisiblePages = 5 
     const halfVisible = Math.floor(maxVisiblePages / 2)
     
     let startPage = Math.max(1, currentPage - halfVisible)
     let endPage = Math.min(totalPages, currentPage + halfVisible)
     
-    // Adjust if we're near the beginning or end
     if (currentPage <= halfVisible) {
       endPage = Math.min(totalPages, maxVisiblePages)
     }
@@ -237,7 +227,6 @@ const UserList = () => {
       startPage = Math.max(1, totalPages - maxVisiblePages + 1)
     }
     
-    // Add first page and ellipsis if needed
     if (startPage > 1) {
       items.push(
         <CPaginationItem
@@ -259,7 +248,6 @@ const UserList = () => {
       }
     }
     
-    // Add visible page numbers
     for (let page = startPage; page <= endPage; page++) {
       items.push(
         <CPaginationItem
@@ -274,7 +262,6 @@ const UserList = () => {
       )
     }
     
-    // Add ellipsis and last page if needed
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
         items.push(

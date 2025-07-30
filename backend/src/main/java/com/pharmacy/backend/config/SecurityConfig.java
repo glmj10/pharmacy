@@ -38,12 +38,16 @@ public class SecurityConfig {
             "/api/v1/auth/register",
             "/api/v1/auth/refresh-token",
             "/api/v1/contacts",
+            "/api/v1/auth/forgot-password",
     };
 
     public final String[] GET_ENDPOINTS = {
             "/api/v1/products",
             "/api/v1/products/slug/{slug}",
+            "/api/v1/products/rank/suggestions/top15",
             "/api/v1/categories/**",
+            "/api/v1/products/brand/suggestions/top15",
+            "/api/v1/brands/customer/public",
             "/api/v1/blogs",
             "/api/v1/blogs/{slug}",
             "/api/v1/categories/parent/{parentSlug}",
@@ -51,6 +55,10 @@ public class SecurityConfig {
             "/api/v1/files/download/{uuid}",
             "/api/v1/blogs",
             "/api/v1/blogs/slug/{slug}",
+    };
+
+    public final String[] PUT_ENDPOINTS = {
+            "/api/v1/auth/reset-password"
     };
 
     @Value("${jwt.secret}")
@@ -65,6 +73,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
                 .requestMatchers(HttpMethod.POST, POST_ENDPOINTS).permitAll()
                 .requestMatchers(HttpMethod.GET, GET_ENDPOINTS).permitAll()
+                .requestMatchers(HttpMethod.PUT, PUT_ENDPOINTS).permitAll()
                 .anyRequest().authenticated());
         http.csrf(AbstractHttpConfigurer::disable);
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
@@ -94,8 +103,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://localhost:3001"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:3000", 
+            "http://localhost:3001"
+        ));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 

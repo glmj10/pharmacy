@@ -25,10 +25,6 @@ import ProfileInfoTab from './ProfileInfoTab';
 import ChangePasswordTab from './ChangePasswordTab';
 import AvatarUploadTab from './AvatarUploadTab';
 
-/**
- * Profile View - Trang hồ sơ người dùng
- * Cho phép xem và chỉnh sửa thông tin cá nhân
- */
 const Profile = () => {
   const [activeKey, setActiveKey] = useState(1);
   const { userInfo, loading, displayName, email, refresh } = useCurrentUser();
@@ -82,7 +78,6 @@ const Profile = () => {
         </CCardBody>
       </CCard>
 
-      {/* Tabs cho các phần khác nhau */}
       <CCard>
         <CCardHeader>
           <CNav variant="tabs" role="tablist">

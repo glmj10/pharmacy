@@ -34,7 +34,7 @@ spring:
         default:
           encoding: UTF-8
 jwt:
-  secret: Jm/t4iRHPEvp1fFxY3ft0yRytsrRJrjctdLbRlRD+JjF9MBPcyEFOYZ0tqsLKOJe
+  secret: your_jwt_secret_key_here
   expiration: 3600
   refresh:
     expiration: 86400

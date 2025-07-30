@@ -9,11 +9,8 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Nếu không authenticated và không đang loading, mở modal
     if (!loading && !isAuthenticated) {
       openLoginModal(() => {
-        // Callback để redirect sau khi login thành công
-        // Navigate sẽ được handle bởi login success logic
       });
     }
   }, [isAuthenticated, loading, openLoginModal]);
@@ -27,7 +24,6 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    // Chuyển hướng về trang chủ, modal sẽ tự động mở
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 

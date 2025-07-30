@@ -35,10 +35,8 @@ const AppRouter = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Register logout callback
     const unregister = globalLogoutHandler.registerCallback((reason) => {
       console.log('Logout triggered:', reason);
-      // Navigate to login page
       navigate('/login', { replace: true });
     });
 
@@ -84,8 +82,7 @@ const App = () => {
     }
 
     setColorMode(storedTheme)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, []) 
   return (
     <NotificationProvider>
       <BrowserRouter basename="/admin">

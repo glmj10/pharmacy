@@ -1,4 +1,4 @@
-import api from './api';
+import api from './publicApi';
 
 export const productService = {
   getAllProducts: async (params = {}) => {
@@ -13,7 +13,6 @@ export const productService = {
       isAscending: params.isAscending
     };
 
-    // Remove undefined/empty values
     Object.keys(backendParams).forEach(key => {
       if (backendParams[key] === undefined || backendParams[key] === '') {
         delete backendParams[key];
@@ -25,7 +24,7 @@ export const productService = {
   },
 
   getTop15ProductsByNumberOfLikes: async () => {
-    const response = await api.get('/products/top15');
+    const response = await api.get('/products/rank/suggestions/top15');
     return response.data;
   },
 
@@ -55,6 +54,11 @@ export const productService = {
     };
     
     const response = await api.get('/products', { params: searchParams });
+    return response.data;
+  },
+
+  get15ProductByBrandId: async (brandId) => {
+    const response = await api.get(`/products/brand/suggestions/top15?brandId=${brandId}`);
     return response.data;
   }
 };

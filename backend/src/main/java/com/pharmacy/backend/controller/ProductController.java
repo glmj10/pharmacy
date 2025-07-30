@@ -24,20 +24,26 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<PageResponse<List<ProductResponse>>> getAllActiveProducts(@RequestParam(defaultValue = "1", required = false) int pageIndex,
+    public ResponseEntity<ApiResponse<PageResponse<List<ProductResponse>>>> getAllActiveProducts(@RequestParam(defaultValue = "1", required = false) int pageIndex,
                                                                                     @RequestParam(defaultValue = "10", required = false) int pageSize,
                                                                                      @ModelAttribute ProductFilterCustomerRequest filterRequest) {
         ApiResponse<PageResponse<List<ProductResponse>>> response = productService.getAllActiveProduct(pageIndex, pageSize, filterRequest);
-        return ResponseEntity.status(response.getStatus()).body(response.getData());
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping("/rank/suggestions/top15")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getTop15ProductsByNumberOfLikes() {
+        ApiResponse<List<ProductResponse>> response = productService.getTop15ProductsByNumberOfLikes();
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @GetMapping("/cms")
-    public ResponseEntity<PageResponse<List<ProductResponse>>> getAllCMSProducts(@RequestParam(defaultValue = "1", required = false) int pageIndex,
+    public ResponseEntity<ApiResponse<PageResponse<List<ProductResponse>>>> getAllCMSProducts(@RequestParam(defaultValue = "1", required = false) int pageIndex,
                                                                                     @RequestParam(defaultValue = "10", required = false) int pageSize,
                                                                                     @ModelAttribute ProductCMSFilterRequest filterRequest) {
         ApiResponse<PageResponse<List<ProductResponse>>> response = productService.getAllCMSProduct(pageIndex, pageSize, filterRequest);
-        return ResponseEntity.status(response.getStatus()).body(response.getData());
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
@@ -83,6 +89,19 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
         ApiResponse<Void> response = productService.deleteProduct(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @GetMapping("/statistic/total")
+    public ResponseEntity<ApiResponse<Long>> getTotalProduct() {
+        ApiResponse<Long> response = productService.getTotalProduct();
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping("/brand/suggestions/top15")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> get15ProductByBrand(@RequestParam Long brandId) {
+        ApiResponse<List<ProductResponse>> response = productService.get15ProductByBrand(brandId);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 }

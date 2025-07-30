@@ -48,19 +48,16 @@ const AdminDashboard = () => {
       setLoading(true)
       setError('')
 
-      // Load dashboard statistics
       const statsResponse = await dashboardService.getDashboardStats()
       if (statsResponse.success) {
         setStats(statsResponse.data)
       }
 
-      // Load recent orders
       const ordersResponse = await dashboardService.getRecentOrders(5)
       if (ordersResponse.success) {
         setRecentOrders(ordersResponse.data)
       }
 
-      // Load top products
       const productsResponse = await dashboardService.getTopProducts(5)
       if (productsResponse.success) {
         setTopProducts(productsResponse.data)

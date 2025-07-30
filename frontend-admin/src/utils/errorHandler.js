@@ -1,8 +1,5 @@
 import { apiUtils } from '../utils/apiUtils';
 
-/**
- * Global error handler for unhandled errors
- */
 class ErrorHandler {
   constructor(notificationService = null) {
     this.notificationService = notificationService;
@@ -14,7 +11,6 @@ class ErrorHandler {
   }
 
   setupGlobalErrorHandlers() {
-    // Handle unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
       console.error('Unhandled promise rejection:', event.reason);
       
@@ -23,7 +19,6 @@ class ErrorHandler {
         this.notificationService.showError(errorMessage, 'Lỗi hệ thống');
       }
       
-      // Prevent the default browser behavior (console error)
       event.preventDefault();
     });
 
@@ -57,9 +52,6 @@ class ErrorHandler {
     return 'Đã xảy ra lỗi không xác định';
   }
 
-  /**
-   * Handle API errors manually
-   */
   handleApiError(error, context = '') {
     console.error(`API Error ${context}:`, error);
     
@@ -69,9 +61,6 @@ class ErrorHandler {
     }
   }
 
-  /**
-   * Handle validation errors
-   */
   handleValidationError(error, context = '') {
     console.error(`Validation Error ${context}:`, error);
     

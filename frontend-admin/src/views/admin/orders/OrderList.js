@@ -84,7 +84,6 @@ const OrderList = () => {
     isEmpty,
   } = useOrders()
 
-  // State management
   const [searchTerm, setSearchTerm] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -96,11 +95,10 @@ const OrderList = () => {
   const [selectedOrders, setSelectedOrders] = useState([])
   const [toasts, setToasts] = useState([])
 
-  // Modals
   const [statusModal, setStatusModal] = useState({ 
     visible: false, 
     order: null, 
-    type: '', // 'status' or 'payment'
+    type: '', 
     newStatus: '' 
   })
   const [detailModal, setDetailModal] = useState({ 
@@ -110,20 +108,17 @@ const OrderList = () => {
   })
   const [bulkModal, setBulkModal] = useState({
     visible: false,
-    type: '', // 'status' or 'payment'
+    type: '', 
     newStatus: ''
   })
 
-  // Debounced search
   const [searchDebounce, setSearchDebounce] = useState(null)
   const [pdfLoading, setPdfLoading] = useState(false)
 
-  // Load orders on component mount
   useEffect(() => {
     loadOrders()
   }, [])
 
-  // Debounced search effect
   useEffect(() => {
     if (searchDebounce) {
       clearTimeout(searchDebounce)
@@ -141,7 +136,6 @@ const OrderList = () => {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  // Filter change effects
   useEffect(() => {
     resetToFirstPage()
   }, [statusFilter, paymentFilter, phoneFilter, dateFromFilter, dateToFilter])
@@ -149,11 +143,10 @@ const OrderList = () => {
   const loadOrders = async (page = 1, orderId = '', statusF = '', paymentF = '', phone = '', fromDate = '', toDate = '') => {
     try {
       const params = {
-        pageIndex: page, // Backend expects pageIndex
+        pageIndex: page, 
         pageSize: 10
       }
       
-      // Tìm kiếm theo mã đơn hàng
       if (orderId.trim()) {
         const orderIdNum = parseInt(orderId.trim())
         if (!isNaN(orderIdNum)) {
@@ -161,22 +154,18 @@ const OrderList = () => {
         }
       }
       
-      // Filter theo trạng thái đơn hàng
       if (statusF) {
         params.orderStatus = statusF
       }
       
-      // Filter theo trạng thái thanh toán
       if (paymentF) {
         params.paymentStatus = paymentF
       }
       
-      // Filter theo số điện thoại khách hàng
       if (phone.trim()) {
         params.customerPhoneNumber = phone.trim()
       }
       
-      // Filter theo khoảng thời gian
       if (fromDate) {
         params.fromDate = fromDate
       }
@@ -194,7 +183,7 @@ const OrderList = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault()
     setSearchTerm(searchInput)
-    loadOrders(1, searchInput, statusFilter, paymentFilter, phoneFilter, dateFromFilter, dateToFilter) // Always go to first page on search
+    loadOrders(1, searchInput, statusFilter, paymentFilter, phoneFilter, dateFromFilter, dateToFilter) 
   }
 
   const handleClearSearch = () => {
@@ -205,7 +194,7 @@ const OrderList = () => {
     setPhoneFilter('')
     setDateFromFilter('')
     setDateToFilter('')
-    loadOrders(1, '', '', '', '', '', '') // Reset to first page
+    loadOrders(1, '', '', '', '', '', '') 
   }
 
   const handlePageChange = (page) => {
@@ -219,12 +208,10 @@ const OrderList = () => {
     loadOrders(currentPageToLoad, searchTerm, statusFilter, paymentFilter, phoneFilter, dateFromFilter, dateToFilter)
   }
 
-  // Reset to first page when filters change
   const resetToFirstPage = () => {
     loadOrders(1, searchTerm, statusFilter, paymentFilter, phoneFilter, dateFromFilter, dateToFilter)
   }
 
-  // Status update handlers
   const handleStatusUpdate = async () => {
     if (!statusModal.order || !statusModal.newStatus) return
 
@@ -244,7 +231,6 @@ const OrderList = () => {
     }
   }
 
-  // Bulk update handlers
   const handleBulkUpdate = async () => {
     if (!bulkModal.type || !bulkModal.newStatus || selectedOrders.length === 0) return
 
@@ -267,7 +253,6 @@ const OrderList = () => {
     }
   }
 
-  // Selection handlers
   const handleSelectAll = (checked) => {
     if (checked) {
       setSelectedOrders(orders.map(order => order.id))
@@ -287,7 +272,6 @@ const OrderList = () => {
   const isAllSelected = selectedOrders.length === orders.length && orders.length > 0
   const isIndeterminate = selectedOrders.length > 0 && selectedOrders.length < orders.length
 
-  // Detail modal handler
   const handleViewDetails = async (order) => {
     try {
       const details = await getOrderDetails(order.id)
@@ -302,7 +286,6 @@ const OrderList = () => {
     }
   }
 
-  // Toast management
   const addToast = useCallback((message, type = 'info') => {
     const toast = {
       id: Date.now(),
@@ -318,7 +301,6 @@ const OrderList = () => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
 
-  // Utility functions
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -361,13 +343,12 @@ const OrderList = () => {
     const items = []
     const currentPage = pagination.currentPage
     const totalPages = pagination.totalPages
-    const maxVisiblePages = 5 // Maximum number of page buttons to show
+    const maxVisiblePages = 5 
     const halfVisible = Math.floor(maxVisiblePages / 2)
 
     let startPage = Math.max(1, currentPage - halfVisible)
     let endPage = Math.min(totalPages, currentPage + halfVisible)
 
-    // Adjust if we're near the beginning or end
     if (currentPage <= halfVisible) {
       endPage = Math.min(totalPages, maxVisiblePages)
     }
@@ -375,7 +356,6 @@ const OrderList = () => {
       startPage = Math.max(1, totalPages - maxVisiblePages + 1)
     }
 
-    // Previous button
     items.push(
       <CPaginationItem
         key="prev"
@@ -388,7 +368,6 @@ const OrderList = () => {
       </CPaginationItem>
     )
 
-    // Add first page and ellipsis if needed
     if (startPage > 1) {
       items.push(
         <CPaginationItem
@@ -410,7 +389,6 @@ const OrderList = () => {
       }
     }
 
-    // Add visible page numbers
     for (let page = startPage; page <= endPage; page++) {
       items.push(
         <CPaginationItem
@@ -425,7 +403,6 @@ const OrderList = () => {
       )
     }
 
-    // Add ellipsis and last page if needed
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
         items.push(
@@ -447,7 +424,6 @@ const OrderList = () => {
       )
     }
 
-    // Next button
     items.push(
       <CPaginationItem
         key="next"
@@ -463,7 +439,6 @@ const OrderList = () => {
     return <CPagination align="center" className="mt-3">{items}</CPagination>
   }
 
-  // Print plain text table function
   const printOrderDetails = async (order, orderDetails) => {
     try {
       setPdfLoading(true)
@@ -471,7 +446,6 @@ const OrderList = () => {
       
       const customer = getCustomerInfo(order)
       
-      // Generate plain text table with better formatting
       const textContent = `
 ===============================================================================
                        PHARMACY ADMIN - HÓA ĐƠN BÁN HÀNG
@@ -526,7 +500,6 @@ Thời gian xuất: ${formatDate(new Date())}
 ===============================================================================
       `.trim()
       
-      // Open new window with text content
       const printWindow = window.open('', '_blank', 'width=800,height=600')
       printWindow.document.write(`
         <html>
@@ -553,7 +526,6 @@ Thời gian xuất: ${formatDate(new Date())}
       printWindow.document.close()
       printWindow.focus()
       
-      // Auto print dialog
       setTimeout(() => {
         printWindow.print()
       }, 500)
@@ -568,14 +540,12 @@ Thời gian xuất: ${formatDate(new Date())}
     }
   }
 
-  // Handle print PDF
   const handlePrintPDF = async () => {
     if (!detailModal.order || !detailModal.details) return
     
     await printOrderDetails(detailModal.order, detailModal.details)
   }
 
-  // Handle quick print PDF
   const handleQuickPrint = async (order) => {
     try {
       setPdfLoading(true)
@@ -589,7 +559,6 @@ Thời gian xuất: ${formatDate(new Date())}
     }
   }
 
-  // Handle bulk print PDF
   const handleBulkPrint = async () => {
     if (selectedOrders.length === 0) return
     
@@ -605,7 +574,6 @@ Thời gian xuất: ${formatDate(new Date())}
           const details = await getOrderDetails(order.id)
           await printOrderDetails(order, details)
           
-          // Delay between prints to avoid overwhelming the browser
           if (i < selectedOrderData.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 1000))
           }
@@ -625,7 +593,6 @@ Thời gian xuất: ${formatDate(new Date())}
     }
   }
 
-  // Render main component
   if (loading && orders.length === 0) {
     return <LoadingSpinner />
   }

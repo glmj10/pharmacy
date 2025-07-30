@@ -3,15 +3,8 @@ import { ENDPOINTS } from '../config/constants';
 import { apiUtils } from '../utils/apiUtils';
 
 class DashboardService {
-    /**
-     * Get dashboard statistics
-     * @returns {Promise<Object>}
-     */
     async getDashboardStats() {
         try {
-            console.log('Starting dashboard stats fetch...');
-            
-            // Use dedicated API endpoints for getting totals
             const [productResponse, orderResponse, userResponse, revenueResponse] = await Promise.all([
                 api.get('/products/statistic/total').catch(err => {
                     console.error('Product total API error:', err);
@@ -30,14 +23,7 @@ class DashboardService {
                     throw err;
                 })
             ]);
-
-            console.log('API Responses:', {
-                products: productResponse.data,
-                orders: orderResponse.data,
-                users: userResponse.data,
-                revenue: revenueResponse.data
-            });
-
+            
             const totalProducts = productResponse.data?.data || 0;
             const totalOrders = orderResponse.data?.data || 0;
             const totalUsers = userResponse.data?.data || 0;
@@ -72,19 +58,12 @@ class DashboardService {
         }
     }
 
-    /**
-     * Get recent orders for dashboard
-     * @param {number} limit - Number of recent orders to fetch (not used as backend returns 5)
-     * @returns {Promise<Array>}
-     */
     async getRecentOrders() {
         try {
-            // Use dedicated API endpoint for getting 5 newest orders
             const response = await api.get('/orders/statistic/newest');
             
             const orders = response.data?.data || [];
             
-            // Format orders for dashboard display
             const formattedOrders = orders.map(order => ({
                 id: order.id,
                 customerName: order.customerName || 'Khách hàng',
@@ -108,11 +87,6 @@ class DashboardService {
         }
     }
 
-    /**
-     * Get top selling products
-     * @param {number} limit - Number of top products to fetch
-     * @returns {Promise<Array>}
-     */
     async getTopProducts(limit = 5) {
         try {
             const response = await api.get(ENDPOINTS.PRODUCTS.GET_CMS, { 
@@ -145,20 +119,13 @@ class DashboardService {
         }
     }
 
-    /**
-     * Get low stock products
-     * @param {number} threshold - Stock threshold
-     * @param {number} limit - Number of products to fetch
-     * @returns {Promise<Array>}
-     */
     async getLowStockProducts(threshold = 10, limit = 5) {
         try {
-            // This would require a specific backend endpoint for low stock
-            // For now, we'll get all products and filter
+
             const response = await api.get(ENDPOINTS.PRODUCTS.GET_CMS, { 
                 params: { 
                     pageIndex: 1, 
-                    pageSize: 50, // Get more to filter
+                    pageSize: 50, 
                     isActive: true
                 } 
             });

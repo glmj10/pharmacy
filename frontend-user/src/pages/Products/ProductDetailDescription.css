@@ -1,0 +1,39 @@
+
+.description-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.description-content th,
+.description-content td {
+  border: 1px solid #dee2e6;
+  padding: 8px;
+  text-align: left;
+}
+
+.description-content th {
+  background-color: #f8f9fa;
+}
+
+.description-content hr {
+  border: none;
+  border-top: 1px solid #dee2e6;
+  margin: 16px 0;
+}
+
+.description-content ul,
+.description-content ol {
+  margin-left: 1.5rem;
+}
+
+.description-content p {
+  margin-bottom: 1rem;
+}
+
+.description-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+}

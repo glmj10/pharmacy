@@ -14,10 +14,7 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilSave, cilX } from '@coreui/icons';
 import authService from '../../services/auth.service';
-/**
- * Tab đổi mật khẩu
- * Cho phép người dùng thay đổi mật khẩu
- */
+
 const ChangePasswordTab = ({ userInfo }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
@@ -38,7 +35,6 @@ const ChangePasswordTab = ({ userInfo }) => {
       ...prev,
       [name]: value
     }));
-    // Clear message when user starts typing
     if (message.content) {
       setMessage({ type: '', content: '' });
     }
@@ -84,7 +80,6 @@ const ChangePasswordTab = ({ userInfo }) => {
     setMessage({ type: '', content: '' });
 
     try {
-      // Gọi API đổi mật khẩu
       const response = await authService.changePassword({
         oldPassword: formData.currentPassword,
         password: formData.newPassword,
@@ -97,7 +92,6 @@ const ChangePasswordTab = ({ userInfo }) => {
           content: 'Đổi mật khẩu thành công!' 
         });
         
-        // Reset form
         setFormData({
           currentPassword: '',
           newPassword: '',

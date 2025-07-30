@@ -48,10 +48,8 @@ const CartModal = ({ isOpen, onClose }) => {
   }, [items]);
 
   const handleSelectItem = (itemId) => {
-    // Lấy trạng thái hiện tại của item từ safeCartItems
     const item = safeCartItems.find(i => i.id === itemId);
     const newSelected = !item.selected;
-    // Gọi API để cập nhật trạng thái selected (true nếu tích xanh, false nếu bỏ tích)
     updateCartItemStatus(itemId, newSelected)
       .then(() => {
         fetchCart();

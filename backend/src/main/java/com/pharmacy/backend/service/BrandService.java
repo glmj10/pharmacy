@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface BrandService {
     ApiResponse<PageResponse<List<BrandResponse>>> getAllBrands(int pageIndex, int pageSize, String name);
+    ApiResponse<List<BrandResponse>> getAllBrands();
     ApiResponse<BrandResponse> getBrandById(Long id);
     ApiResponse<BrandResponse> createBrand(BrandRequest request);
     ApiResponse<BrandResponse> updateBrand(Long id, BrandRequest request);

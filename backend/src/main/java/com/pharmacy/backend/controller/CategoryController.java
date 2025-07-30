@@ -27,6 +27,20 @@ public class CategoryController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @PreAuthorize( "hasRole('ADMIN') or hasRole('STAFF')")
+    @GetMapping("/products/all")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllProductCategories() {
+        ApiResponse<List<CategoryResponse>> response = categoryService.getAllProductCategories();
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PreAuthorize( "hasRole('ADMIN') or hasRole('STAFF')")
+    @GetMapping("/blogs/all")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllBlogCategories() {
+        ApiResponse<List<CategoryResponse>> response = categoryService.getAllBlogCategories();
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     @GetMapping("/parent/{parentSlug}")
     public ResponseEntity<ApiResponse<List<CategoryParentAndChildResponse>>> getAllCategoriesByParentSlug(@PathVariable String parentSlug) {
         ApiResponse<List<CategoryParentAndChildResponse>> response = categoryService.getAllCategoriesByParentSlug(parentSlug);

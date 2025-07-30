@@ -2,9 +2,6 @@ import { useState, useCallback } from 'react'
 import brandService from '../services/brand.service'
 import { useApiCall } from './useApiCall'
 
-/**
- * Custom hook for brand management operations
- */
 export const useBrands = () => {
   const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(false)
@@ -18,9 +15,6 @@ export const useBrands = () => {
 
   const { execute: callApi } = useApiCall()
 
-  /**
-   * Fetch brands with pagination and filters
-   */
   const fetchBrands = useCallback(async (params = {}) => {
     setLoading(true)
     try {
@@ -50,9 +44,6 @@ export const useBrands = () => {
     }
   }, [callApi])
 
-  /**
-   * Get all brands without pagination
-   */
   const getBrands = useCallback(async () => {
     try {
       const response = await callApi(() => brandService.getAllBrands())
@@ -68,9 +59,6 @@ export const useBrands = () => {
     }
   }, [callApi])
 
-  /**
-   * Create new brand
-   */
   const createBrand = useCallback(async (brandData) => {
     try {
       const response = await callApi(
@@ -88,9 +76,6 @@ export const useBrands = () => {
     }
   }, [callApi])
 
-  /**
-   * Update existing brand
-   */
   const updateBrand = useCallback(async (id, brandData) => {
     try {
       const response = await callApi(
@@ -108,9 +93,6 @@ export const useBrands = () => {
     }
   }, [callApi])
 
-  /**
-   * Delete brand
-   */
   const deleteBrand = useCallback(async (id) => {
     try {
       const response = await callApi(
@@ -128,9 +110,6 @@ export const useBrands = () => {
     }
   }, [callApi])
 
-  /**
-   * Get single brand by ID
-   */
   const getBrandById = useCallback(async (id) => {
     try {
       const response = await callApi(() => brandService.getBrandById(id))
@@ -146,9 +125,6 @@ export const useBrands = () => {
     }
   }, [callApi])
 
-  /**
-   * Refresh current page
-   */
   const refresh = useCallback(async (params = {}) => {
     return await fetchBrands({
       pageIndex: pagination.currentPage,
@@ -158,12 +134,10 @@ export const useBrands = () => {
   }, [fetchBrands, pagination.currentPage])
 
   return {
-    // State
     brands,
     loading,
     pagination,
     
-    // Actions
     fetchBrands,
     getBrands,
     createBrand,
@@ -172,7 +146,6 @@ export const useBrands = () => {
     getBrandById,
     refresh,
     
-    // Utils
     setBrands,
     setPagination,
   }

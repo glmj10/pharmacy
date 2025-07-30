@@ -3,11 +3,6 @@ import { apiUtils } from '../utils/apiUtils';
 import { ENDPOINTS } from '../config/constants';
 
 class BlogService {
-    /**
-     * Get all active blogs (public)
-     * @param {Object} params - Query parameters
-     * @returns {Promise<ApiResponse>}
-     */
     async getBlogs(params = {}) {
         try {
             const response = await api.get(ENDPOINTS.BLOG.GET_ALL, { params });
@@ -17,11 +12,6 @@ class BlogService {
         }
     }
     
-    /**
-     * Get blog by ID
-     * @param {string|number} id - Blog ID
-     * @returns {Promise<ApiResponse>}
-     */
     async getBlogById(id) {
         try {
             const response = await api.get(ENDPOINTS.BLOG.GET_BY_ID(id));
@@ -31,11 +21,6 @@ class BlogService {
         }
     }
 
-    /**
-     * Get blog by slug
-     * @param {string} slug - Blog slug
-     * @returns {Promise<ApiResponse>}
-     */
     async getBlogBySlug(slug) {
         try {
             const response = await api.get(ENDPOINTS.BLOG.GET_BY_SLUG(slug));
@@ -45,11 +30,6 @@ class BlogService {
         }
     }
 
-    /**
-     * Create new blog
-     * @param {FormData} blogData - Blog form data
-     * @returns {Promise<ApiResponse>}
-     */
     async createBlog(blogData) {
         try {
             const response = await api.post(ENDPOINTS.BLOG.CREATE, blogData);
@@ -59,12 +39,6 @@ class BlogService {
         }
     }
 
-    /**
-     * Update blog
-     * @param {string|number} id - Blog ID
-     * @param {FormData} blogData - Blog form data
-     * @returns {Promise<ApiResponse>}
-     */
     async updateBlog(id, blogData) {
         try {
             const response = await api.put(ENDPOINTS.BLOG.UPDATE(id), blogData);

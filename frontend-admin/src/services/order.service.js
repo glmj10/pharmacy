@@ -3,11 +3,6 @@ import { ENDPOINTS } from '../config/constants';
 import { apiUtils } from '../utils/apiUtils';
 
 class OrderService {
-    /**
-     * Get all orders (admin)
-     * @param {Object} params - Query parameters
-     * @returns {Promise<ApiResponse>}
-     */
     async getOrders(params = {}) {
         try {
             const response = await api.get(ENDPOINTS.ORDERS.GET_ALL, { params });
@@ -17,11 +12,6 @@ class OrderService {
         }
     }
 
-    /**
-     * Get order details
-     * @param {string|number} id - Order ID
-     * @returns {Promise<ApiResponse>}
-     */
     async getOrderDetails(id) {
         try {
             const response = await api.get(ENDPOINTS.ORDERS.GET_DETAILS(id));
@@ -31,14 +21,6 @@ class OrderService {
         }
     }
 
-
-
-    /**
-     * Update order status
-     * @param {string|number} id - Order ID
-     * @param {string} status - New status
-     * @returns {Promise<ApiResponse>}
-     */
     async updateOrderStatus(id, status) {
         try {
             const response = await api.put(ENDPOINTS.ORDERS.UPDATE_STATUS(id), null, {
@@ -50,12 +32,6 @@ class OrderService {
         }
     }
 
-    /**
-     * Update payment status
-     * @param {string|number} id - Order ID
-     * @param {string} status - New payment status
-     * @returns {Promise<ApiResponse>}
-     */
     async updatePaymentStatus(id, status) {
         try {
             const response = await api.put(ENDPOINTS.ORDERS.UPDATE_PAYMENT_STATUS(id), null, {

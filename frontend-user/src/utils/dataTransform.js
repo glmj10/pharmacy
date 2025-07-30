@@ -1,26 +1,21 @@
-// Data transformation utilities for Profile operations
-
 export const ProfileTransform = {
-  // Transform frontend profile form to backend ProfileRequest
   toBackendRequest: (profileData) => {
     return {
       fullName: profileData.fullName,
-      phoneNumber: profileData.phoneNumber, // Backend expects 'phone', frontend uses 'phoneNumber'
+      phoneNumber: profileData.phoneNumber, 
       address: profileData.address
     };
   },
 
-  // Transform backend ProfileResponse to frontend format
   toFrontendFormat: (backendProfile) => {
     return {
       id: backendProfile.id,
       fullName: backendProfile.fullName,
-      phoneNumber: backendProfile.phoneNumber, // Backend returns 'phoneNumber'
+      phoneNumber: backendProfile.phoneNumber, 
       address: backendProfile.address
     };
   },
 
-  // Validate profile form data
   validateProfileForm: (profileData) => {
     const errors = [];
 
@@ -46,14 +41,12 @@ export const ProfileTransform = {
 };
 
 export const UserTransform = {
-  // Transform user info for backend (chỉ username, không có email)
   toBackendUserInfo: (userInfo) => {
     return {
       username: userInfo.username
     };
   },
 
-  // Transform password change data
   toBackendPasswordRequest: (passwordData) => {
     return {
       currentPassword: passwordData.currentPassword,
@@ -61,7 +54,6 @@ export const UserTransform = {
     };
   },
 
-  // Validate password form
   validatePasswordForm: (passwordData) => {
     const errors = [];
 
@@ -91,9 +83,7 @@ export const UserTransform = {
   }
 };
 
-// Auth data transformation utilities
 export const AuthTransform = {
-  // Transform login response từ backend
   transformLoginResponse: (apiResponse) => {
     
     if (!apiResponse || !apiResponse.data) {
@@ -107,11 +97,8 @@ export const AuthTransform = {
     };
   },
 
-  // Transform register response từ backend
   transformRegisterResponse: (apiResponse) => {
-    // Backend trả về: ApiResponse<UserResponse>
-    // apiResponse = { status, message, data: UserResponse, timestamp }
-    
+
     if (!apiResponse || !apiResponse.data) {
       throw new Error('Invalid register response structure');
     }
@@ -130,7 +117,6 @@ export const AuthTransform = {
     };
   },
 
-  // Transform user info từ backend UserResponse
   transformUserResponse: (userResponse) => {
     if (!userResponse) {
       return null;
@@ -146,7 +132,6 @@ export const AuthTransform = {
     };
   },
 
-  // Validate login credentials
   validateLoginCredentials: (credentials) => {
     const errors = [];
 
@@ -166,7 +151,6 @@ export const AuthTransform = {
     };
   },
 
-  // Validate register data
   validateRegisterData: (userData) => {
     const errors = [];
 
@@ -200,7 +184,6 @@ export const AuthTransform = {
     };
   },
 
-  // Transform change password request
   toChangePasswordRequest: (passwordData) => {
     return {
       oldPassword: passwordData.currentPassword,
@@ -209,22 +192,19 @@ export const AuthTransform = {
     };
   },
 
-  // Transform user info request (for updating profile)
   toUserInfoRequest: (userInfo) => {
     return {
       email: userInfo.email,
       username: userInfo.username
     };
   }
+
 };
 
-// Error handling utilities
 export const ErrorTransform = {
-  // Transform backend validation errors to frontend format
   transformValidationErrors: (error) => {
     const fieldErrors = {};
     
-    // Check if error has validation details from backend
     if (error?.response?.data?.details && Array.isArray(error.response.data.details)) {
       error.response.data.details.forEach(detail => {
         if (detail.field && detail.message) {
@@ -239,24 +219,20 @@ export const ErrorTransform = {
     return fieldErrors;
   },
 
-  // Get first error message for a field
   getFirstFieldError: (fieldErrors, fieldName) => {
     return fieldErrors[fieldName] && fieldErrors[fieldName].length > 0 
       ? fieldErrors[fieldName][0] 
       : null;
   },
 
-  // Check if field has validation error
   hasFieldError: (fieldErrors, fieldName) => {
     return fieldErrors[fieldName] && fieldErrors[fieldName].length > 0;
   },
 
-  // Transform error response to user-friendly message
   transformErrorMessage: (error) => {
     const status = error?.response?.status;
     const message = error?.response?.data?.message;
     
-    // Priority: specific field errors > general message > status-based message
     const fieldErrors = ErrorTransform.transformValidationErrors(error);
     const hasFieldErrors = Object.keys(fieldErrors).length > 0;
     

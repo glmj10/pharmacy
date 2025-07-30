@@ -1,17 +1,16 @@
 package com.pharmacy.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -33,7 +32,7 @@ public class Product {
     String slug;
     Long priority = 1L;
     Boolean active = true;
-
+    Long numberOfLikes = 0L;
     @Column(columnDefinition = "TEXT")
     String description;
 
@@ -46,16 +45,17 @@ public class Product {
     @Column(name = "dosage_form")
     String dosageForm;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     List<ProductImage> images;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     List<Wishlist> wishlists;
 
     @ManyToOne
     @JoinColumn(name = "brand_id")
     Brand brand;
 
+    @ToString.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "product_categories",
             joinColumns = @JoinColumn(name = "product_id"),
@@ -64,10 +64,10 @@ public class Product {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    String createdAt;
+    LocalDateTime createdAt;
 
     @CreationTimestamp
     @Column(name = "updated_at")
-    String updatedAt;
+    LocalDateTime updatedAt;
 
 }

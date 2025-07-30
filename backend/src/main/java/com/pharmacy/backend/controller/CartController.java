@@ -16,13 +16,27 @@ import java.util.List;
 @RequestMapping("/api/v1/carts")
 @RequiredArgsConstructor
 @PreAuthorize( "hasRole('USER')")
-@Controller
+@RestController
 public class CartController {
     private final CartService cartService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<CartResponse>> getCartItems() {
         ApiResponse<CartResponse> response = cartService.getCart();
+
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping("/item/totalItems")
+    public ResponseEntity<ApiResponse<Long>> getTotalItems() {
+        ApiResponse<Long> response = cartService.getTotalItemsInCart();
+
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping("/item/checkout")
+    public ResponseEntity<ApiResponse<List<CartResponse>>> getCartItemToCheckout() {
+        ApiResponse<List<CartResponse>> response = cartService.getCartItemsForCheckout();
 
         return ResponseEntity.status(response.getStatus()).body(response);
     }

@@ -1,47 +1,18 @@
 import { ApiResponse, ErrorResponse, ValidationError } from './apiTypes';
 
-/**
- * API Response utility functions
- */
 export const apiUtils = {
-    /**
-     * Create success response
-     * @param {*} data 
-     * @param {string} message 
-     * @param {number} status 
-     * @returns {ApiResponse}
-     */
     createSuccessResponse(data, message = 'Success', status = 200) {
         return new ApiResponse(status, message, data);
     },
 
-    /**
-     * Create error response
-     * @param {string} error 
-     * @param {string} message 
-     * @param {number} status 
-     * @param {ValidationError[]} details 
-     * @param {string} path 
-     * @returns {ErrorResponse}
-     */
     createErrorResponse(error, message, status = 500, details = [], path = '') {
         return new ErrorResponse(status, error, message, details, path);
     },
 
-    /**
-     * Check if response is successful
-     * @param {any} response 
-     * @returns {boolean}
-     */
     isSuccessResponse(response) {
         return response && response.status >= 200 && response.status < 300;
     },
 
-    /**
-     * Extract data from API response
-     * @param {ApiResponse} response 
-     * @returns {*}
-     */
     extractData(response) {
         if (this.isSuccessResponse(response)) {
             return response.data;
@@ -49,11 +20,6 @@ export const apiUtils = {
         return null;
     },
 
-    /**
-     * Extract error message from response
-     * @param {ErrorResponse} error 
-     * @returns {string}
-     */
     extractErrorMessage(error) {
         if (error instanceof ErrorResponse) {
             return error.getFullErrorMessage();
@@ -61,11 +27,6 @@ export const apiUtils = {
         return error?.message || 'An unexpected error occurred';
     },
 
-    /**
-     * Handle form validation errors
-     * @param {ErrorResponse} error 
-     * @returns {Object} - Object with field names as keys and error messages as values
-     */
     extractValidationErrors(error) {
         const validationErrors = {};
         
@@ -81,21 +42,11 @@ export const apiUtils = {
         return validationErrors;
     },
 
-    /**
-     * Convert axios response to ApiResponse
-     * @param {AxiosResponse} axiosResponse 
-     * @returns {ApiResponse}
-     */
     fromAxiosResponse(axiosResponse) {
         const { status, message, data, timestamp } = axiosResponse.data;
         return new ApiResponse(status, message, data, timestamp);
     },
 
-    /**
-     * Convert axios error to ErrorResponse
-     * @param {AxiosError} axiosError 
-     * @returns {ErrorResponse}
-     */
     fromAxiosError(axiosError) {
         // Log the error for debugging
         console.error('API Error:', {
@@ -141,11 +92,6 @@ export const apiUtils = {
         );
     },
 
-    /**
-     * Show user-friendly error message
-     * @param {ErrorResponse} error 
-     * @returns {string}
-     */
     getUserFriendlyErrorMessage(error) {
         if (error instanceof ErrorResponse) {
             // Handle specific error types

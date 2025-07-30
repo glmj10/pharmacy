@@ -15,4 +15,6 @@ public interface CategoryService {
     ApiResponse<CategoryResponse> createCategory(CategoryRequest request, MultipartFile thumbnail);
     ApiResponse<CategoryResponse> updateCategory(Long id, CategoryRequest request, MultipartFile thumbnail);
     ApiResponse<Void> deleteCategory(Long id);
+    ApiResponse<List<CategoryResponse>> getAllProductCategories();
+    ApiResponse<List<CategoryResponse>> getAllBlogCategories();
 }

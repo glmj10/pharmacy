@@ -1,10 +1,7 @@
 package com.pharmacy.backend.controller;
 
 import com.nimbusds.jose.JOSEException;
-import com.pharmacy.backend.dto.request.AuthRequest;
-import com.pharmacy.backend.dto.request.ChangePasswordRequest;
-import com.pharmacy.backend.dto.request.UserInfoRequest;
-import com.pharmacy.backend.dto.request.UserRequest;
+import com.pharmacy.backend.dto.request.*;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.AuthResponse;
 import com.pharmacy.backend.dto.response.RefreshRequest;
@@ -62,6 +59,18 @@ public class AuthController {
     @PutMapping("/password")
     public ResponseEntity<ApiResponse<String>> changePassword(@RequestBody @Valid ChangePasswordRequest request) {
         ApiResponse<String> response = authService.changePassword(request);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestBody @Valid ConfirmationEmailRequest request) {
+        ApiResponse<Void> response = authService.forgotPassword(request);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PutMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) throws ParseException {
+        ApiResponse<Void> response = authService.resetPassword(request);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

@@ -12,4 +12,5 @@ public interface UserService {
     ApiResponse<UserResponse> getUserById(Long userId);
     ApiResponse<PageResponse<List<UserResponse>>> getAllUsers(Integer pageIndex, Integer pageSize, String email);
     ApiResponse<UserResponse> getCurrentUser();
+    ApiResponse<Long> getTotalUser();
 }

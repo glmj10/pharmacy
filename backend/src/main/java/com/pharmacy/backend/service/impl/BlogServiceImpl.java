@@ -5,11 +5,15 @@ import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.BlogResponse;
 import com.pharmacy.backend.dto.response.PageResponse;
 import com.pharmacy.backend.entity.Blog;
+import com.pharmacy.backend.entity.Category;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.BlogMapper;
+import com.pharmacy.backend.mapper.CategoryMapper;
 import com.pharmacy.backend.repository.BlogRepository;
+import com.pharmacy.backend.repository.CategoryRepository;
 import com.pharmacy.backend.service.BlogService;
 import com.pharmacy.backend.service.FileMetadataService;
+import com.pharmacy.backend.specification.BlogSpecification;
 import com.pharmacy.backend.utils.SlugUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,8 +35,11 @@ public class BlogServiceImpl implements BlogService {
     private final BlogRepository blogRepository;
     private final BlogMapper blogMapper;
     private final FileMetadataService fileMetadataService;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
+
     @Override
-    public ApiResponse<PageResponse<List<BlogResponse>>> getAllBlogs(int pageIndex, int pageSize, String title) {
+    public ApiResponse<PageResponse<List<BlogResponse>>> getAllBlogs(int pageIndex, int pageSize, String title, String category) {
         if(pageIndex <= 0) {
             pageIndex = 1;
         }
@@ -40,14 +48,15 @@ public class BlogServiceImpl implements BlogService {
             pageSize = 10;
         }
 
+        Specification<Blog> blogSpecification = BlogSpecification.hasTitle(title)
+                .and(BlogSpecification.hasCategorySlug(category));
+
         Pageable pageable = PageRequest.of(pageIndex - 1, pageSize,
                 Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Blog> blogPage;
-        if(title != null && !title.isEmpty()) {
-            blogPage = blogRepository.findByTitleContainingIgnoreCase(title, pageable);
-        } else {
-            blogPage = blogRepository.findAll(pageable);
-        }
+
+        blogPage = blogRepository.findAll(blogSpecification, pageable);
+
         List<BlogResponse> blogResponses = blogPage.getContent().stream().map(
                 blogMapper::toBlogResponse
         ).toList();
@@ -67,12 +76,14 @@ public class BlogServiceImpl implements BlogService {
         );
     }
 
+    @Transactional
     @Override
     public ApiResponse<BlogResponse> getBlogBySlug(String slug) {
         Blog blog = blogRepository.findBySlug(slug)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                         "Không tìm thấy bài viết với slug: " + slug, "Blog not found"));
         BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
+        blogResponse.setCategory(categoryMapper.toCategoryResponse(blog.getCategory()));
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
                 "Lấy bài viết thành công",
@@ -80,12 +91,14 @@ public class BlogServiceImpl implements BlogService {
         );
     }
 
+    @Transactional
     @Override
     public ApiResponse<BlogResponse> getBlogById(Long id) {
         Blog blog = blogRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                         "Không tìm thấy bài viết với ID: " + id, "Blog not found"));
         BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
+        blogResponse.setCategory(categoryMapper.toCategoryResponse(blog.getCategory()));
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
                 "Lấy bài viết thành công",
@@ -96,12 +109,16 @@ public class BlogServiceImpl implements BlogService {
     @Transactional
     @Override
     public ApiResponse<BlogResponse> createBlog(BlogRequest request, MultipartFile thumbnail) {
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy danh mục với ID: " + request.getCategoryId(), "Category not found"));
+
         Blog blog = blogMapper.toBlog(request);
         blog.setSlug(createSlug(blog.getTitle()));
 
         var fileMetadata = fileMetadataService.storeFile(thumbnail, "BLOG");
         blog.setThumbnail(fileMetadata.getData().getId().toString());
-
+        blog.setCategory(category);
         Blog savedBlog = blogRepository.save(blog);
 
         BlogResponse blogResponse = blogMapper.toBlogResponse(savedBlog);

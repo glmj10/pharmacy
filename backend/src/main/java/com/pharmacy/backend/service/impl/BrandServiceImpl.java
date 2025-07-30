@@ -62,6 +62,20 @@ public class BrandServiceImpl implements BrandService {
         );
     }
 
+    @Override
+    public ApiResponse<List<BrandResponse>> getAllBrands() {
+        List<Brand> brands = brandRepository.findAll();
+        List<BrandResponse> brandResponses = brands.stream()
+                .map(brandMapper::toBrandResponse)
+                .toList();
+
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy danh sách thương hiệu thành công",
+                brandResponses
+        );
+    }
+
 
     @Transactional
     @Override

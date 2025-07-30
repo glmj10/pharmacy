@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +40,9 @@ public class JwtUtils{
 
     @Value("${jwt.refresh.expiration}")
     long refreshExpiration;
+
+    @Value("${jwt.reset-password.expiration}")
+    Long resetPasswordExpiration;
 
     static final String ISUER = "Pharmacy";
     final InvalidatedTokenRepository invalidatedTokenRepository;
@@ -108,6 +112,64 @@ public class JwtUtils{
             invalidatedTokenRepository.deleteAll(expiredTokens);
         }
         log.info("Cleaned up {} expired tokens", expiredTokens.size());
+    }
+
+    public LocalDateTime getExpirationTime(String token, boolean isRefreshToken) throws ParseException {
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        if (isRefreshToken) {
+            return LocalDateTime.ofInstant(signedJWT.getJWTClaimsSet().getIssueTime().toInstant(), java.time.ZoneId.systemDefault())
+                    .plusSeconds(refreshExpiration);
+        } else {
+            return LocalDateTime.ofInstant(signedJWT.getJWTClaimsSet().getExpirationTime().toInstant(), java.time.ZoneId.systemDefault());
+        }
+    }
+
+    public String getUserEmail(String token) throws ParseException {
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        return signedJWT.getJWTClaimsSet().getStringClaim("email");
+    }
+
+    public Boolean isTokenExpired(String token, boolean isRefreshToken) {
+        try {
+            LocalDateTime expirationTime = getExpirationTime(token, isRefreshToken);
+            return expirationTime.isBefore(LocalDateTime.now());
+        } catch (ParseException e) {
+            log.error("Error parsing token expiration time", e);
+            return true;
+        }
+    }
+
+    public String generatePasswordResetToken(User user) {
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+
+        List<RoleCodeEnum> roles = user.getRoles().stream()
+                .map(Role::getCode)
+                .toList();
+
+        List<String> authorities = roles.stream()
+                .map(Enum::name).toList();
+
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .issuer(ISUER)
+                .subject(user.getUsername())
+                .claim("authorities", authorities)
+                .claim("email", user.getEmail())
+                .claim("id", user.getId())
+                .claim("ver", user.getTokenVersion())
+                .issueTime(new Date())
+                .jwtID(UUID.randomUUID().toString())
+                .expirationTime(new Date(System.currentTimeMillis() + resetPasswordExpiration * 1000))
+                .build();
+
+        Payload payload = new Payload(claimsSet.toJSONObject());
+        JWSObject jwsObject = new JWSObject(header, payload);
+
+        try {
+            jwsObject.sign(new MACSigner(secret.getBytes()));
+        } catch (JOSEException e) {
+            throw new RuntimeException("Error signing JWT token", e);
+        }
+        return jwsObject.serialize();
     }
 
 }

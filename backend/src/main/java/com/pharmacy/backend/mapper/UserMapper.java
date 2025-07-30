@@ -16,6 +16,8 @@ public interface UserMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "profiles", ignore = true)
     @Mapping(target = "profilePic", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
+    @Mapping(target = "roles", ignore = true)
     User toUser (UserRequest request);
 
     @Mapping(target = "profilePic", ignore = true)

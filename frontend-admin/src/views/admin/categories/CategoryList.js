@@ -44,7 +44,6 @@ import {
 import { categoryService } from '../../../services'
 import { useApiCall } from '../../../hooks/useApiCall'
 
-// Modern CSS styles for animations and smooth transitions
 const modernCategoryStyles = `
   <style>
     @keyframes pulse {
@@ -172,7 +171,6 @@ const CategoryList = () => {
           : response.data.content || response.data.data || []
         setCategories(categoriesData)
         
-        // Mặc định thu gọn tất cả categories
         setExpandedCategories(new Set())
       } else {
         setCategories([])
@@ -196,7 +194,6 @@ const CategoryList = () => {
       [name]: value
     }))
     
-    // Real-time validation
     validateField(name, value)
   }
 
@@ -211,7 +208,6 @@ const CategoryList = () => {
       errors.type = 'Loại danh mục là bắt buộc'
     }
 
-    // Validate thumbnail for create mode
     if (!formModal.isEdit && !thumbnailFile) {
       errors.thumbnail = 'Hình ảnh là bắt buộc khi tạo danh mục mới'
     }
@@ -245,7 +241,6 @@ const CategoryList = () => {
   const isFormValid = () => {
     const basicValid = formData.name.trim() !== '' && formData.type.trim() !== ''
     
-    // For create mode, thumbnail is also required
     if (!formModal.isEdit) {
       return basicValid && thumbnailFile !== null
     }
@@ -357,36 +352,22 @@ const CategoryList = () => {
     try {
       const submitFormData = new FormData()
       
-      // Create category request object to match backend CategoryRequest
       const categoryRequest = {
         name: formData.name.trim(),
         type: formData.type,
         parentId: formData.parentId || null,
       }
       
-      // Add category data as JSON string with proper content type for @RequestPart("category")
       const categoryBlob = new Blob([JSON.stringify(categoryRequest)], { type: 'application/json' })
       submitFormData.append('category', categoryBlob)
       
-      // Add thumbnail file for @RequestPart("thumbnail") - required for create, optional for update
       if (thumbnailFile) {
         submitFormData.append('thumbnail', thumbnailFile)
       } else if (!formModal.isEdit) {
-        // For create mode, thumbnail is required
         alert('Vui lòng chọn hình ảnh cho danh mục')
         return
       }
-      // For update mode, if no new thumbnail is selected, keep the existing one
 
-      // Debug: Log FormData contents
-      console.log('FormData contents:');
-      for (let [key, value] of submitFormData.entries()) {
-        console.log(`${key}:`, value);
-      }
-      console.log('Category request object:', categoryRequest);
-
-      // Don't set Content-Type header manually for FormData
-      // Browser will automatically set multipart/form-data with boundary
       const config = {}
 
       if (formModal.isEdit) {
@@ -443,7 +424,6 @@ const CategoryList = () => {
     }
   }
 
-  // Helper functions for styling
   const getTypeColor = (type) => {
     switch(type) {
       case 'PRODUCT': return '#4caf50'

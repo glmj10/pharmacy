@@ -9,8 +9,8 @@
 		<relativePath/>
 	</parent>
 	<groupId>com.pharmacy</groupId>
-	<artifactId>backend</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<artifactId>Pharmacy-api</artifactId>
+	<version>0.0.1</version>
 	<name>backend</name>
 	<description>Pharmacy ecommerce</description>
 	<url/>
@@ -70,6 +70,10 @@
 			<version>2.4.3</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
 		<!--Lombok-->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -91,15 +95,14 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct-processor</artifactId>
-			<version>${org.mapstruct.version}</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 			<version>3.4.3</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-http44</artifactId>
 		</dependency>
 	</dependencies>
 

@@ -466,3 +466,20 @@
     transform: translateX(0);
   }
 }
+
+.back-to-login {
+  background: none;
+  border: none;
+  color: #16A34A;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.back-to-login:hover {
+  color: #15803d;
+  text-decoration: underline;
+}

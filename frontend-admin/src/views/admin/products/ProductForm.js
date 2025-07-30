@@ -32,7 +32,7 @@ const ProductForm = () => {
   const isEdit = Boolean(id)
   
   const [loading, setLoading] = useState(false)
-  const [initialLoading, setInitialLoading] = useState(true) // For brands/categories loading
+  const [initialLoading, setInitialLoading] = useState(true)
   const [brands, setBrands] = useState([])
   const [categories, setCategories] = useState([])
   const [thumbnailFile, setThumbnailFile] = useState(null)
@@ -40,8 +40,7 @@ const ProductForm = () => {
   const [imageFiles, setImageFiles] = useState([])
   const [imagePreviews, setImagePreviews] = useState([])
   const [existingImages, setExistingImages] = useState([])
-  const [removedImageIds, setRemovedImageIds] = useState([]) // Track removed existing images
-  
+  const [removedImageIds, setRemovedImageIds] = useState([])
   const { execute: callApi } = useApiCall()
 
   const [formData, setFormData] = useState({
@@ -74,12 +73,10 @@ const ProductForm = () => {
     thumbnail: '',
   })
 
-  // Load brands and categories
   useEffect(() => {
     const fetchData = async () => {
       setInitialLoading(true)
       try {
-        // Fetch brands
         const brandsResponse = await callApi(() => brandService.getAllBrands())
         if (brandsResponse.success) {
           const brandsData = Array.isArray(brandsResponse.data) 
@@ -88,7 +85,6 @@ const ProductForm = () => {
           setBrands(brandsData)
         }
 
-        // Fetch categories
         const categoriesResponse = await callApi(() => categoryService.getAllProductCategories())
         if (categoriesResponse.success) {
           const categoriesData = Array.isArray(categoriesResponse.data) 
@@ -105,7 +101,6 @@ const ProductForm = () => {
     fetchData()
   }, [])
 
-  // Load product data for editing
   useEffect(() => {
     if (isEdit && brands.length > 0 && categories.length > 0) {
       const fetchProduct = async () => {
@@ -115,9 +110,8 @@ const ProductForm = () => {
           if (response.success) {
             const product = response.data
             
-            console.log('Loaded product data:', product) // Debug log
+            console.log('Loaded product data:', product)
             
-            // Handle different response structures
             let brandId = ''
             if (product.brand && product.brand.id) {
               brandId = String(product.brand.id)
@@ -151,23 +145,19 @@ const ProductForm = () => {
             }
             setFormData(newFormData)
             
-            // Set existing thumbnail preview
             if (product.thumbnailUrl) {
               setThumbnailPreview(product.thumbnailUrl)
             }
 
-            // Set existing images preview
             if (product.images && product.images.length > 0) {
               setExistingImages(product.images)
             }
           } else {
             console.error('Failed to load product:', response.message)
-            // Navigate back to list if product not found
             navigate('/products')
           }
         } catch (error) {
           console.error('Error fetching product:', error)
-          // Navigate back to list on error
           navigate('/products')
         } finally {
           setLoading(false)
@@ -181,7 +171,6 @@ const ProductForm = () => {
     const { name, value, type, checked } = e.target
     
     if (name === 'categoryIds') {
-      // Handle multiple select for categories
       const selectedOptions = Array.from(e.target.selectedOptions, option => option.value)
       setFormData(prev => ({
         ...prev,
@@ -194,7 +183,6 @@ const ProductForm = () => {
       }))
     }
 
-    // Clear error when field is modified
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,
@@ -220,7 +208,6 @@ const ProductForm = () => {
     if (files.length > 0) {
       setImageFiles(files)
       
-      // Create preview URLs
       const previews = files.map(file => {
         const reader = new FileReader()
         return new Promise((resolve) => {
@@ -334,7 +321,6 @@ const ProductForm = () => {
     try {
       const submitFormData = new FormData()
       
-      // Create product request object to match backend ProductRequest
       const productRequest = {
         title: formData.title.trim(),
         priceOld: parseFloat(formData.priceOld),
@@ -353,21 +339,17 @@ const ProductForm = () => {
         categoryIds: formData.categoryIds.map(id => parseInt(id)),
       }
       
-      // Add product data as JSON string for @RequestPart("product")
       const productBlob = new Blob([JSON.stringify(productRequest)], { type: 'application/json' })
       submitFormData.append('product', productBlob)
       
-      // Add thumbnail if provided
       if (thumbnailFile) {
         submitFormData.append('thumbnail', thumbnailFile)
       }
       
-      // Add images if provided
       imageFiles.forEach((file, index) => {
         submitFormData.append('images', file)
       })
       
-      // Add removed image IDs for update operation
       if (isEdit && removedImageIds.length > 0) {
         submitFormData.append('removedImageIds', JSON.stringify(removedImageIds))
       }

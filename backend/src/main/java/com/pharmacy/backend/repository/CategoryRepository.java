@@ -1,6 +1,8 @@
 package com.pharmacy.backend.repository;
 
 import com.pharmacy.backend.entity.Category;
+import com.pharmacy.backend.entity.Product;
+import com.pharmacy.backend.enums.CategoryTypeEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,4 +16,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findBySlug(String parentSlug);
 
     List<Category> findByParent(Category parent);
+
+    List<Category> findByType(CategoryTypeEnum categoryTypeEnum);
+
+    List<Category> findAllByProductsContains(Product product);
 }

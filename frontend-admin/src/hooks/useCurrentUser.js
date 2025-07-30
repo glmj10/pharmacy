@@ -104,10 +104,10 @@ export const useCurrentUser = () => {
     userInfo,
     loading,
     error,
+    refresh: refreshUserInfo, 
     refreshUserInfo,
     updateUserInfo,
     clearUserInfo,
-    // Helper properties
     displayName: userInfo?.username || userInfo?.email || 'Người dùng',
     email: userInfo?.email,
     profilePic: userInfo?.profilePic,
@@ -116,9 +116,6 @@ export const useCurrentUser = () => {
   };
 };
 
-/**
- * Helper function to get user initials
- */
 const getInitials = (name) => {
   if (!name) return 'U';
   

@@ -91,7 +91,6 @@
   font-weight: 500;
 }
 
-/* Filter tags/buttons style */
 .filter-tags {
   display: flex;
   flex-wrap: wrap;
@@ -381,7 +380,6 @@
   color: white;
 }
 
-/* Additional styles for product card consistency with Home */
 .product-badges {
   position: absolute;
   top: var(--spacing-sm);

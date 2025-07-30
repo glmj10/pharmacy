@@ -41,4 +41,15 @@ public class SecurityUtils {
         }
         throw new IllegalStateException("Không có request hiện tại");
     }
+
+    public static boolean isCurrentUserAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication instanceof JwtAuthenticationToken jwtAuthToken) {
+            Jwt jwt = jwtAuthToken.getToken();
+            return jwt.getClaimAsString("role").equalsIgnoreCase("ADMIN");
+        }
+
+        return false;
+    }
 }

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { FaChevronRight } from 'react-icons/fa'; // <-- Import FaChevronRight
-import './Breadcrumb.css'; // Import CSS cho breadcrumb
+import { FaChevronRight } from 'react-icons/fa'; 
+import './Breadcrumb.css'; 
 
 const Breadcrumb = ({ items }) => {
   if (!items || items.length === 0) {

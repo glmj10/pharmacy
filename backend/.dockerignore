@@ -1,0 +1,13 @@
+target/
+build/
+.git/
+.gitignore
+.gradle/
+*.iml
+.idea/
+mvnw.cmd
+gradlew
+gradlew.bat
+Dockerfile
+docker-compose.yml
+.env

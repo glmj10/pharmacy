@@ -26,8 +26,9 @@ public class BlogController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<List<BlogResponse>>>> getAllBlogs(@RequestParam(defaultValue = "1") int pageIndex,
                                                                                    @RequestParam(defaultValue = "10") int pageSize,
-                                                                                   @RequestParam(required = false) String title) {
-        ApiResponse<PageResponse<List<BlogResponse>>> response = blogService.getAllBlogs(pageIndex, pageSize, title);
+                                                                                   @RequestParam(required = false) String title,
+                                                                                     @RequestParam(required = false) String category) {
+        ApiResponse<PageResponse<List<BlogResponse>>> response = blogService.getAllBlogs(pageIndex, pageSize, title, category);
 
         return ResponseEntity.status(response.getStatus()).body(response);
     }
@@ -40,6 +41,7 @@ public class BlogController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @GetMapping("{id}")
     public ResponseEntity<ApiResponse<BlogResponse>> getBlogById(@PathVariable Long id) {
@@ -50,7 +52,7 @@ public class BlogController {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @PostMapping
-    public ResponseEntity<ApiResponse<BlogResponse>> createBlog(@RequestPart("blog") BlogRequest request,
+    public ResponseEntity<ApiResponse<BlogResponse>> createBlog(@RequestPart("blog") @Valid BlogRequest request,
                                                                 @RequestPart("thumbnail") MultipartFile thumbnail) {
         ApiResponse<BlogResponse> response = blogService.createBlog(request, thumbnail);
 
@@ -74,4 +76,5 @@ public class BlogController {
 
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
 }

@@ -91,6 +91,16 @@ public class UserServiceImpl implements UserService {
         );
     }
 
+    @Override
+    public ApiResponse<Long> getTotalUser() {
+        Long totalUsers = userRepository.count();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy tổng số người dùng thành công",
+                totalUsers
+        );
+    }
+
 
     @Transactional
     @Override
@@ -106,6 +116,10 @@ public class UserServiceImpl implements UserService {
                 .map(roles -> RoleCodeEnum.valueOf(roles.toUpperCase())).collect(Collectors.toSet());
         if (codes.isEmpty()) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Vui lòng chọn ít nhất một quyền", userId);
+        }
+
+        if (codes.contains(RoleCodeEnum.ADMIN) && !SecurityUtils.isCurrentUserAdmin()) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền cấp quyền ADMIN", null);
         }
 
         Set<Role> roles = roleRepository.findAllByCodeIn(codes)

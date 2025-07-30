@@ -11,7 +11,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -69,8 +68,8 @@ api.interceptors.response.use(
         const res = await authService.refreshToken({
           token: expiredToken
         });
-
-        const newToken = res.token;
+        
+        const newToken = res.data.token;
 
         localStorage.setItem('token', newToken);
         api.defaults.headers.common['Authorization'] = 'Bearer ' + newToken;
@@ -82,14 +81,14 @@ api.interceptors.response.use(
         processQueue(err, null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        modalEvents.triggerAuthExpired('token_expired', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        modalEvents.triggerAuthExpired('token_expired', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', {
+          showGoHome: true
+        });
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
       }
     }
-
-    return Promise.reject(error);
   });
 
 

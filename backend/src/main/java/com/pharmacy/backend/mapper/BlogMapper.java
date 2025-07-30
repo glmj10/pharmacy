@@ -30,7 +30,13 @@ public interface BlogMapper {
     @Mapping(target = "thumbnail", ignore = true)
     Blog toBlogUpdateFromRequest(BlogRequest request, @MappingTarget Blog blog);
 
+    @Mapping(target = "category", source = "category")
     BlogResponse toBlogResponse(Blog blog);
+
+    @Mapping(target = "children", ignore = true)
+    @Mapping(target = "priority", ignore = true)
+    @Mapping(target = "parentId", ignore = true)
+    CategoryResponse toCategoryResponse(Category category);
 
     @AfterMapping
     default void setThumbnail(@MappingTarget BlogResponse blogResponse, Blog blog) {

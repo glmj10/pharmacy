@@ -57,7 +57,6 @@ const Blog = () => {
       }
 
       const response = await blogService.getBlogs(params);
-      console.log("Response data:", response.data); 
       const responseData = response.data;
       if (responseData && responseData.content) {
         setBlogs(responseData.content);

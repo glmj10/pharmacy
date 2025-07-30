@@ -8,22 +8,19 @@ import './Orders-pagination.css';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
-  const [orderDetails, setOrderDetails] = useState({}); // { orderId: [items] }
-  const [expandedOrders, setExpandedOrders] = useState({}); // { orderId: true/false }
+  const [orderDetails, setOrderDetails] = useState({}); 
+  const [expandedOrders, setExpandedOrders] = useState({}); 
   const [loading, setLoading] = useState(true);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false); // State để hiển thị modal xác nhận hủy
-  const [showRefundInfo, setShowRefundInfo] = useState(false); // State để hiển thị modal thông báo hoàn tiền
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showRefundInfo, setShowRefundInfo] = useState(false); 
 
-  // Use a ref to store IDs of orders whose details have been fetched
-  // This helps prevent redundant API calls for order details
   const fetchedDetailIds = useRef(new Set());
 
-  // Helper function to format date
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -36,7 +33,6 @@ const Orders = () => {
     });
   };
 
-  // Helper function to format currency
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return '0 ₫';
     return new Intl.NumberFormat('vi-VN', {
@@ -45,7 +41,6 @@ const Orders = () => {
     }).format(amount);
   };
 
-  // Helper function to get status text
   const getStatusText = (status) => {
     switch (status) {
       case 'PENDING':
@@ -65,23 +60,22 @@ const Orders = () => {
     }
   };
 
-  // Helper function to get status color
   const getStatusColor = (status) => {
     switch (status) {
       case 'PENDING':
-        return '#ffa500'; // Orange
+        return '#ffa500'; 
       case 'CONFIRMED':
-        return '#2196f3'; // Blue
+        return '#2196f3'; 
       case 'SHIPPING':
-        return '#9c27b0'; // Purple
+        return '#9c27b0'; 
       case 'DELIVERED':
-        return '#4caf50'; // Green
+        return '#4caf50'; 
       case 'CANCELLED':
-        return '#f44336'; // Red
+        return '#f44336'; 
       case 'COMPLETED':
-        return '#28a745'; // Darker green
+        return '#28a745'; 
       default:
-        return '#666'; // Gray
+        return '#666'; 
     }
   };
 
@@ -97,7 +91,7 @@ const Orders = () => {
           case 'delivered': statusParam = 'DELIVERED'; break;
           case 'cancelled': statusParam = 'CANCELLED'; break;
           case 'completed': statusParam = 'COMPLETED'; break;
-          default: break; // If filter is not one of the cases, no statusParam is sent
+          default: break; 
         }
       }
 
@@ -107,7 +101,6 @@ const Orders = () => {
       setCurrentPage(response?.data?.currentPage || 1);
       setTotalPages(response?.data?.totalPages || 1);
 
-      // Fetch details for orders that are newly loaded or not yet in state
       const newDetailsToFetch = fetchedOrders.filter(order =>
         !fetchedDetailIds.current.has(order.id)
       );
@@ -117,38 +110,36 @@ const Orders = () => {
         await Promise.all(newDetailsToFetch.map(async (order) => {
           try {
             const res = await orderService.getOrderDetail(order.id);
-            tempOrderDetails[order.id] = res?.data?.items || [];
-            fetchedDetailIds.current.add(order.id); // Mark as fetched
+            tempOrderDetails[order.id] = res?.data || [];
+            fetchedDetailIds.current.add(order.id); 
           } catch (e) {
             console.error(`Lỗi khi lấy chi tiết đơn hàng ${order.id}:`, e);
-            tempOrderDetails[order.id] = []; // Ensure it's an empty array on error
+            tempOrderDetails[order.id] = []; 
           }
         }));
         setOrderDetails(prev => ({ ...prev, ...tempOrderDetails }));
       }
 
     } catch (error) {
-      toast.error('Không thể tải danh sách đơn hàng: ' + (error.response?.data?.message || error.message));
+      console.error('Không thể tải danh sách đơn hàng: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
-  }, [filter]); // fetchOrders depends on 'filter', so it re-runs when filter changes
+  }, [filter]); 
 
   useEffect(() => {
-    // This effect runs when currentPage changes or fetchOrders itself changes (due to filter change)
     fetchOrders(currentPage);
   }, [fetchOrders, currentPage]);
 
   const handleCancelOrder = (orderId) => {
     setSelectedOrderId(orderId);
-    setShowCancelConfirm(true); // Hiển thị modal xác nhận hủy
+    setShowCancelConfirm(true); 
   };
 
-  // Function to handle filter change and reset page to 1
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
-    setCurrentPage(1); // Reset to page 1 every time filter changes
-    fetchedDetailIds.current.clear(); // Clear the cache of fetched details when filter changes
+    setCurrentPage(1); 
+    fetchedDetailIds.current.clear(); 
   };
 
   if (loading) {
@@ -163,7 +154,7 @@ const Orders = () => {
   }
 
   return (
-    <> {/* Use React.Fragment for top-level elements */}
+    <> 
       <div className="orders-container">
         <div className="orders-filters">
           <button
@@ -239,7 +230,6 @@ const Orders = () => {
                 </div>
 
                 <div className="order-items">
-                  {/* Render order items if details are available and not empty */}
                   {orderDetails[order.id] && orderDetails[order.id].length > 0 ? (
                     <>
                       <table className="order-items-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -254,7 +244,7 @@ const Orders = () => {
                         <tbody>
                           {(expandedOrders[order.id]
                             ? orderDetails[order.id]
-                            : [orderDetails[order.id][0]] // Show only the first item if not expanded
+                            : [orderDetails[order.id][0]] 
                           ).map(item => (
                             <tr key={item.id} style={{ border: 'none' }}>
                               <td style={{ padding: '4px 8px', verticalAlign: 'middle' }}>
@@ -288,7 +278,7 @@ const Orders = () => {
                       )}
                     </>
                   ) : (
-                    <p>Đang tải chi tiết sản phẩm...</p> // Show loading if details are not yet available
+                    <p>Đang tải chi tiết sản phẩm...</p> 
                   )}
                 </div>
 
@@ -387,11 +377,11 @@ const Orders = () => {
                   await orderService.cancelOrder(selectedOrderId);
                   toast.success('Đã hủy đơn hàng thành công!');
                   setShowCancelConfirm(false);
-                  setShowRefundInfo(true); // Hiển thị modal thông báo hoàn tiền sau khi hủy thành công
-                  fetchedDetailIds.current.delete(selectedOrderId); // Invalidate cached details for the cancelled order
-                  fetchOrders(currentPage); // Tải lại danh sách đơn hàng để cập nhật trạng thái
+                  setShowRefundInfo(true); 
+                  fetchedDetailIds.current.delete(selectedOrderId); 
+                  fetchOrders(currentPage); 
                 } catch (error) {
-                  toast.error('Không thể hủy đơn hàng: ' + (error.response?.data?.message || error.message));
+                  console.error('Không thể hủy đơn hàng: ' + (error.response?.data?.message || error.message));
                   setShowCancelConfirm(false);
                 }
               }}>Xác nhận hủy</button>

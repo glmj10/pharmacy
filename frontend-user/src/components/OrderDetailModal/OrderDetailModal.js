@@ -12,7 +12,6 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
       setLoading(true);
       orderService.getOrderDetail(order.id)
         .then(data => {
-          // Nếu data.data là mảng, gộp với order
           let detail;
           if (Array.isArray(data?.data)) {
             detail = { ...order, items: data.data };
@@ -102,7 +101,6 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
   );
 };
 
-// Thêm hàm getStatusText dự phòng nếu không truyền từ order
 function getStatusText(status) {
   switch (status) {
     case 'PENDING':
@@ -123,7 +121,6 @@ function getStatusText(status) {
   }
 }
 
-// Thêm hàm chuyển đổi trạng thái thanh toán
 function getPaymentStatusText(status) {
   switch (status) {
     case 'PENDING':

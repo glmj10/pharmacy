@@ -3,6 +3,7 @@ package com.pharmacy.backend.entity;
 import com.pharmacy.backend.enums.OrderStatusEnum;
 import com.pharmacy.backend.enums.PaymentMethodEnum;
 import com.pharmacy.backend.enums.PaymentStatusEnum;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,15 @@ public class Order {
 
     Long totalPrice;
 
+    @Column(name = "customer_name")
+    String customerName;
+
+    @Column(name = "customer_phone_number")
+    String customerPhoneNumber;
+
+    @Column(name = "customer_address")
+    String customerAddress;
+
     @Column(columnDefinition = "TEXT")
     String note;
 
@@ -42,13 +52,8 @@ public class Order {
     @Enumerated(EnumType.STRING)
     OrderStatusEnum status;
 
-
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "order")
     List<OrderDetail> orderDetails = new ArrayList<>();
-
-    @ManyToOne
-    @JoinColumn(name = "profile_id", referencedColumnName = "id")
-    Profile profile;
 
     @ManyToOne
     @JoinColumn(name = "cart_id", referencedColumnName = "id")

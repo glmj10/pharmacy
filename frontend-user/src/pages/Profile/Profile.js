@@ -4,7 +4,6 @@ import { profileService } from '../../services/profileService';
 import { userService } from '../../services/userService';
 import { ProfileTransform, UserTransform, ErrorTransform } from '../../utils/dataTransform';
 import { ApiUtils } from '../../utils/apiUtils';
-import { useLocalStorageDebug } from '../../hooks/useLocalStorageDebug';
 import { toast } from 'react-toastify';
 import { 
   FaUser, 
@@ -27,24 +26,19 @@ const Profile = () => {
   const [profilePicLoading, setProfilePicLoading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Debug localStorage in development
-  useLocalStorageDebug();
 
-  // Personal Information State
   const [personalInfo, setPersonalInfo] = useState({
     username: '',
     email: '',
     profilePic: ''
   });
 
-  // Password Change State
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
-  // Profiles (Shipping addresses) State
   const [profiles, setProfiles] = useState([]);
   const [editingProfile, setEditingProfile] = useState(null);
   const [showProfileForm, setShowProfileForm] = useState(false);
@@ -54,12 +48,10 @@ const Profile = () => {
     address: ''
   });
 
-  // Validation errors state
   const [validationErrors, setValidationErrors] = useState({});
   const [setPasswordErrors] = useState({});
   const [setProfileErrors] = useState({});
 
-  // Clear validation errors for a field
   const clearFieldError = (fieldName, errorType = 'validationErrors') => {
     const setErrorState = {
       validationErrors: setValidationErrors,
@@ -75,7 +67,6 @@ const Profile = () => {
     }
   };
 
-  // Initialize personal info when user changes
   useEffect(() => {
     if (user) {
       setPersonalInfo({
@@ -86,7 +77,6 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Fetch user profiles on component mount
   useEffect(() => {
     fetchProfiles();
   }, []);
@@ -94,7 +84,6 @@ const Profile = () => {
   const fetchProfiles = async () => {
     try {
       const response = await profileService.getUserProfiles();
-      // Backend returns ApiResponse<List<ProfileResponse>>
       if (response?.data) {
         setProfiles(response.data);
       } else if (Array.isArray(response)) {
@@ -102,11 +91,9 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error fetching profiles:', error);
-      toast.error('Có lỗi xảy ra khi tải danh sách địa chỉ');
     }
   };
 
-  // Handle personal info update
   const handlePersonalInfoChange = (e) => {
     const { name, value } = e.target;
     setPersonalInfo(prev => ({
@@ -116,7 +103,6 @@ const Profile = () => {
   };
 
   const handleUpdatePersonalInfo = async () => {
-    // Validate username
     if (!personalInfo.username || personalInfo.username.trim() === '') {
       toast.error('Tên đăng nhập không được để trống');
       return;
@@ -129,13 +115,11 @@ const Profile = () => {
 
     try {
       setLoading(true);
-      // Only update username, not email
       const response = await userService.updateUser({ 
         username: personalInfo.username.trim(),
         email: personalInfo.email
       });
       
-      // Backend returns ApiResponse<UserResponse>
       if (response?.data) {
         await updateUser(response.data);
         toast.success('Cập nhật thông tin thành công!');
@@ -143,15 +127,12 @@ const Profile = () => {
     } catch (error) {
       console.error('Error updating personal info:', error);
       
-      // Extract validation errors from backend
       const fieldErrors = ErrorTransform.transformValidationErrors(error);
       
       if (Object.keys(fieldErrors).length > 0) {
-        // Set field-specific errors
         setValidationErrors(fieldErrors);
         toast.error('Vui lòng kiểm tra lại thông tin đã nhập');
       } else {
-        // General error message
         const errorMessage = ErrorTransform.transformErrorMessage(error);
         toast.error(errorMessage);
       }
@@ -216,7 +197,6 @@ const Profile = () => {
   };
 
   const handleUpdatePassword = async () => {
-    // Use validation from utils
     const validation = UserTransform.validatePasswordForm(passwordData);
     
     if (!validation.isValid) {
@@ -239,9 +219,6 @@ const Profile = () => {
       
       toast.success('Đổi mật khẩu thành công!');
     } catch (error) {
-      // Enhanced error handling
-      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi đổi mật khẩu. Vui lòng kiểm tra lại mật khẩu hiện tại.';
-      toast.error(errorMessage);
       console.error('Error changing password:', error);
     } finally {
       setLoading(false);
@@ -282,7 +259,7 @@ const Profile = () => {
     const validation = ProfileTransform.validateProfileForm(profileForm);
     
     if (!validation.isValid) {
-      validation.errors.forEach(error => toast.error(error));
+      validation.errors.forEach(error => console.error(error));
       return;
     }
 
@@ -306,9 +283,6 @@ const Profile = () => {
       await fetchProfiles();
       setShowProfileForm(false);
     } catch (error) {
-      // Enhanced error handling
-      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi lưu địa chỉ';
-      toast.error(errorMessage);
       console.error('Error saving profile:', error);
     } finally {
       setLoading(false);
@@ -329,9 +303,6 @@ const Profile = () => {
         toast.success('Xóa địa chỉ thành công!');
       }
     } catch (error) {
-      // Enhanced error handling
-      const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi xóa địa chỉ';
-      toast.error(errorMessage);
       console.error('Error deleting profile:', error);
     } finally {
       setLoading(false);

@@ -6,9 +6,6 @@ import { globalLogoutHandler } from '../utils/globalLogout';
 import authService from '../services/auth.service';
 import { dispatchUserInfoCleared } from '../utils/userInfoEvents';
 
-/**
- * Custom hook để xử lý logout
- */
 export const useLogout = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
@@ -26,7 +23,6 @@ export const useLogout = () => {
     setIsLoggingOut(true);
     
     try {
-      // Gọi API logout để invalidate token trên server
       await authService.logout();
       
       if (showNotification) {
@@ -40,19 +36,15 @@ export const useLogout = () => {
         showError('Đã có lỗi xảy ra khi đăng xuất, nhưng bạn đã được đăng xuất khỏi hệ thống.');
       }
     } finally {
-      // Luôn xóa token và chuyển hướng, dù API có lỗi
       tokenUtils.removeTokens();
       
-      // Clear any cached user data
       localStorage.removeItem('userInfo');
       localStorage.removeItem('currentUserInfo');
       
-      // Dispatch event to clear user info in all components
       dispatchUserInfoCleared();
       
       setIsLoggingOut(false);
       
-      // Chuyển hướng
       navigate(redirectTo, { replace });
     }
   };
@@ -62,7 +54,6 @@ export const useLogout = () => {
     localStorage.removeItem('userInfo');
     localStorage.removeItem('currentUserInfo');
     
-    // Dispatch event to clear user info in all components
     dispatchUserInfoCleared();
     
     const message = reason === 'session_expired' 
@@ -78,7 +69,6 @@ export const useLogout = () => {
     });
   };
 
-  // Đăng ký với global logout handler
   useEffect(() => {
     const unregister = globalLogoutHandler.registerCallback(forceLogout);
     return unregister;

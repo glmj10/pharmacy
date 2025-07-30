@@ -28,6 +28,7 @@ public class ProductResponse {
     String dosageForm;
     Boolean inWishlist;
     Long numberOfLikes;
-
+    BrandResponse brand;
+    List<CategoryResponse> categories;
     List<ProductImageResponse> images;
 }

@@ -1,4 +1,4 @@
-import api from './api';
+import api from './publicApi';
 
 export const contactService = {
     sendContact: async(contactData) => {

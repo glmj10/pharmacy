@@ -24,6 +24,13 @@ import java.util.List;
 public class UserController {
     UserService userService;
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @GetMapping("/statistic/total")
+    public ResponseEntity<ApiResponse<Long>> getTotalUser() {
+        ApiResponse<Long> response = userService.getTotalUser();
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<List<UserResponse>>>> getAllUsers(

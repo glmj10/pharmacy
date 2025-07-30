@@ -3,10 +3,6 @@ import { ENDPOINTS } from '../config/constants';
 import { apiUtils } from '../utils/apiUtils';
 
 class CategoryService {
-    /**
-     * Get all categories
-     * @returns {Promise<ApiResponse>}
-     */
     async getCategories() {
         try {
             const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL);
@@ -16,10 +12,6 @@ class CategoryService {
         }
     }
 
-    /**
-     * Get all blog categories
-     * @returns {Promise<ApiResponse>}
-     */
     async getBlogCategories() {
         try {
             const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL_BLOG_CATEGORIES);
@@ -29,10 +21,6 @@ class CategoryService {
         }
     }
 
-    /**
-     * Get all product categories
-     * @returns {Promise<ApiResponse>}
-     */
     async getAllProductCategories() {
         try {
             const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL);
@@ -42,11 +30,6 @@ class CategoryService {
         }
     }
 
-    /**
-     * Get category by ID
-     * @param {string|number} id - Category ID
-     * @returns {Promise<ApiResponse>}
-     */
     async getCategoryById(id) {
         try {
             const response = await api.get(ENDPOINTS.CATEGORIES.GET_BY_ID(id));
@@ -56,12 +39,6 @@ class CategoryService {
         }
     }
 
-    /**
-     * Create new category
-     * @param {FormData} categoryData - Category form data
-     * @param {Object} config - Axios config options
-     * @returns {Promise<ApiResponse>}
-     */
     async createCategory(categoryData, config = {}) {
         try {
             const response = await api.post(ENDPOINTS.CATEGORIES.CREATE, categoryData, config);
@@ -71,13 +48,6 @@ class CategoryService {
         }
     }
 
-    /**
-     * Update category
-     * @param {string|number} id - Category ID
-     * @param {FormData} categoryData - Category form data
-     * @param {Object} config - Axios config options
-     * @returns {Promise<ApiResponse>}
-     */
     async updateCategory(id, categoryData, config = {}) {
         try {
             const response = await api.put(ENDPOINTS.CATEGORIES.UPDATE(id), categoryData, config);
@@ -87,11 +57,6 @@ class CategoryService {
         }
     }
 
-    /**
-     * Delete category
-     * @param {string|number} id - Category ID
-     * @returns {Promise<ApiResponse>}
-     */
     async deleteCategory(id) {
         try {
             const response = await api.delete(`/categories/${id}`);
@@ -101,10 +66,6 @@ class CategoryService {
         }
     }
 
-    /**
-     * Get all categories without pagination
-     * @returns {Promise<ApiResponse>}
-     */
     async getAllCategories() {
         try {
             const response = await api.get(ENDPOINTS.CATEGORIES.GET_ALL);

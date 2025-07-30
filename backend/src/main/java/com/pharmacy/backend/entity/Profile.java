@@ -19,14 +19,13 @@ public class Profile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    String phone;
+    @Column(name = "phone_number")
+    String phoneNumber;
+
     String address;
+
     @Column(name = "full_name")
     String fullName;
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "profile")
-            @ToString.Exclude
-    List<Order> orders = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "user_id")

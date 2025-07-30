@@ -17,7 +17,7 @@ import org.hibernate.annotations.CreationTimestamp;
 public class Wishlist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

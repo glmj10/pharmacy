@@ -4,25 +4,14 @@ class ToastManager {
     this.listeners = [];
   }
 
-  /**
-   * Đăng ký listener để nhận thông báo toast
-   * @param {Function} callback - Function sẽ được gọi khi có toast mới
-   */
   registerListener(callback) {
     this.listeners.push(callback);
     
-    // Return unregister function
     return () => {
       this.listeners = this.listeners.filter(cb => cb !== callback);
     };
   }
 
-  /**
-   * Thêm toast mới
-   * @param {string} message - Nội dung thông báo
-   * @param {string} type - Loại toast (success, error, info, warning)
-   * @param {number} duration - Thời gian hiển thị (ms)
-   */
   addToast(message, type = 'info', duration = 5000) {
     const toast = {
       id: Date.now() + Math.random(),
@@ -34,7 +23,6 @@ class ToastManager {
 
     this.toasts.push(toast);
     
-    // Notify all listeners
     this.listeners.forEach(callback => {
       try {
         callback(toast);
@@ -43,7 +31,6 @@ class ToastManager {
       }
     });
 
-    // Auto remove after duration
     if (duration > 0) {
       setTimeout(() => {
         this.removeToast(toast.id);
@@ -53,10 +40,6 @@ class ToastManager {
     return toast.id;
   }
 
-  /**
-   * Xóa toast theo ID
-   * @param {string|number} id - ID của toast
-   */
   removeToast(id) {
     this.toasts = this.toasts.filter(toast => toast.id !== id);
     
@@ -70,9 +53,6 @@ class ToastManager {
     });
   }
 
-  /**
-   * Xóa tất cả toasts
-   */
   clearAllToasts() {
     this.toasts = [];
     this.listeners.forEach(callback => {
@@ -84,7 +64,6 @@ class ToastManager {
     });
   }
 
-  // Convenience methods
   success(message, duration = 5000) {
     return this.addToast(message, 'success', duration);
   }
@@ -101,7 +80,6 @@ class ToastManager {
     return this.addToast(message, 'info', duration);
   }
 
-  // Special method for session expiry
   sessionExpired(message = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.') {
     return this.addToast(message, 'error', 10000);
   }

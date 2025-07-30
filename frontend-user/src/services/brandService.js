@@ -6,7 +6,7 @@ class BrandService {
   async getAllBrands() {
     try {
       const response = await axios.get(`${API_BASE_URL}/brands/customer/public`);
-      return response.data; // Return response.data to match API structure
+      return response.data; 
     } catch (error) {
       console.error('Error fetching brands:', error);
       throw error;

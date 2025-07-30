@@ -2,9 +2,6 @@ import { useState } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import { apiUtils } from '../utils/apiUtils';
 
-/**
- * Custom hook for API calls with automatic error handling
- */
 export const useApiCall = () => {
   const [loading, setLoading] = useState(false);
   const { showSuccess, showError, showWarning } = useNotification();

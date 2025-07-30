@@ -14,7 +14,7 @@ public class ProductFilterCustomerRequest {
     Long priceTo;
     Boolean isAscending;
 
-    String brandSlug;
-    String categorySlug;
+    String brand;
+    String category;
 
 }

@@ -29,7 +29,6 @@ const AvatarUploadTab = ({ userInfo, onUpdate }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
       setMessage({
@@ -39,8 +38,7 @@ const AvatarUploadTab = ({ userInfo, onUpdate }) => {
       return;
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024; 
     if (file.size > maxSize) {
       setMessage({
         type: 'danger',
@@ -52,7 +50,6 @@ const AvatarUploadTab = ({ userInfo, onUpdate }) => {
     setSelectedFile(file);
     setMessage({ type: '', content: '' });
 
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewImage(e.target.result);
@@ -74,11 +71,9 @@ const AvatarUploadTab = ({ userInfo, onUpdate }) => {
     setMessage({ type: '', content: '' });
 
     try {
-      // Tạo FormData để gửi file
       const formData = new FormData();
       formData.append('profilePic', selectedFile);
 
-      // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
           if (prev >= 90) {
@@ -89,7 +84,6 @@ const AvatarUploadTab = ({ userInfo, onUpdate }) => {
         });
       }, 200);
 
-      // Call API to upload avatar
       const response = await authService.updateInfo(formData);
 
       clearInterval(progressInterval);
@@ -102,12 +96,10 @@ const AvatarUploadTab = ({ userInfo, onUpdate }) => {
             content: 'Cập nhật ảnh đại diện thành công!'
           });
           
-          // Reset state
           setPreviewImage(null);
           setSelectedFile(null);
           setUploadProgress(0);
           
-          // Update cached user info immediately
           const cachedUserInfo = storage.get('currentUserInfo');
           if (cachedUserInfo && response.data) {
             const updatedUserInfo = {
@@ -116,11 +108,9 @@ const AvatarUploadTab = ({ userInfo, onUpdate }) => {
             };
             storage.set('currentUserInfo', updatedUserInfo);
             
-            // Dispatch event to update all components using useCurrentUser
             dispatchUserInfoUpdated(updatedUserInfo);
           }
           
-          // Refresh user info from API
           if (onUpdate) {
             onUpdate();
           }

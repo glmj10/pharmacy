@@ -41,7 +41,6 @@ const DefaultLayout = () => {
 
   const handleLogoutClose = () => {
     // Don't allow closing without confirming
-    // User must click "Đăng nhập lại" button
   }
 
   return (

@@ -8,6 +8,7 @@ import { wishlistService } from '../../services/wishlistService';
 import { FaChevronRight, FaHome } from 'react-icons/fa';
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 import './ProductDetail.css';
+import './ProductDetailDescription.css'
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -71,6 +72,7 @@ const ProductDetail = () => {
           relatedData = relatedResponse.data.content;
         } else if (relatedResponse?.content) {
           relatedData = relatedResponse.content;
+          console.log(relatedProducts)
         } else if (Array.isArray(relatedResponse)) {
           relatedData = relatedResponse;
         }
@@ -214,10 +216,6 @@ const ProductDetail = () => {
           event.preventDefault();
           handleManualImageChange(selectedImage === productImages.length - 1 ? 0 : selectedImage + 1);
           break;
-        case ' ': // Spacebar to toggle auto-slide
-          event.preventDefault();
-          setAutoSlide(!autoSlide);
-          break;
         default:
           break;
       }
@@ -333,26 +331,9 @@ const ProductDetail = () => {
             )}
           </div>
 
-          {/* Product Info + Description cùng cấp */}
           <div className="product-info">
             <h1>{product.title}</h1>
             {product.type && <p className="product-category">{product.type}</p>}
-
-            {/* Likes and Wishlist Status */}
-            {/* <div className="product-stats">
-              {product.numberOfLikes > 0 && (
-                <span className="likes-count">
-                  <i className="fas fa-heart"></i>
-                  {product.numberOfLikes} lượt thích
-                </span>
-              )}
-              {product.inWishlist && (
-                <span className="in-wishlist">
-                  <i className="fas fa-bookmark"></i>
-                  Đã thêm vào wishlist
-                </span>
-              )}
-            </div> */}
 
             <div className="product-price">
               {product.priceOld && product.priceNew && product.priceOld > product.priceNew ? (
@@ -468,7 +449,7 @@ const ProductDetail = () => {
               className={`description-content ${showFullDescription ? 'expanded' : 'collapsed'}${noFade ? ' no-fade' : ''}`}
               ref={descriptionRef}
             >
-              <p>{product.description}</p>
+              <div dangerouslySetInnerHTML={{ __html: product.description }} />
             </div>
             {showToggleDescription && (
               <button
@@ -483,7 +464,6 @@ const ProductDetail = () => {
         </div>
 
 
-        {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="related-products">
             <h2>Sản phẩm liên quan</h2>

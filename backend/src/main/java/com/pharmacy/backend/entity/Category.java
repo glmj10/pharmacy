@@ -3,17 +3,15 @@ package com.pharmacy.backend.entity;
 
 import com.pharmacy.backend.enums.CategoryTypeEnum;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "categories")
@@ -37,6 +35,7 @@ public class Category {
     @JoinColumn(name = "parent_id")
     Category parent;
 
+    @ToString.Exclude
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "categories")
     List<Product> products;
 

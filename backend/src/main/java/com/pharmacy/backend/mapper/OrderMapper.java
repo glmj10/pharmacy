@@ -16,7 +16,6 @@ public interface OrderMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "status", constant = "PENDING")
     @Mapping(target = "paymentStatus", constant = "PENDING")
-    @Mapping(target = "profile", ignore = true)
     @Mapping(target = "cart", ignore = true)
     Order toOrder(OrderRequest request);
 

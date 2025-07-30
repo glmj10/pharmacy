@@ -60,7 +60,7 @@ const BlogList = () => {
     setLoading(true)
     try {
       const params = {
-        pageIndex: page, // Backend expects 1-based indexing
+        pageIndex: page, 
         pageSize: 10,
         ...(search.trim() && { title: search.trim() }),
       }
@@ -99,12 +99,11 @@ const BlogList = () => {
     fetchBlogs(1, '')
   }
 
-  // Real-time search with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setCurrentPage(1)
       fetchBlogs(1, searchTerm.trim())
-    }, 500) // 500ms delay
+    }, 500) 
 
     return () => clearTimeout(timeoutId)
   }, [searchTerm])
@@ -148,7 +147,6 @@ const BlogList = () => {
   }
 
   const truncateContent = (content, maxLength = 100) => {
-    // Remove HTML tags and truncate
     const text = content.replace(/<[^>]*>/g, '')
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
   }

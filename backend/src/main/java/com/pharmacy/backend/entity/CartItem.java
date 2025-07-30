@@ -31,6 +31,10 @@ public class CartItem {
         return product.getQuantity() <= 0;
     }
 
+    public boolean isSelected() {
+        return selected != null && selected;
+    }
+
     public boolean isProductAvailable() {
         return product.getQuantity() >= quantity;
     }

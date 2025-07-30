@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface BlogService {
-    ApiResponse<PageResponse<List<BlogResponse>>> getAllBlogs(int pageIndex, int pageSize, String title);
+    ApiResponse<PageResponse<List<BlogResponse>>> getAllBlogs(int pageIndex, int pageSize, String title, String category);
     ApiResponse<BlogResponse> getBlogBySlug(String slug);
     ApiResponse<BlogResponse> getBlogById(Long id);
     ApiResponse<BlogResponse> createBlog(BlogRequest request, MultipartFile thumbnail);

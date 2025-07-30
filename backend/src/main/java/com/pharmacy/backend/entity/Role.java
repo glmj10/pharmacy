@@ -20,6 +20,7 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
+    @Column(nullable = false, unique = true)
     @Enumerated(EnumType.STRING)
     RoleCodeEnum code;
     String name;

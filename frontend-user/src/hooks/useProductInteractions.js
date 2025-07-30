@@ -47,7 +47,6 @@ const useProductInteractions = () => {
       await addToCart(product.id, 1);
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error('Có lỗi khi thêm sản phẩm vào giỏ hàng.');
     }
   });
 
@@ -74,7 +73,6 @@ const useProductInteractions = () => {
         msg = error.message;
       }
       console.error('Error toggling wishlist:', error);
-      toast.error(msg);
     }
   });
 
@@ -94,7 +92,6 @@ const useProductInteractions = () => {
         msg = error.message;
       }
       console.error('Error adding to wishlist:', error);
-      toast.error(msg);
     }
   });
 
@@ -113,7 +110,6 @@ const useProductInteractions = () => {
         msg = error.message;
       }
       console.error('Error removing from wishlist:', error);
-      toast.error(msg);
     }
   });
 
@@ -124,7 +120,7 @@ const useProductInteractions = () => {
     handleWishlistToggle,
     addToWishlist,
     removeFromWishlist,
-    fetchWishlist // Có thể xuất nếu cần gọi lại từ bên ngoài
+    fetchWishlist 
   };
 };
 

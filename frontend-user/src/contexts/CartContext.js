@@ -93,7 +93,6 @@ const cartReducer = (state, action) => {
 
 const calculateTotal = (items) => {
   return items.reduce((total, item) => {
-    // Sử dụng priceAtAddition nếu có, nếu không thì lấy priceNew từ product
     const price = item.priceAtAddition ?? item.product?.priceNew ?? 0;
     return total + (price * item.quantity);
   }, 0);
@@ -133,7 +132,6 @@ export const CartProvider = ({ children }) => {
       await cartService.addToCart(productId, quantity);
       toast.success('Đã thêm vào giỏ hàng!');
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng');
       throw error;
     }
   };
@@ -144,7 +142,6 @@ export const CartProvider = ({ children }) => {
       fetchCart();
       dispatch({ type: 'UPDATE_CART_ITEM', payload: { id: itemId, quantity } });
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi cập nhật giỏ hàng');
       throw error;
     }
   };
@@ -154,7 +151,6 @@ export const CartProvider = ({ children }) => {
       await cartService.updateCartItemStatus(itemId, status);
       fetchCart();
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi cập nhật trạng thái chọn sản phẩm');
       throw error;
     }
   };
@@ -164,7 +160,6 @@ export const CartProvider = ({ children }) => {
       dispatch({ type: 'REMOVE_FROM_CART', payload: itemId });
       toast.success('Đã xóa khỏi giỏ hàng!');
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi xóa khỏi giỏ hàng');
       throw error;
     }
   };
@@ -175,7 +170,7 @@ export const CartProvider = ({ children }) => {
       dispatch({ type: 'CLEAR_CART' });
       toast.success('Đã xóa toàn bộ giỏ hàng!');
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi xóa toàn bộ giỏ hàng');
+      console.error('Có lỗi xảy ra khi xóa toàn bộ giỏ hàng');
       throw error;
     }
   };
@@ -186,11 +181,6 @@ export const CartProvider = ({ children }) => {
       const response = await cartService.getTotalCartItems();
       return response.data || 0;
     } catch (error) {
-      if (error?.response?.status === 401) {
-        toast.error('Bạn cần đăng nhập để xem giỏ hàng');
-        return 0;
-      }
-      toast.error('Có lỗi xảy ra khi lấy số lượng sản phẩm trong giỏ hàng');
       return 0;
     }
   };
@@ -200,7 +190,6 @@ export const CartProvider = ({ children }) => {
       await cartService.updateAllCartItemsStatus(status);
       fetchCart();
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi cập nhật trạng thái chọn tất cả sản phẩm');
       throw error;
     }
   };
@@ -222,8 +211,5 @@ export const CartProvider = ({ children }) => {
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
   return context;
 };

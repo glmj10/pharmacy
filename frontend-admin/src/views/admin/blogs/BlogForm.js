@@ -44,7 +44,6 @@ const BlogForm = () => {
     categoryId: '',
   })
 
-  // Debug formData changes
   useEffect(() => {
   }, [formData])
 
@@ -55,7 +54,6 @@ const BlogForm = () => {
     thumbnail: '',
   })
 
-  // Load categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -82,13 +80,10 @@ const BlogForm = () => {
           if (response.success) {
             const blog = response.data
 
-            // Handle different response structures
             let categoryId = ''
             if (blog.category && blog.category.id) {
-              // New structure: { category: { id: 1, name: "..." } }
               categoryId = String(blog.category.id)
             } else if (blog.categoryId) {
-              // Old structure: { categoryId: 1 }
               categoryId = String(blog.categoryId)
             } else {
               console.log('No category information found in blog data')
@@ -111,7 +106,7 @@ const BlogForm = () => {
       }
       fetchBlog()
     }
-  }, [id, isEdit, categories]) // Add categories as dependency
+  }, [id, isEdit, categories]) 
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -120,7 +115,6 @@ const BlogForm = () => {
       [name]: type === 'checkbox' ? checked : value
     }))
     
-    // Clear error when field is modified
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,
@@ -183,18 +177,15 @@ const BlogForm = () => {
     try {
       const submitFormData = new FormData()
       
-      // Create blog request object to match backend BlogRequest
       const blogRequest = {
         title: formData.title.trim(),
         content: formData.content.trim(),
         categoryId: parseInt(formData.categoryId),
       }
       
-      // Add blog data as JSON string for @RequestPart("blog")
       const blogBlob = new Blob([JSON.stringify(blogRequest)], { type: 'application/json' })
       submitFormData.append('blog', blogBlob)
       
-      // Add thumbnail if provided
       if (thumbnailFile) {
         submitFormData.append('thumbnail', thumbnailFile)
       }

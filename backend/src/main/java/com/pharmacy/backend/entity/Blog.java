@@ -16,7 +16,7 @@ import org.hibernate.annotations.CreationTimestamp;
 public class Blog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     String slug;
     String thumbnail;
@@ -25,7 +25,7 @@ public class Blog {
     @Column(columnDefinition = "LONGTEXT")
     String content;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "category_id")
     Category category;
 

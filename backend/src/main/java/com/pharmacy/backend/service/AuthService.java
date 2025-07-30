@@ -1,10 +1,7 @@
 package com.pharmacy.backend.service;
 
 import com.nimbusds.jose.JOSEException;
-import com.pharmacy.backend.dto.request.AuthRequest;
-import com.pharmacy.backend.dto.request.ChangePasswordRequest;
-import com.pharmacy.backend.dto.request.UserInfoRequest;
-import com.pharmacy.backend.dto.request.UserRequest;
+import com.pharmacy.backend.dto.request.*;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.AuthResponse;
 import com.pharmacy.backend.dto.response.RefreshRequest;
@@ -20,4 +17,6 @@ public interface AuthService {
     ApiResponse<String> logout(String token) throws ParseException;
     ApiResponse<AuthResponse> refreshToken(RefreshRequest request) throws ParseException, JOSEException;
     ApiResponse<String> changePassword(ChangePasswordRequest request);
+    ApiResponse<Void> forgotPassword(ConfirmationEmailRequest request);
+    ApiResponse<Void> resetPassword(ResetPasswordRequest request) throws ParseException;
 }

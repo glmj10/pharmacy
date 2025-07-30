@@ -1,11 +1,8 @@
-// Utility functions for handling API responses
 export const ApiUtils = {
-  // Check if response is successful (status 200-299)
   isSuccess: (response) => {
     return response && response.status >= 200 && response.status < 300;
   },
 
-  // Extract data from API response
   extractData: (response) => {
     if (ApiUtils.isSuccess(response)) {
       return response.data;
@@ -13,7 +10,6 @@ export const ApiUtils = {
     return null;
   },
 
-  // Extract error message from response
   extractErrorMessage: (error) => {
     if (error?.response?.data?.message) {
       return error.response.data.message;
@@ -24,11 +20,9 @@ export const ApiUtils = {
     return 'Đã xảy ra lỗi không xác định';
   },
 
-  // Extract validation errors for form fields
   extractValidationErrors: (error) => {
     const validationErrors = {};
     
-    // Check if error has validation details
     if (error?.response?.data?.details && Array.isArray(error.response.data.details)) {
       error.response.data.details.forEach(detail => {
         if (detail.field && detail.message) {
@@ -43,7 +37,6 @@ export const ApiUtils = {
     return validationErrors;
   },
 
-  // Handle API response and return standardized format
   handleResponse: (response) => {
     if (ApiUtils.isSuccess(response)) {
       return {
@@ -59,7 +52,6 @@ export const ApiUtils = {
     };
   },
 
-  // Get user-friendly error message based on status code
   getUserFriendlyErrorMessage: (error) => {
     const status = error?.response?.status;
     const message = error?.response?.data?.message;

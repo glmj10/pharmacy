@@ -21,6 +21,10 @@ public interface ProductMapper {
     @Mapping(target = "thumbnail", ignore = true)
     @Mapping(target = "categories", ignore = true)
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "numberOfLikes", ignore = true)
+    @Mapping(target = "brand", ignore = true)
+    @Mapping(target = "wishlists", ignore = true)
+    @Mapping(target = "active", constant = "true")
     Product toProduct(ProductRequest request);
 
     @Mapping(target = "id", ignore = true)
@@ -30,9 +34,16 @@ public interface ProductMapper {
     @Mapping(target = "thumbnail", ignore = true)
     @Mapping(target = "categories", ignore = true)
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "numberOfLikes", ignore = true)
+    @Mapping(target = "brand", ignore = true)
+    @Mapping(target = "wishlists", ignore = true)
+    @Mapping(target = "active", constant = "true")
     Product toProductUpdateFromRequest(ProductRequest request, @MappingTarget Product product);
 
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "brand", ignore = true)
+    @Mapping(target = "thumbnailUrl", ignore = true)
+    @Mapping(target = "inWishlist", ignore = true)
     ProductResponse toProductResponse(Product product);
 
     @AfterMapping

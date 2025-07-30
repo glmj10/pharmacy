@@ -2,28 +2,21 @@ package com.pharmacy.backend.service.impl;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
-import com.pharmacy.backend.dto.request.AuthRequest;
-import com.pharmacy.backend.dto.request.ChangePasswordRequest;
-import com.pharmacy.backend.dto.request.UserInfoRequest;
-import com.pharmacy.backend.dto.request.UserRequest;
+import com.pharmacy.backend.dto.request.*;
 import com.pharmacy.backend.dto.response.*;
-import com.pharmacy.backend.entity.FileMetadata;
-import com.pharmacy.backend.entity.InvalidatedToken;
-import com.pharmacy.backend.entity.Role;
-import com.pharmacy.backend.entity.User;
+import com.pharmacy.backend.entity.*;
 import com.pharmacy.backend.enums.FileCategoryEnum;
 import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.UserMapper;
-import com.pharmacy.backend.repository.FileMetadataRepository;
-import com.pharmacy.backend.repository.InvalidatedTokenRepository;
-import com.pharmacy.backend.repository.RoleRepository;
-import com.pharmacy.backend.repository.UserRepository;
+import com.pharmacy.backend.repository.*;
 import com.pharmacy.backend.security.JwtUtils;
 import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.AuthService;
 import com.pharmacy.backend.service.CartService;
+import com.pharmacy.backend.service.EmailService;
 import com.pharmacy.backend.service.FileMetadataService;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 
@@ -51,6 +45,8 @@ public class AuthServiceImpl implements AuthService {
     FileMetadataService fileMetadataService;
     FileMetadataRepository fileMetadataRepository;
     CartService cartService;
+    EmailService emailService;
+    PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Transactional
     @Override
@@ -210,6 +206,61 @@ public class AuthServiceImpl implements AuthService {
                 .status(HttpStatus.OK.value())
                 .message("Đổi mật khẩu thành công")
                 .data("Mật khẩu đã được cập nhật")
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public ApiResponse<Void> forgotPassword(ConfirmationEmailRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", "email"));
+        try {
+            String token = jwtUtils.generatePasswordResetToken(user);
+            LocalDateTime expiryAt = jwtUtils.getExpirationTime(token, false);
+            PasswordResetToken passwordResetToken = PasswordResetToken.builder()
+                    .token(token)
+                    .expiresAt(expiryAt)
+                    .build();
+            passwordResetTokenRepository.save(passwordResetToken);
+
+            emailService.sendResetEmail(user.getEmail(), token, expiryAt, request.isUser());
+        } catch (ParseException | MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return ApiResponse.<Void>builder()
+                .status(HttpStatus.OK.value())
+                .message("Yêu cầu đặt lại mật khẩu đã được gửi, hãy kiểm tra email")
+                .data(null)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<Void> resetPassword(ResetPasswordRequest request) throws ParseException {
+        PasswordResetToken token = passwordResetTokenRepository.findByToken(request.getResetToken())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Mã đặt lại mật khẩu không hợp lệ", "token"));
+
+        if(jwtUtils.isTokenExpired(token.getToken(), false)) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Mã đặt lại mật khẩu đã hết hạn", "token");
+        }
+
+        User user = userRepository.findByEmail(jwtUtils.getUserEmail(token.getToken()))
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại", "email"));
+
+        if(!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Mật khẩu xác nhận không khớp", "confirmPassword");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+        passwordResetTokenRepository.delete(token);
+
+        return ApiResponse.<Void>builder()
+                .status(HttpStatus.OK.value())
+                .message("Đặt lại mật khẩu thành công")
+                .data(null)
                 .timestamp(LocalDateTime.now())
                 .build();
     }

@@ -26,4 +26,8 @@ public interface ProductService {
                                                MultipartFile thumbnail, List<MultipartFile> images);
     ApiResponse<ProductResponse> changeProductStatus(Long id, Boolean active);
     ApiResponse<Void> deleteProduct(Long id);
+
+    ApiResponse<Long> getTotalProduct();
+    ApiResponse<List<ProductResponse>> getTop15ProductsByNumberOfLikes();
+    ApiResponse<List<ProductResponse>> get15ProductByBrand(Long brandId);
 }

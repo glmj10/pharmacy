@@ -7,15 +7,12 @@ class ErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI
     return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
-    // Clear localStorage if it's a JSON parsing error
     if (error.message && error.message.includes('JSON')) {
       try {
         localStorage.removeItem('token');
@@ -31,7 +28,6 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReload = () => {
-    // Clear localStorage and reload
     try {
       localStorage.clear();
     } catch (e) {

@@ -100,20 +100,6 @@ const _nav = [
     to: '/contacts',
     icon: <CIcon icon={cilEnvelopeClosed} customClassName="nav-icon" />,
   },
-  {
-    component: CNavTitle,
-    name: 'Test & Debug',
-  },
-  {
-    component: CNavItem,
-    name: 'Toast Demo',
-    to: '/test/toast-demo',
-    icon: <CIcon icon={cilBug} customClassName="nav-icon" />,
-    badge: {
-      color: 'warning',
-      text: 'TEST',
-    },
-  },
 ]
 
 export default _nav

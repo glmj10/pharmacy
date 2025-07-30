@@ -3,14 +3,18 @@ package com.pharmacy.backend.service.impl;
 import com.pharmacy.backend.config.VnPayConfig;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.entity.Order;
+import com.pharmacy.backend.entity.User;
 import com.pharmacy.backend.enums.OrderStatusEnum;
 import com.pharmacy.backend.enums.PaymentStatusEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.repository.OrderRepository;
+import com.pharmacy.backend.repository.UserRepository;
+import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -30,7 +35,10 @@ public class VnPayService {
     private final OrderRepository orderRepository;
     private final VnPayConfig vnPayConfig;
     private final EmailService emailService;
+    private final UserRepository userRepository;
 
+    @Value("${frontend.url-payment-return}")
+    String frontendUrl;
 
     @Transactional
     public ApiResponse<String> handleVnPayReturn(Map<String, String> params) {
@@ -57,7 +65,9 @@ public class VnPayService {
                 order.setPaymentStatus(PaymentStatusEnum.COMPLETED);
                 order.setStatus(OrderStatusEnum.PENDING);
                 try {
-                    emailService.sendOrderConfirmationEmail(order);
+                    User user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng", "User not found"));
+                    emailService.sendOrderConfirmationEmail(order, user.getEmail());
                 } catch (Exception e) {
                     throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể gửi email xác nhận", "Failed to send confirmation email");
                 }
@@ -91,14 +101,18 @@ public class VnPayService {
         params.put("vnp_OrderInfo", vnp_OrderInfo);
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
-        params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+        params.put("vnp_ReturnUrl", frontendUrl + "/vnpay-return");
         params.put("vnp_IpAddr", vnp_IpAddr);
         params.put("vnp_CreateDate", vnp_CreateDate);
 
         String queryString = buildQueryString(params);
         String secureHash = hmacSHA512(vnPayConfig.getHashSecret(), queryString);
+
         return vnPayConfig.getVnpUrl() + "?" + queryString + "&vnp_SecureHash=" + secureHash;
     }
+
+
+
 
     private String buildQueryString(Map<String, String> params) {
         return params.entrySet().stream()

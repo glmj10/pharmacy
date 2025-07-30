@@ -32,7 +32,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
 
-  // Get validation status for each field
   const getValidationStatus = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return {
@@ -43,7 +42,6 @@ const Register = () => {
     }
   }
 
-  // Check if form is valid
   const isFormValid = () => {
     const status = getValidationStatus()
     return status.username && status.email && status.password && status.confirmPassword
@@ -56,7 +54,6 @@ const Register = () => {
       [name]: value
     }))
     
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors(prev => ({
         ...prev,
@@ -64,7 +61,6 @@ const Register = () => {
       }))
     }
 
-    // Real-time validation for confirm password
     if (name === 'confirmPassword' && value !== registerData.password) {
       setValidationErrors(prev => ({
         ...prev,
@@ -77,7 +73,6 @@ const Register = () => {
       }))
     }
 
-    // Real-time validation for password when confirm password exists
     if (name === 'password' && registerData.confirmPassword && value !== registerData.confirmPassword) {
       setValidationErrors(prev => ({
         ...prev,
@@ -96,7 +91,6 @@ const Register = () => {
     setLoading(true)
     setValidationErrors({})
 
-    // Check password confirmation
     if (registerData.password !== registerData.confirmPassword) {
       setValidationErrors({ confirmPassword: ['Mật khẩu xác nhận không khớp'] })
       setLoading(false)
@@ -113,7 +107,6 @@ const Register = () => {
       
       if (response.isSuccess()) {
         showSuccess('Đăng ký thành công! Chuyển hướng đến trang đăng nhập...')
-        // Redirect to login after 2 seconds
         setTimeout(() => {
           navigate('/login')
         }, 2000)
@@ -123,11 +116,9 @@ const Register = () => {
     } catch (error) {
       console.error('Register error:', error)
       
-      // Handle different types of errors
       const errorMessage = apiUtils.getUserFriendlyErrorMessage(error)
       showError(errorMessage)
       
-      // Extract validation errors for form fields
       const fieldErrors = apiUtils.extractValidationErrors(error)
       setValidationErrors(fieldErrors)
     } finally {

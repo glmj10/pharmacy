@@ -6,10 +6,20 @@ const AuthModalContext = createContext();
 
 export const AuthModalProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [modalType, setModalType] = useState('login'); // 'login' or 'register'
+  const [modalType, setModalType] = useState('login'); 
   const callbackRef = useRef(null);
 
-  // Listen for global events to open modal
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      if (token) {
+        setModalType('login'); 
+        setIsOpen(true);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const handleAuthExpired = (event) => {
       const { reason, message } = event.detail;
@@ -33,12 +43,10 @@ export const AuthModalProvider = ({ children }) => {
       openRegisterModal(callback);
     };
 
-    // Add event listeners
     window.addEventListener('authExpired', handleAuthExpired);
     window.addEventListener('openLoginModal', handleOpenLoginModal);
     window.addEventListener('openRegisterModal', handleOpenRegisterModal);
 
-    // Cleanup
     return () => {
       window.removeEventListener('authExpired', handleAuthExpired);
       window.removeEventListener('openLoginModal', handleOpenLoginModal);
@@ -82,13 +90,12 @@ export const AuthModalProvider = ({ children }) => {
     openRegisterModal,
     closeModal,
     handleAuthSuccess,
-    setModalType, // Add this for the AuthModal component
+    setModalType,
   };
 
   return (
     <AuthModalContext.Provider value={value}>
       {children}
-      {/* Render AuthModal globally */}
       {isOpen && <AuthModal />}
     </AuthModalContext.Provider>
   );

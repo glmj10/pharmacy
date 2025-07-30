@@ -69,7 +69,6 @@ const ContactList = () => {
 
       const response = await callApi(() => contactService.getContacts(params))
       if (response.success) {
-        // Handle both array and paginated response formats
         const contactsData = Array.isArray(response.data)
           ? response.data
           : response.data.content || response.data.data || []

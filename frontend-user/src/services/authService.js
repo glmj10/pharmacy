@@ -1,9 +1,9 @@
 import api from './api';
-import { AuthTransform } from '../utils/dataTransform';
+import publicApi from './publicApi';
 
 export const authService = {
   login: async (credentials) => {
-    const response = await api.post('/auth/login', credentials);
+    const response = await publicApi.post('/auth/login', credentials);
     if (!response.data || !response.data.data || !response.data.data.token) {
       throw new Error('Invalid login response from server');
     }
@@ -12,7 +12,7 @@ export const authService = {
   },
 
   register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
+    const response = await publicApi.post('/auth/register', userData);
     return response.data;
   },
 
@@ -49,11 +49,24 @@ export const authService = {
   },
 
   refreshToken: async (refreshData) => {
-    const response = await api.post('/auth/refresh-token', refreshData);
-    if (!response.data || !response.data.data || !response.data.data.token) {
-      throw new Error('Token không hợp lệ');
-    }
-    
-    return AuthTransform(response.data);
+    const response = await publicApi.post('/auth/refresh-token', refreshData);
+
+    return response.data;
+  },
+
+  forgotPassword: async (confirmationData) => {
+    const response = await publicApi.post('/auth/forgot-password', confirmationData);
+    return response.data;
+  },
+
+  resetPassword: async (resetData) => {
+    const { password, confirmPassword, token } = resetData;
+    const response = await publicApi.put('/auth/reset-password', {
+      resetToken: token,
+      password,
+      confirmPassword
+    });
+    return response.data;
   }
+
 };

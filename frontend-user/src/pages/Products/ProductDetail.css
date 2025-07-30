@@ -618,6 +618,8 @@
   overflow-y: auto;
 }
 
+
+
 /* Auto-hide navigation trên mobile */
 @media (max-width: 768px) {
   .product-detail .image-nav-btn {

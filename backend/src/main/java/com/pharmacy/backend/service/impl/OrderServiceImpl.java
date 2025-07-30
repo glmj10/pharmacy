@@ -1,5 +1,6 @@
 package com.pharmacy.backend.service.impl;
 
+import com.pharmacy.backend.dto.request.OrderFilterRequest;
 import com.pharmacy.backend.dto.request.OrderRequest;
 import com.pharmacy.backend.dto.response.*;
 import com.pharmacy.backend.entity.*;
@@ -9,11 +10,11 @@ import com.pharmacy.backend.enums.PaymentStatusEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.OrderMapper;
 import com.pharmacy.backend.mapper.ProductMapper;
-import com.pharmacy.backend.mapper.ProfileMapper;
 import com.pharmacy.backend.repository.*;
 import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.EmailService;
 import com.pharmacy.backend.service.OrderService;
+import com.pharmacy.backend.specification.OrderSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -22,10 +23,11 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,28 +42,41 @@ public class OrderServiceImpl implements OrderService {
     final OrderDetailRepository orderDetailRepository;
     final CartItemRepository cartItemRepository;
     final ProfileRepository profileRepository;
-    final ProfileMapper profileMapper;
     final ProductMapper productMapper;
     final EmailService emailService;
     final VnPayService vnPayService;
 
     @Transactional
     @Override
-    public ApiResponse<PageResponse<List<OrderResponse>>> getAllOrders(int pageIndex, int pageSize) {
+    public ApiResponse<PageResponse<List<OrderResponse>>> getAllOrders(int pageIndex, int pageSize, OrderFilterRequest filterRequest) {
         if(pageIndex <= 0) {
             pageIndex = 1;
         }
         if(pageSize <= 0) {
             pageSize = 10;
         }
+        Specification<Order> orderSpecification = OrderSpecification.hasDateRange(filterRequest.getFromDate(), filterRequest.getToDate())
+                .and(OrderSpecification.hasCustomerPhoneNumber(filterRequest.getCustomerPhoneNumber()))
+                .and(OrderSpecification.hasOrderId(filterRequest.getId()));
+
+        if(filterRequest.getOrderStatus() != null) {
+            orderSpecification = orderSpecification.and(OrderSpecification.hasStatus(
+                    OrderStatusEnum.valueOf(filterRequest.getOrderStatus().toUpperCase()).toString())
+            );
+        }
+
+        if(filterRequest.getPaymentStatus() != null) {
+            orderSpecification = orderSpecification.and(OrderSpecification.hasPaymentStatus(
+                    PaymentStatusEnum.valueOf(filterRequest.getPaymentStatus().toUpperCase()).toString())
+            );
+        }
 
         Pageable pageable = PageRequest.of(pageIndex - 1, pageSize);
-        Page<Order> orderPage = orderRepository.findAll(pageable);
+        Page<Order> orderPage = orderRepository.findAll(orderSpecification ,pageable);
 
         List<OrderResponse> orderResponses = orderPage.getContent().stream()
                 .map(order -> {
                     OrderResponse response = orderMapper.toOrderResponse(order);
-                    response.setAddress(profileMapper.toProfileResponse(order.getProfile()));
                     response.setPaymentStatus(order.getPaymentStatus().name());
                     return response;
                 })
@@ -84,7 +99,17 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public ApiResponse<List<OrderResponse>> getMyOrders() {
+    public ApiResponse<PageResponse<List<OrderResponse>>> getMyOrders(int pageIndex, int pageSize, String status) {
+        if(pageIndex <= 0) {
+            pageIndex = 1;
+        }
+
+        if(pageSize <= 0) {
+            pageSize = 10;
+        }
+
+        Pageable pageable = PageRequest.of(pageIndex - 1, pageSize, Sort.by("createdAt").descending());
+
         Long userId = SecurityUtils.getCurrentUserId();
         assert userId != null;
         User user = userRepository.findById(userId)
@@ -92,20 +117,31 @@ public class OrderServiceImpl implements OrderService {
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giỏ hàng cho người dùng với ID: " + userId, "Cart not found"));
 
-        List<Order> orders = orderRepository.findByCart(cart);
+        Page<Order> orders;
+        if(status != null && !status.isEmpty()) {
+            OrderStatusEnum orderStatus = OrderStatusEnum.valueOf(status.toUpperCase());
+            orders = orderRepository.findByCartAndStatus(cart, orderStatus, pageable);
+        } else {
+            orders = orderRepository.findByCart(cart, pageable);
+        }
 
-        List<OrderResponse> orderResponses = orders.stream()
-                .map(orderResponse -> {
-                    OrderResponse response = orderMapper.toOrderResponse(orderResponse);
-                    response.setAddress(profileMapper.toProfileResponse(orderResponse.getProfile()));
-                    return response;
-                })
+        List<OrderResponse> orderResponses = orders.getContent().stream()
+                .map(orderMapper::toOrderResponse)
                 .toList();
+
+        PageResponse<List<OrderResponse>> pageResponse = PageResponse.<List<OrderResponse>>builder()
+                .currentPage(pageIndex)
+                .totalElements(orders.getTotalElements())
+                .totalPages(orders.getTotalPages())
+                .hasNext(orders.hasNext())
+                .hasPrevious(orders.hasPrevious())
+                .content(orderResponses)
+                .build();
 
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
                 "Lấy danh sách đơn hàng người dùng thành công",
-                orderResponses
+                pageResponse
         );
     }
 
@@ -158,7 +194,9 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giỏ hàng", "Cart not found"));
 
         Order order = orderMapper.toOrder(request);
-        order.setProfile(profile);
+        order.setCustomerName(profile.getFullName());
+        order.setCustomerPhoneNumber(profile.getPhoneNumber());
+        order.setCustomerAddress(profile.getAddress());
         order.setCart(cart);
         order.setTotalPrice(cart.getTotalPrice());
 
@@ -190,13 +228,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         try {
-            emailService.sendOrderConfirmationEmail(order);
+            emailService.sendOrderConfirmationEmail(order, user.getEmail());
         } catch (Exception e) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Gửi email xác nhận đơn hàng thất bại", "Email sending failed");
         }
 
         OrderResponse orderResponse = orderMapper.toOrderResponse(order);
-        orderResponse.setAddress(profileMapper.toProfileResponse(profile));
         orderResponse.setPaymentStatus(order.getPaymentStatus().name());
         return ApiResponse.buildResponse(
                 HttpStatus.CREATED.value(),
@@ -236,6 +273,64 @@ public class OrderServiceImpl implements OrderService {
                 HttpStatus.OK.value(),
                 "Cập nhật trạng thái thanh toán đơn hàng thành công",
                 orderResponse
+        );
+    }
+
+    @Override
+    public ApiResponse<Long> getTotalOrder() {
+        Long totalOrders = orderRepository.count();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy tổng số đơn hàng thành công",
+                totalOrders
+        );
+    }
+
+    @Override
+    public ApiResponse<Long> getAllRevenue() {
+        Long totalRevenue = orderRepository.getTotalRevenue("DELIVERED");
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy tổng doanh thu thành công",
+                totalRevenue
+        );
+    }
+
+    @Override
+    public ApiResponse<List<OrderResponse>> getFiveNewestOrder() {
+        List<Order> newestOrders = orderRepository.findTop5ByOrderByCreatedAtDesc();
+
+        List<OrderResponse> orderResponse = newestOrders.stream()
+                .map(order -> {
+                    OrderResponse response = orderMapper.toOrderResponse(order);
+                    response.setPaymentStatus(order.getPaymentStatus().name());
+                    return response;
+                })
+                .toList();
+
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy 5 đơn hàng mới nhất thành công",
+                orderResponse
+        );
+    }
+
+    @Override
+    public ApiResponse<Void> cancelOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng với ID: " + id, "Order not found"));
+
+        if (!order.getStatus().equals(OrderStatusEnum.PENDING)) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể hủy đơn hàng đang chờ xử lý", "Order cannot be canceled");
+        }
+
+        order.setStatus(OrderStatusEnum.CANCELLED);
+        orderRepository.save(order);
+
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Hủy đơn hàng thành công",
+                null
         );
     }
 

@@ -2,9 +2,6 @@ import { useState, useCallback } from 'react'
 import productService from '../services/product.service'
 import { useApiCall } from './useApiCall'
 
-/**
- * Custom hook for product management operations
- */
 export const useProducts = () => {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
@@ -27,8 +24,6 @@ export const useProducts = () => {
       const response = await callApi(() => productService.getProductsCMS(params))
       
       if (response.success && response.data) {
-        // Backend returns ApiResponse<PageResponse<List<ProductResponse>>>
-        // response.data is PageResponse<List<ProductResponse>>
         const pageData = response.data
         
         setProducts(pageData.content || [])

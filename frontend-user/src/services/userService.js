@@ -2,13 +2,11 @@ import api from './api';
 import { UserTransform } from '../utils/dataTransform';
 
 export const userService = {
-  // Get current user profile
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
     return response.data;
   },
 
-  // Update user information (username only, email không được update)
   updateUser: async (userData) => {
     const requestData = {
       username: userData.username,
@@ -28,7 +26,6 @@ export const userService = {
     return response.data;
   },
 
-  // Update user information with profile picture
   updateUserWithAvatar: async (userInfo, profilePic) => {
     const formData = new FormData();
     
@@ -51,7 +48,6 @@ export const userService = {
     return response.data;
   },
 
-  // Update profile picture only
   updateProfilePicture: async (profilePic) => {
     const formData = new FormData();
     formData.append('profilePic', profilePic);
@@ -64,7 +60,6 @@ export const userService = {
     return response.data;
   },
 
-  // Change password
   changePassword: async (passwordData) => {
     const requestData = UserTransform.toBackendPasswordRequest(passwordData);
     const response = await api.put('/auth/password', requestData);

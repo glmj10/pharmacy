@@ -16,5 +16,7 @@ public class BlogResponse {
     String content;
     String thumbnail;
     String slug;
+    CategoryResponse category;
     LocalDateTime createdAt;
+    LocalDateTime updatedAt;
 }

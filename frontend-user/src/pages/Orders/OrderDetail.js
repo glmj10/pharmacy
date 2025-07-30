@@ -15,7 +15,7 @@ const OrderDetail = () => {
       const data = await orderService.getOrderById(id);
       setOrder(data);
     } catch (error) {
-      toast.error('Không thể tải chi tiết đơn hàng: ' + error.message);
+      console.error('Không thể tải chi tiết đơn hàng: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ const OrderDetail = () => {
         toast.success('Đã hủy đơn hàng thành công!');
         fetchOrderDetail();
       } catch (error) {
-        toast.error('Không thể hủy đơn hàng: ' + error.message);
+        console.error('Không thể hủy đơn hàng: ' + error.message);
       }
     }
   };

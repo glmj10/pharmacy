@@ -20,11 +20,10 @@ export const useOrders = () => {
     setError(null)
     try {
       const queryParams = {
-        pageIndex: params.pageIndex || 1, // Backend expects 1-based indexing
+        pageIndex: params.pageIndex || 1,
         pageSize: params.pageSize || 10,
       }
       
-      // Add filter parameters only if they exist
       if (params.id) {
         queryParams.id = params.id
       }
@@ -92,7 +91,6 @@ export const useOrders = () => {
       const response = await callApi(() => orderService.updateOrderStatus(orderId, status))
       
       if (response.success) {
-        // Update the order in the local state
         setOrders(prev => prev.map(order => 
           order.id === orderId 
             ? { ...order, status: status }
@@ -117,7 +115,6 @@ export const useOrders = () => {
       const response = await callApi(() => orderService.updatePaymentStatus(orderId, paymentStatus))
       
       if (response.success) {
-        // Update the order in the local state
         setOrders(prev => prev.map(order => 
           order.id === orderId 
             ? { ...order, paymentStatus: paymentStatus }

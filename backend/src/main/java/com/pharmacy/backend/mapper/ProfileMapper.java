@@ -12,12 +12,10 @@ import org.mapstruct.MappingTarget;
 public interface ProfileMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "orders", ignore = true)
     @Mapping(target = "user", ignore = true)
     Profile toProfile(ProfileRequest request);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "orders", ignore = true)
     @Mapping(target = "user", ignore = true)
     Profile updateProfileFromRequest(ProfileRequest request, @MappingTarget Profile profile);
 

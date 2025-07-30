@@ -1,6 +1,9 @@
 package com.pharmacy.backend.specification;
 
+import com.pharmacy.backend.entity.Category;
 import com.pharmacy.backend.entity.Product;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 
 public class ProductSpecification {
@@ -20,11 +23,11 @@ public class ProductSpecification {
                 return criteriaBuilder.conjunction();
             }
             if (priceFrom != null && priceTo != null) {
-                return criteriaBuilder.between(root.get("price"), priceFrom, priceTo);
+                return criteriaBuilder.between(root.get("priceNew"), priceFrom, priceTo);
             } else if (priceFrom != null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("price"), priceFrom);
+                return criteriaBuilder.greaterThanOrEqualTo(root.get("priceNew"), priceFrom);
             } else {
-                return criteriaBuilder.lessThanOrEqualTo(root.get("price"), priceTo);
+                return criteriaBuilder.lessThanOrEqualTo(root.get("priceNew"), priceTo);
             }
         };
     }
@@ -52,7 +55,10 @@ public class ProductSpecification {
             if (slug == null || slug.isEmpty()) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.equal(root.get("category").get("slug"), slug);
+            // Join tới collection categories
+            Join<Product, Category> categoryJoin = root.join("categories", JoinType.INNER);
+            return criteriaBuilder.equal(categoryJoin.get("slug"), slug);
         };
     }
+
 }

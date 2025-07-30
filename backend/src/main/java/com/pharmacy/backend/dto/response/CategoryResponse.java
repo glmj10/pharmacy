@@ -17,5 +17,6 @@ public class CategoryResponse {
     String slug;
     Long priority;
     String type;
+    Long parentId;
     List<CategoryResponse> children;
 }

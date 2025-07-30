@@ -7,10 +7,16 @@ import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.PageResponse;
 import com.pharmacy.backend.dto.response.ProductImageResponse;
 import com.pharmacy.backend.dto.response.ProductResponse;
+import com.pharmacy.backend.entity.Brand;
+import com.pharmacy.backend.entity.Category;
 import com.pharmacy.backend.entity.Product;
+import com.pharmacy.backend.entity.User;
 import com.pharmacy.backend.exception.AppException;
+import com.pharmacy.backend.mapper.BrandMapper;
+import com.pharmacy.backend.mapper.CategoryMapper;
 import com.pharmacy.backend.mapper.ProductMapper;
-import com.pharmacy.backend.repository.ProductRepository;
+import com.pharmacy.backend.repository.*;
+import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.FileMetadataService;
 import com.pharmacy.backend.service.ProductImageService;
 import com.pharmacy.backend.service.ProductService;
@@ -27,8 +33,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +44,12 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final FileMetadataService fileMetadataService;
     private final ProductImageService productImageService;
+    private final BrandRepository brandRepository;
+    private final BrandMapper brandMapper;
+    private final CategoryRepository categoryRepository;
+    private final WishlistRepository wishlistRepository;
+    private final UserRepository userRepository;
+    private final CategoryMapper categoryMapper;
 
     @Transactional
     @Override
@@ -45,7 +58,6 @@ public class ProductServiceImpl implements ProductService {
                 .and(ProductSpecification.hasTitle(filterRequest.getTitle()));
 
         Pageable pageable = createPageable(pageIndex, pageSize, filterRequest.getIsAscending());
-
 
         Page<Product> productPage = productRepository.findAll(productSpecification, pageable);
         List<ProductResponse> productResponses = productPage.getContent()
@@ -69,23 +81,40 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    @Transactional
     @Override
     public ApiResponse<PageResponse<List<ProductResponse>>> getAllActiveProduct(int pageIndex, int pageSize, ProductFilterCustomerRequest filterRequest) {
         Specification<Product> productSpecification = ProductSpecification.hasActive(true)
                 .and(ProductSpecification.hasTitle(filterRequest.getTitle()))
-                .and(ProductSpecification.hasCategorySlug(filterRequest.getCategorySlug()))
-                .and(ProductSpecification.hasBrandSlug(filterRequest.getBrandSlug()))
+                .and(ProductSpecification.hasCategorySlug(filterRequest.getCategory()))
+                .and(ProductSpecification.hasBrandSlug(filterRequest.getBrand()))
                 .and(ProductSpecification.hasPriceRange(filterRequest.getPriceFrom(), filterRequest.getPriceTo()));
+
 
         Pageable pageable = createPageable(pageIndex, pageSize, filterRequest.getIsAscending());
 
         Page<Product> productPage = productRepository.findAll(productSpecification, pageable);
 
+        User user;
+        Long userId = SecurityUtils.getCurrentUserId();
+        if(userId != null) {
+            user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                    .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "USER_NOT_FOUND"));
+        } else {
+            user = null;
+        }
+
         List<ProductResponse> productResponses = productPage.getContent()
                 .stream()
                 .map(product -> {
                     ProductResponse response = productMapper.toProductResponse(product);
-                    response.setNumberOfLikes((long) product.getWishlists().size());
+                    if(user != null) {
+                        Boolean isInWishList = wishlistRepository.existsByProductAndUser(product, user);
+                        response.setInWishlist(isInWishList);
+                    } else {
+                        response.setInWishlist(false);
+                    }
+
                     return response;
                 })
                 .toList();
@@ -113,6 +142,9 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm với ID: " + id, "PRODUCT_NOT_FOUND"));
         ProductResponse productResponse = productMapper.toProductResponse(product);
         productResponse.setImages(productImageService.getProductImagesByProduct(product));
+        productResponse.setBrand(brandMapper.toBrandResponse(product.getBrand()));
+        List<Category> categories = categoryRepository.findAllByProductsContains(product);
+        productResponse.setCategories(categories.stream().map(categoryMapper::toCategoryResponse).collect(Collectors.toList()));
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
                 "Lấy thông tin sản phẩm thành công",
@@ -129,6 +161,18 @@ public class ProductServiceImpl implements ProductService {
             throw new AppException(HttpStatus.NOT_FOUND, "Sản phẩm không còn hoạt động", "PRODUCT_INACTIVE");
         }
         ProductResponse productResponse = productMapper.toProductResponse(product);
+        User user;
+        Long userId = SecurityUtils.getCurrentUserId();
+        if(userId != null) {
+            user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                    .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "USER_NOT_FOUND"));
+            productResponse.setInWishlist(wishlistRepository.existsByProductAndUser(product, user));
+        } else {
+            productResponse.setInWishlist(false);
+        }
+
+        List<Category> categories = categoryRepository.findAllByProductsContains(product);
+        productResponse.setCategories(categories.stream().map(categoryMapper::toCategoryResponse).collect(Collectors.toList()));
         productResponse.setImages(productImageService.getProductImagesByProduct(product));
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
@@ -137,6 +181,7 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    @Transactional
     @Override
     public ApiResponse<ProductResponse> createProduct(ProductRequest request, MultipartFile thumbnail, List<MultipartFile> images) {
         if(thumbnail == null || thumbnail.isEmpty()) {
@@ -147,11 +192,23 @@ public class ProductServiceImpl implements ProductService {
             throw new AppException(HttpStatus.BAD_REQUEST, "Hình ảnh sản phẩm không được để trống", "IMAGES_REQUIRED");
         }
 
+        Brand brand = brandRepository.findById(request.getBrandId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy thương hiệu với ID: " + request.getBrandId(), "BRAND_NOT_FOUND"));
+
+        List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
+
+        if (categories.isEmpty()) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục nào với ID đã cung cấp", "CATEGORIES_NOT_FOUND");
+        }
+
         Product product = productMapper.toProduct(request);
         product.setSlug(createSlug(product.getTitle()));
         product.setThumbnail(fileMetadataService.storeFile(thumbnail, "PRODUCT").getData().getId().toString());
+        product.setBrand(brand);
+        product.setCategories(categories);
 
         product = productRepository.save(product);
+        images.addFirst(thumbnail);
         List<ProductImageResponse> productImages = productImageService.createProductImages(product, images);
 
         ProductResponse productResponse = productMapper.toProductResponse(product);
@@ -173,8 +230,11 @@ public class ProductServiceImpl implements ProductService {
             product.setThumbnail(fileMetadataService.storeFile(thumbnail, "PRODUCT").getData().getId().toString());
         }
 
+        Brand brand = brandRepository.findById(request.getBrandId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy thương hiệu với ID: " + request.getBrandId(), "BRAND_NOT_FOUND"));
         Product updatedProduct = productMapper.toProductUpdateFromRequest(request, product);
-
+        updatedProduct.setBrand(brand);
         product = productRepository.save(updatedProduct);
 
         List<ProductImageResponse> productImages = productImageService.updateProductImages(product, images);
@@ -223,6 +283,89 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    @Override
+    public ApiResponse<Long> getTotalProduct() {
+        long totalProducts = productRepository.count();
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy tổng số sản phẩm thành công",
+                totalProducts
+        );
+    }
+
+    @Transactional
+    @Override
+    public ApiResponse<List<ProductResponse>> getTop15ProductsByNumberOfLikes() {
+        Pageable pageable = PageRequest.of(0, 15, Sort.by(Sort.Direction.DESC, "numberOfLikes"));
+        List<Product> products = productRepository.findTop15ByActiveTrue((pageable));
+        User user;
+        Long userId = SecurityUtils.getCurrentUserId();
+        if(userId != null) {
+            user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                    .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "USER_NOT_FOUND"));
+        } else {
+            user = null;
+        }
+
+        List<ProductResponse> productResponses = products
+                .stream()
+                .map(product -> {
+                    ProductResponse response = productMapper.toProductResponse(product);
+                    if(user != null) {
+                        Boolean isInWishList = wishlistRepository.existsByProductAndUser(product, user);
+                        response.setInWishlist(isInWishList);
+                    } else {
+                        response.setInWishlist(false);
+                    }
+
+                    return response;
+                })
+                .toList();
+
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy 15 sản phẩm hàng đầu theo số lượt thích thành công",
+                productResponses
+        );
+    }
+
+    @Transactional
+    @Override
+    public ApiResponse<List<ProductResponse>> get15ProductByBrand(Long brandId) {
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy thương hiệu với ID: " + brandId, "BRAND_NOT_FOUND"));
+
+        List<Product> products = productRepository.findTop15ByBrandAndActive(brand, true);
+        User user;
+        Long userId = SecurityUtils.getCurrentUserId();
+        if(userId != null) {
+            user = userRepository.findById(Objects.requireNonNull(SecurityUtils.getCurrentUserId()))
+                    .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Người dùng không hợp lệ", "USER_NOT_FOUND"));
+        } else {
+            user = null;
+        }
+
+        List<ProductResponse> productResponses = products
+                .stream()
+                .map(product -> {
+                    ProductResponse response = productMapper.toProductResponse(product);
+                    if(user != null) {
+                        Boolean isInWishList = wishlistRepository.existsByProductAndUser(product, user);
+                        response.setInWishlist(isInWishList);
+                    } else {
+                        response.setInWishlist(false);
+                    }
+
+                    return response;
+                })
+                .toList();
+
+        return ApiResponse.buildResponse(
+                HttpStatus.OK.value(),
+                "Lấy 10 sản phẩm theo danh mục thành công",
+                productResponses
+        );
+    }
 
 
     private String createSlug(String name) {
@@ -246,7 +389,7 @@ public class ProductServiceImpl implements ProductService {
         if (isAscending == null) {
             sort = Sort.by(Sort.Direction.DESC, "createdAt");
         } else {
-            sort = Sort.by(isAscending ? Sort.Direction.ASC : Sort.Direction.DESC, "newPrice");
+            sort = Sort.by(isAscending ? Sort.Direction.ASC : Sort.Direction.DESC, "priceNew");
         }
 
         return PageRequest.of(pageIndex - 1, pageSize, sort);

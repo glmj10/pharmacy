@@ -17,10 +17,7 @@ import { cilUser, cilEnvelopeOpen, cilPhone, cilLocationPin, cilSave, cilX } fro
 import authService from '../../services/auth.service';
 import { storage } from '../../utils/storage';
 import { dispatchUserInfoUpdated } from '../../utils/userInfoEvents';
-/**
- * Tab thông tin cá nhân
- * Cho phép xem và chỉnh sửa thông tin user
- */
+
 const ProfileInfoTab = ({ userInfo, loading, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,7 +27,6 @@ const ProfileInfoTab = ({ userInfo, loading, onUpdate }) => {
     email: ''
   });
 
-  // Load data vào form khi userInfo thay đổi
   useEffect(() => {
     if (userInfo) {
       setFormData({
@@ -56,7 +52,6 @@ const ProfileInfoTab = ({ userInfo, loading, onUpdate }) => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setMessage({ type: '', content: '' });
-    // Reset form data về giá trị gốc
     if (userInfo) {
       setFormData({
         username: userInfo.username || '',
@@ -92,7 +87,6 @@ const ProfileInfoTab = ({ userInfo, loading, onUpdate }) => {
           content: 'Cập nhật thông tin thành công!'
         });
 
-        // Update cached user info immediately
         const cachedUserInfo = storage.get('currentUserInfo');
         if (cachedUserInfo) {
           const updatedUserInfo = {
@@ -102,16 +96,13 @@ const ProfileInfoTab = ({ userInfo, loading, onUpdate }) => {
           };
           storage.set('currentUserInfo', updatedUserInfo);
           
-          // Dispatch event to update all components using useCurrentUser
           dispatchUserInfoUpdated(updatedUserInfo);
         }
 
-        // Refresh user info from API and update all components
         if (onUpdate) {
           await onUpdate();
         }
 
-        // Exit edit mode after successful update
         setIsEditing(false);
       } else {
         setMessage({
@@ -191,7 +182,6 @@ const ProfileInfoTab = ({ userInfo, loading, onUpdate }) => {
           </CCol>
         </CRow>
 
-        {/* Nút điều khiển */}
         <div className="d-flex justify-content-end gap-2">
           {!isEditing ? (
             <CButton

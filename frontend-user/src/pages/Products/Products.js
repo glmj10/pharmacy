@@ -47,7 +47,7 @@ const Products = () => {
     handleProductClick,
     handleAddToCart,
     handleWishlistToggle,
-    fetchWishlist // Cần fetch wishlist riêng khi component này mount
+    fetchWishlist 
   } = useProductInteractions();
 
   useEffect(() => {
@@ -598,7 +598,6 @@ const Products = () => {
                     {renderPagination()}
                   </>
                 )}
-                {totalPages <= 1 && console.log('No pagination - totalPages:', totalPages)}
               </>
             )}
           </div>

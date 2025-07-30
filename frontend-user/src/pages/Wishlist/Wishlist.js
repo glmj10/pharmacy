@@ -27,7 +27,7 @@ const Wishlist = () => {
       const data = response.data;
       setWishlist(Array.isArray(data) ? data : []);
     } catch (error) {
-      toast.error('Không thể tải danh sách yêu thích: ' + error.message);
+      console.error('Error fetching wishlist:', error);
       setWishlist([]);
     } finally {
       setLoading(false);
@@ -40,7 +40,7 @@ const Wishlist = () => {
       setWishlist(prev => prev.filter(item => item.id !== productId));
       toast.success('Đã xóa khỏi danh sách yêu thích!');
     } catch (error) {
-      toast.error('Không thể xóa sản phẩm: ' + error.message);
+      console.error('Error removing from wishlist:', error);
     }
   };
 
@@ -49,7 +49,7 @@ const Wishlist = () => {
       await addToCart(product, 1);
       toast.success('Đã thêm vào giỏ hàng!');
     } catch (error) {
-      toast.error('Không thể thêm vào giỏ hàng: ' + error.message);
+      console.error('Không thể thêm vào giỏ hàng: ' + error.message);
     }
   };
 
@@ -60,7 +60,7 @@ const Wishlist = () => {
       }
       toast.success('Đã thêm tất cả sản phẩm vào giỏ hàng!');
     } catch (error) {
-      toast.error('Không thể thêm tất cả sản phẩm vào giỏ hàng: ' + error.message);
+      console.error('Không thể thêm tất cả sản phẩm vào giỏ hàng: ' + error.message);
     }
   };
 
@@ -70,7 +70,7 @@ const Wishlist = () => {
       setWishlist([]);
       toast.success('Đã xóa toàn bộ danh sách yêu thích!');
     } catch (error) {
-      toast.error('Không thể xóa toàn bộ danh sách: ' + error.message);
+      console.error('Không thể xóa toàn bộ danh sách: ' + error.message);
     }
     setShowConfirmModal(false);
   };

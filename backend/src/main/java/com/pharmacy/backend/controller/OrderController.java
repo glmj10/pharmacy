@@ -1,5 +1,6 @@
 package com.pharmacy.backend.controller;
 
+import com.pharmacy.backend.dto.request.OrderFilterRequest;
 import com.pharmacy.backend.dto.request.OrderRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.OrderDetailResponse;
@@ -26,8 +27,10 @@ public class OrderController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my-orders")
-    public ResponseEntity<ApiResponse<List<OrderResponse>>> getMyOrders() {
-        ApiResponse<List<OrderResponse>> response = orderService.getMyOrders();
+    public ResponseEntity<ApiResponse<PageResponse<List<OrderResponse>>>> getMyOrders(@RequestParam(required = false, defaultValue = "1") int pageIndex,
+                                                                                      @RequestParam (required = false, defaultValue = "10") int pageSize,
+                                                                                      @RequestParam(required = false) String status) {
+        ApiResponse<PageResponse<List<OrderResponse>>> response = orderService.getMyOrders(pageIndex, pageSize, status);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
@@ -39,9 +42,11 @@ public class OrderController {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<List<OrderResponse>>>> getAllOrders(@RequestParam(defaultValue = "1", required = false) int pageIndex,
-                                                                  @RequestParam(defaultValue = "10", required = false) int pageSize) {
-        ApiResponse<PageResponse<List<OrderResponse>>> response = orderService.getAllOrders(pageIndex, pageSize);
+    public ResponseEntity<ApiResponse<PageResponse<List<OrderResponse>>>> getAllOrders(
+            @RequestParam(defaultValue = "1", required = false) int pageIndex,
+            @RequestParam(defaultValue = "10", required = false) int pageSize,
+            @ModelAttribute OrderFilterRequest request) {
+        ApiResponse<PageResponse<List<OrderResponse>>> response = orderService.getAllOrders(pageIndex, pageSize, request);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
@@ -60,11 +65,39 @@ public class OrderController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @PutMapping("/cancel/{id}")
+    public ResponseEntity<ApiResponse<?>> cancelOrder(@PathVariable Long id) {
+        ApiResponse<?> response = orderService.cancelOrder(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @PutMapping("/payment-status/{id}")
     public ResponseEntity<ApiResponse<OrderResponse>> changePaymentStatus(@PathVariable Long id,
                                                                         @RequestParam(name = "status") String paymentStatus) {
         ApiResponse<OrderResponse> response = orderService.changePaymentStatus(id, paymentStatus);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @GetMapping("/statistic/total")
+    public ResponseEntity<ApiResponse<Long>> getTotalOrder() {
+        ApiResponse<Long> response = orderService.getTotalOrder();
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @GetMapping("/statistic/allRevenue")
+    public ResponseEntity<ApiResponse<Long>> getAllRevenue() {
+        ApiResponse<Long> response = orderService.getAllRevenue();
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @GetMapping("/statistic/newest")
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getFiveNewestOrder() {
+        ApiResponse<List<OrderResponse>> response = orderService.getFiveNewestOrder();
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 }

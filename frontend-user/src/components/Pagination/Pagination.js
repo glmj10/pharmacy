@@ -3,7 +3,6 @@ import './Pagination.css';
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const pages = [];
-  // Giới hạn số lượng nút trang hiển thị để tránh tràn màn hình
   const maxPageNumbers = 5; 
   let startPage = Math.max(1, currentPage - Math.floor(maxPageNumbers / 2));
   let endPage = Math.min(totalPages, startPage + maxPageNumbers - 1);

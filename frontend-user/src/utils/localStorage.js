@@ -1,13 +1,4 @@
-/**
- * Safe localStorage utilities
- */
-
 export const localStorageUtils = {
-  /**
-   * Safely get item from localStorage
-   * @param {string} key 
-   * @returns {string|null}
-   */
   getItem: (key) => {
     try {
       if (typeof window === 'undefined') return null;
@@ -23,12 +14,6 @@ export const localStorageUtils = {
     }
   },
 
-  /**
-   * Safely set item to localStorage
-   * @param {string} key 
-   * @param {string} value 
-   * @returns {boolean} success
-   */
   setItem: (key, value) => {
     try {
       if (typeof window === 'undefined') return false;
@@ -44,11 +29,6 @@ export const localStorageUtils = {
     }
   },
 
-  /**
-   * Safely remove item from localStorage
-   * @param {string} key 
-   * @returns {boolean} success
-   */
   removeItem: (key) => {
     try {
       if (typeof window === 'undefined') return false;
@@ -60,11 +40,6 @@ export const localStorageUtils = {
     }
   },
 
-  /**
-   * Safely get JSON from localStorage
-   * @param {string} key 
-   * @returns {any|null}
-   */
   getJSON: (key) => {
     try {
       const item = localStorageUtils.getItem(key);
@@ -73,18 +48,11 @@ export const localStorageUtils = {
       return JSON.parse(item);
     } catch (error) {
       console.error(`Error parsing JSON from localStorage item ${key}:`, error);
-      // Remove corrupted data
       localStorageUtils.removeItem(key);
       return null;
     }
   },
 
-  /**
-   * Safely set JSON to localStorage
-   * @param {string} key 
-   * @param {any} value 
-   * @returns {boolean} success
-   */
   setJSON: (key, value) => {
     try {
       if (value === undefined || value === null) {
@@ -98,9 +66,6 @@ export const localStorageUtils = {
     }
   },
 
-  /**
-   * Clear all localStorage data
-   */
   clear: () => {
     try {
       if (typeof window === 'undefined') return false;
@@ -112,10 +77,6 @@ export const localStorageUtils = {
     }
   },
 
-  /**
-   * Check if localStorage is available
-   * @returns {boolean}
-   */
   isAvailable: () => {
     try {
       if (typeof window === 'undefined') return false;

@@ -2,10 +2,6 @@ import api from '../config/api';
 import { apiUtils } from '../utils/apiUtils';
 
 class RoleService {
-    /**
-     * Get all roles
-     * @returns {Promise<ApiResponse>}
-     */
     async getAllRoles() {
         try {
             const response = await api.get('/roles');
