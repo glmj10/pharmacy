@@ -1,20 +1,30 @@
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
+
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:uat}
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      # This setting controls the schema generation strategy. Can change to 'create', 'create-drop', or 'validate' as needed.
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         format_sql: true
     show-sql: true
     open-in-view: false
     defer-datasource-initialization: true
-  profiles:
-    active: uat
   sql:
     init:
-        # Executing any SQL scripts at startup. Can change to 'always' or 'embedded' as needed.
-      mode: never
+      mode: always
   servlet:
     multipart:
       max-file-size: 10MB
@@ -23,33 +33,44 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: youremail@gmail.com
-    password: yourAppPassword
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-        default:
-          encoding: UTF-8
-jwt:
-  secret: your_jwt_secret_key_here
-  expiration: 3600
-  refresh:
-    expiration: 86400
-server:
-  port: 8080
-  servlet:
-    encoding:
-      charset: UTF-8
-      force: true
-      enabled: true
-account:
-  default:
-    email: admin@gmail.com
-    password: admin123
+
 file:
   upload:
-    dir: D:/upload
+    dir: ${FILE_UPLOAD_DIR}
 
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:3600}
+  reset-password-expiration: ${JWT_RESET_PASSWORD_EXPIRATION:600}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400}
+
+default-admin:
+  email: ${DEFAULT_ADMIN_EMAIL}
+  password: ${DEFAULT_ADMIN_PASSWORD}
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE}
+  hash-secret: ${VNPAY_HASH_SECRET}
+  url: ${VNPAY_URL}
+  return-url: ${VNPAY_RETURN_URL}
+
+frontend:
+  payment-return-url: ${FRONTEND_PAYMENT_RETURN_URL}
+  cms-url: ${FRONTEND_CMS_URL}
+  user-url: ${FRONTEND_USER_URL}
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

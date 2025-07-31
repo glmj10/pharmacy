@@ -33,9 +33,9 @@ public class ApplicationInitConfig {
     private final UserRepository userRepository;
     private final FileMetadataRepository fileMetadataRepository;
     private final UserMapper userMapper;
-    @Value("${account.default.email}")
+    @Value("${default-admin.email}")
     private String email;
-    @Value("${account.default.password}")
+    @Value("${default-admin.password}")
     private String password;
     @Bean
     ApplicationRunner applicationRunner(UserRepository repository, AuthService authService) {

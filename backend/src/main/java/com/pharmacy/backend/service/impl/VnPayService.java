@@ -37,7 +37,7 @@ public class VnPayService {
     private final EmailService emailService;
     private final UserRepository userRepository;
 
-    @Value("${frontend.url-payment-return}")
+    @Value("${frontend.vnp-return}")
     String frontendUrl;
 
     @Transactional
