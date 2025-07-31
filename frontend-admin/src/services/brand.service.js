@@ -14,7 +14,7 @@ class BrandService {
 
     async getAllBrands() {
         try {
-            const response = await api.get(ENDPOINTS.BRANDS.GET_ALL);
+            const response = await api.get(ENDPOINTS.BRANDS.GET_ALL_BRANDS);
             return apiUtils.fromAxiosResponse(response);
         } catch (error) {
             throw apiUtils.fromAxiosError(error);

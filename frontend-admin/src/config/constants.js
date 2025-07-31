@@ -61,6 +61,7 @@ export const ENDPOINTS = {
         CREATE: "/brands",
         UPDATE: (id) => `/brands/${id}`,
         DELETE: (id) => `/brands/${id}`,
+        GET_ALL_BRANDS: "/brands/customer/public",
     },
     CONTACTS: {
         GET_ALL: "/contacts",

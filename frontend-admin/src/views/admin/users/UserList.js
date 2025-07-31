@@ -1,3 +1,4 @@
+import defaultAvatar from '../../../assets/images/avatars/default-avatar.png';
 import React, { useState, useEffect } from 'react'
 import {
   CButton,
@@ -355,9 +356,16 @@ const UserList = () => {
                           <CTableDataCell>
                             <div className="d-flex align-items-center">
                               <CAvatar
-                                src={user.profilePic || '/default-avatar.jpg'}
+                                src={user.profilePic && typeof user.profilePic === 'string' && user.profilePic.trim() !== ''
+                                  ? user.profilePic
+                                  : defaultAvatar}
                                 size="md"
                                 className="me-3"
+                                onError={(e) => {
+                                  if (e.target.src !== defaultAvatar) {
+                                    e.target.src = defaultAvatar;
+                                  }
+                                }}
                               />
                               <div>
                                 <strong>{user.username}</strong>

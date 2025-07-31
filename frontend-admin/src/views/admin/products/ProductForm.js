@@ -35,6 +35,7 @@ const ProductForm = () => {
   const [initialLoading, setInitialLoading] = useState(true)
   const [brands, setBrands] = useState([])
   const [categories, setCategories] = useState([])
+  const [flatCategories, setFlatCategories] = useState([])
   const [thumbnailFile, setThumbnailFile] = useState(null)
   const [thumbnailPreview, setThumbnailPreview] = useState('')
   const [imageFiles, setImageFiles] = useState([])
@@ -91,9 +92,22 @@ const ProductForm = () => {
             ? categoriesResponse.data 
             : categoriesResponse.data.content || categoriesResponse.data.data || []
           setCategories(categoriesData)
+          
+          const flatten = (cats, level = 0) => {
+            let result = [];
+            cats.forEach(cat => {
+              result.push({ ...cat, level, displayName: '　'.repeat(level) + cat.name });
+              if (cat.children && cat.children.length > 0) {
+                result = result.concat(flatten(cat.children, level + 1));
+              }
+            });
+            return result;
+          };
+          setFlatCategories(flatten(categoriesData));
         }
       } catch (error) {
         console.error('Error fetching data:', error)
+        setFlatCategories([]);
       } finally {
         setInitialLoading(false)
       }
@@ -168,28 +182,42 @@ const ProductForm = () => {
   }, [id, isEdit, brands, categories, navigate])
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
-    
-    if (name === 'categoryIds') {
-      const selectedOptions = Array.from(e.target.selectedOptions, option => option.value)
-      setFormData(prev => ({
-        ...prev,
-        categoryIds: selectedOptions
-      }))
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value
-      }))
+    const { name, value, type, checked } = e.target;
+    if (name === 'categorySelect') {
+      // Thêm category vào mảng nếu chưa có
+      const id = value;
+      if (id && !formData.categoryIds.includes(id)) {
+        setFormData(prev => ({
+          ...prev,
+          categoryIds: [...prev.categoryIds, id]
+        }));
+        setFormErrors(prev => ({ ...prev, categoryIds: '' }));
+      }
+      return;
     }
-
+    if (name === 'categoryIds') {
+      // Không dùng nữa, chỉ để tránh lỗi
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,
         [name]: ''
-      }))
+      }));
     }
-  }
+  };
+
+  // Xóa category khỏi mảng đã chọn
+  const removeCategoryTag = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      categoryIds: prev.categoryIds.filter(cid => cid !== id)
+    }));
+  };
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0]
@@ -674,31 +702,34 @@ const ProductForm = () => {
                     )}
                   </div>
 
-                  {/* Categories */}
                   <div className="mb-3">
-                    <CFormLabel htmlFor="categoryIds">Danh mục *</CFormLabel>
-                    <CFormSelect
-                      id="categoryIds"
-                      name="categoryIds"
-                      multiple
-                      value={formData.categoryIds}
+                    <CFormLabel htmlFor="categorySelect">Danh mục *</CFormLabel>
+                    <select
+                      id="categorySelect"
+                      name="categorySelect"
+                      className="form-select"
                       onChange={handleInputChange}
-                      invalid={!!formErrors.categoryIds}
-                      size={5}
+                      value=""
                     >
-                      {categories.map(category => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
+                      <option value="">Chọn danh mục để thêm</option>
+                      {flatCategories.map(cat => (
+                        <option key={cat.id} value={cat.id} disabled={formData.categoryIds.includes(cat.id)}>
+                          {cat.displayName}
                         </option>
                       ))}
-                    </CFormSelect>
-                    {formErrors.categoryIds && (
-                      <CFormFeedback invalid>
-                        {formErrors.categoryIds}
-                      </CFormFeedback>
-                    )}
-                    <div className="form-text">
-                      Giữ Ctrl để chọn nhiều danh mục
+                    </select>
+                    {formErrors.categoryIds && <div className="text-danger mt-1">{formErrors.categoryIds}</div>}
+                    <div className="mt-2 d-flex flex-wrap gap-2">
+                      {formData.categoryIds.map(cid => {
+                        const cat = flatCategories.find(c => String(c.id) === String(cid));
+                        if (!cat) return null;
+                        return (
+                          <span key={cid} className="badge bg-primary d-flex align-items-center" style={{ fontSize: '1em', padding: '0.5em 1em', borderRadius: '16px' }}>
+                            {cat.name}
+                            <button type="button" className="btn-close ms-2" aria-label="Xóa" style={{ fontSize: '0.8em', filter: 'invert(1)' }} onClick={() => removeCategoryTag(cid)}></button>
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
 

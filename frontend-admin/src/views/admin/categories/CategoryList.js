@@ -144,7 +144,8 @@ const CategoryList = () => {
   })
   const [deleteModal, setDeleteModal] = useState({ visible: false, category: null })
   const [expandedCategories, setExpandedCategories] = useState(new Set())
-  
+  const [formLoading, setFormLoading] = useState(false)
+
   const { execute: callApi } = useApiCall()
 
   const [formData, setFormData] = useState({
@@ -349,57 +350,45 @@ const CategoryList = () => {
       return
     }
 
+    setFormLoading(true)
     try {
       const submitFormData = new FormData()
-      
       const categoryRequest = {
         name: formData.name.trim(),
         type: formData.type,
         parentId: formData.parentId || null,
       }
-      
       const categoryBlob = new Blob([JSON.stringify(categoryRequest)], { type: 'application/json' })
       submitFormData.append('category', categoryBlob)
-      
       if (thumbnailFile) {
         submitFormData.append('thumbnail', thumbnailFile)
       } else if (!formModal.isEdit) {
         alert('Vui lòng chọn hình ảnh cho danh mục')
+        setFormLoading(false)
         return
       }
-
       const config = {}
-
+      const apiOptions = {
+        successMessage: formModal.isEdit ? 'Cập nhật danh mục thành công!' : 'Tạo danh mục thành công!',
+        showSuccessNotification: true,
+        onSuccess: () => {
+          fetchCategories()
+          setTimeout(() => {
+            setFormModal({ visible: false, category: null, isEdit: false })
+            setFormLoading(false)
+          }, 1500)
+        },
+        onError: () => {
+          setFormLoading(false)
+        }
+      }
       if (formModal.isEdit) {
-        await callApi(() => 
-          categoryService.updateCategory(formModal.category.id, submitFormData, config),
-          {
-            successMessage: 'Cập nhật danh mục thành công!',
-            showSuccessNotification: true,
-            onSuccess: () => {
-              fetchCategories()
-              setTimeout(() => {
-                setFormModal({ visible: false, category: null, isEdit: false })
-              }, 1500)
-            }
-          }
-        )
+        await callApi(() => categoryService.updateCategory(formModal.category.id, submitFormData, config), apiOptions)
       } else {
-        await callApi(() => 
-          categoryService.createCategory(submitFormData, config),
-          {
-            successMessage: 'Tạo danh mục thành công!',
-            showSuccessNotification: true,
-            onSuccess: () => {
-              fetchCategories()
-              setTimeout(() => {
-                setFormModal({ visible: false, category: null, isEdit: false })
-              }, 1500)
-            }
-          }
-        )
+        await callApi(() => categoryService.createCategory(submitFormData, config), apiOptions)
       }
     } catch (error) {
+      setFormLoading(false)
       console.error('Error saving category:', error)
     }
   }
@@ -1161,10 +1150,20 @@ const CategoryList = () => {
             <CButton 
               color="primary" 
               type="submit" 
-              disabled={!isFormValid()}
+              disabled={!isFormValid() || formLoading}
+              style={{ position: 'relative', minWidth: '110px' }}
             >
-              <CIcon icon={cilSave} className="me-1" />
-              {formModal.isEdit ? 'Cập nhật' : 'Tạo mới'}
+              {formLoading ? (
+                <>
+                  <CSpinner size="sm" color="light" className="me-2" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <CIcon icon={cilSave} className="me-1" />
+                  {formModal.isEdit ? 'Cập nhật' : 'Tạo mới'}
+                </>
+              )}
             </CButton>
           </CModalFooter>
         </CForm>
