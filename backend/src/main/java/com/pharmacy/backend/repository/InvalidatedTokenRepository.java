@@ -12,5 +12,5 @@ import java.util.List;
 public interface InvalidatedTokenRepository extends JpaRepository<InvalidatedToken, Long> {
     boolean existsById(String jti);
 
-    List<InvalidatedToken> findAllByExpirationTimeBefore(Date now);
+    List<InvalidatedToken> findTop10ByExpirationTimeBefore(Date now);
 }

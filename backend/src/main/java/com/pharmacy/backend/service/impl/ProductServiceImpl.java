@@ -7,10 +7,7 @@ import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.PageResponse;
 import com.pharmacy.backend.dto.response.ProductImageResponse;
 import com.pharmacy.backend.dto.response.ProductResponse;
-import com.pharmacy.backend.entity.Brand;
-import com.pharmacy.backend.entity.Category;
-import com.pharmacy.backend.entity.Product;
-import com.pharmacy.backend.entity.User;
+import com.pharmacy.backend.entity.*;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.BrandMapper;
 import com.pharmacy.backend.mapper.CategoryMapper;
@@ -35,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +48,7 @@ public class ProductServiceImpl implements ProductService {
     private final WishlistRepository wishlistRepository;
     private final UserRepository userRepository;
     private final CategoryMapper categoryMapper;
+    private final FileMetadataRepository fileMetadataRepository;
 
     @Transactional
     @Override
@@ -62,7 +61,22 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> productPage = productRepository.findAll(productSpecification, pageable);
         List<ProductResponse> productResponses = productPage.getContent()
                 .stream()
-                .map(productMapper::toProductResponse)
+                .map(product -> {
+                    ProductResponse response = productMapper.toProductResponse(product);
+                    response.setBrand(brandMapper.toBrandResponse(product.getBrand()));
+                    response.setCategories(
+                            product.getCategories().stream()
+                                    .map(categoryMapper::toCategoryResponse)
+                                    .collect(Collectors.toList())
+                    );
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(product.getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy hình ảnh đại diện cho sản phẩm", "THUMBNAIL_NOT_FOUND"));
+                    response.setThumbnailUrl(
+                            fileMetadata.getUrl()
+                    );
+
+                    return response;
+                })
                 .toList();
 
         PageResponse<List<ProductResponse>> pageResponse = PageResponse.<List<ProductResponse>>builder()
@@ -114,6 +128,13 @@ public class ProductServiceImpl implements ProductService {
                     } else {
                         response.setInWishlist(false);
                     }
+
+                    response.setBrand(brandMapper.toBrandResponse(product.getBrand()));
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(product.getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy hình ảnh đại diện cho sản phẩm", "THUMBNAIL_NOT_FOUND"));
+                    response.setThumbnailUrl(
+                            fileMetadata.getUrl()
+                    );
 
                     return response;
                 })
@@ -170,9 +191,12 @@ public class ProductServiceImpl implements ProductService {
         } else {
             productResponse.setInWishlist(false);
         }
+        
+        Brand brand = brandRepository.findById(product.getBrand().getId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy thương hiệu với ID: "
+                        + product.getBrand().getId(), "BRAND_NOT_FOUND"));
 
-        List<Category> categories = categoryRepository.findAllByProductsContains(product);
-        productResponse.setCategories(categories.stream().map(categoryMapper::toCategoryResponse).collect(Collectors.toList()));
+        productResponse.setBrand(brandMapper.toBrandResponse(brand));
         productResponse.setImages(productImageService.getProductImagesByProduct(product));
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
@@ -221,6 +245,7 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    @Transactional
     @Override
     public ApiResponse<ProductResponse> updateProduct(Long id, ProductRequest request, MultipartFile thumbnail, List<MultipartFile> images) {
         Product product = productRepository.findById(id)
@@ -233,8 +258,10 @@ public class ProductServiceImpl implements ProductService {
         Brand brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                         "Không tìm thấy thương hiệu với ID: " + request.getBrandId(), "BRAND_NOT_FOUND"));
-        Product updatedProduct = productMapper.toProductUpdateFromRequest(request, product);
+        Product updatedProduct = productMapper.toProductUpdateFromRequest(request, product);;
+        List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
         updatedProduct.setBrand(brand);
+        updatedProduct.setCategories(categories);
         product = productRepository.save(updatedProduct);
 
         List<ProductImageResponse> productImages = productImageService.updateProductImages(product, images);
@@ -318,6 +345,9 @@ public class ProductServiceImpl implements ProductService {
                         response.setInWishlist(false);
                     }
 
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(product.getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy hình ảnh đại diện cho sản phẩm", "THUMBNAIL_NOT_FOUND"));
+                    response.setThumbnailUrl(fileMetadata.getUrl());
                     return response;
                 })
                 .toList();
@@ -355,6 +385,9 @@ public class ProductServiceImpl implements ProductService {
                     } else {
                         response.setInWishlist(false);
                     }
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(product.getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy hình ảnh đại diện cho sản phẩm", "THUMBNAIL_NOT_FOUND"));
+                    response.setThumbnailUrl(fileMetadata.getUrl());
 
                     return response;
                 })
@@ -362,7 +395,7 @@ public class ProductServiceImpl implements ProductService {
 
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
-                "Lấy 10 sản phẩm theo danh mục thành công",
+                "Lấy 10 sản phẩm theo thương hiệu thành công",
                 productResponses
         );
     }
@@ -394,4 +427,5 @@ public class ProductServiceImpl implements ProductService {
 
         return PageRequest.of(pageIndex - 1, pageSize, sort);
     }
+
 }

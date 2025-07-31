@@ -7,6 +7,7 @@ import com.pharmacy.backend.entity.Profile;
 import com.pharmacy.backend.entity.User;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.ProfileMapper;
+import com.pharmacy.backend.repository.FileMetadataRepository;
 import com.pharmacy.backend.repository.ProfileRepository;
 import com.pharmacy.backend.repository.UserRepository;
 import com.pharmacy.backend.security.SecurityUtils;
@@ -29,6 +30,7 @@ public class ProfileServiceImpl implements ProfileService {
     ProfileRepository profileRepository;
     ProfileMapper profileMapper;
     UserRepository userRepository;
+    FileMetadataRepository fileMetadataRepository;
 
     @Override
     public ApiResponse<List<ProfileResponse>> getUserProfiles() {

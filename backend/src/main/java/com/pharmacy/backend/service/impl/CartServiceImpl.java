@@ -4,16 +4,11 @@ import com.pharmacy.backend.dto.request.CartItemRequest;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.CartItemResponse;
 import com.pharmacy.backend.dto.response.CartResponse;
-import com.pharmacy.backend.entity.Cart;
-import com.pharmacy.backend.entity.CartItem;
-import com.pharmacy.backend.entity.Product;
-import com.pharmacy.backend.entity.User;
+import com.pharmacy.backend.dto.response.ProductResponse;
+import com.pharmacy.backend.entity.*;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.ProductMapper;
-import com.pharmacy.backend.repository.CartItemRepository;
-import com.pharmacy.backend.repository.CartRepository;
-import com.pharmacy.backend.repository.ProductRepository;
-import com.pharmacy.backend.repository.UserRepository;
+import com.pharmacy.backend.repository.*;
 import com.pharmacy.backend.security.SecurityUtils;
 import com.pharmacy.backend.service.CartService;
 import com.pharmacy.backend.utils.NumberUtils;
@@ -26,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +31,7 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final FileMetadataRepository fileMetadataRepository;
 
     @Transactional
     @Override
@@ -61,16 +58,25 @@ public class CartServiceImpl implements CartService {
                 Sort.by(Sort.Direction.DESC, "createdAt"));
 
         List<CartItemResponse> itemResponses = items.stream()
-                .map(item -> CartItemResponse.builder()
-                        .id(item.getId())
-                        .product(productMapper.toProductResponse(item.getProduct()))
-                        .quantity(item.getQuantity())
-                        .priceAtAddition(item.getPriceAtAddition())
-                        .priceDifferent(Math.abs(item.getPriceAtAddition() - item.getProduct().getPriceNew()))
-                        .priceChangeType(NumberUtils.toPriceChangeType(item.getProduct().getPriceNew() - item.getPriceAtAddition()))
-                        .isOutOfStock(item.isOutOfStock())
-                        .selected(item.getSelected())
-                        .build())
+                .map(cartItem -> {
+                    CartItemResponse cartItemResponse = CartItemResponse.builder()
+                            .id(cartItem.getId())
+                            .quantity(cartItem.getQuantity())
+                            .priceAtAddition(cartItem.getPriceAtAddition())
+                            .priceDifferent(Math.abs(cartItem.getPriceAtAddition() - cartItem.getProduct().getPriceNew()))
+                            .priceChangeType(NumberUtils.toPriceChangeType(cartItem.getProduct().getPriceNew() - cartItem.getPriceAtAddition()))
+                            .isOutOfStock(cartItem.isOutOfStock())
+                            .selected(cartItem.getSelected())
+                            .build();
+                    ProductResponse productResponse = productMapper.toProductResponse(cartItem.getProduct());
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(
+                            cartItem.getProduct().getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                                    "Ảnh sản phẩm không tồn tại", "Product image not found"));
+                    productResponse.setThumbnailUrl(fileMetadata.getUrl());
+                    cartItemResponse.setProduct(productResponse);
+                    return cartItemResponse;
+                })
                 .toList();
 
         CartResponse response = new CartResponse(cart.getId(), cart.getTotalPrice(), itemResponses);
@@ -343,16 +349,25 @@ public class CartServiceImpl implements CartService {
         List<CartItem> items = cartItemRepository.findAllByCartAndSelected(cart, true);
 
         List<CartItemResponse> itemResponses = items.stream()
-                .map(item -> CartItemResponse.builder()
-                        .id(item.getId())
-                        .product(productMapper.toProductResponse(item.getProduct()))
-                        .quantity(item.getQuantity())
-                        .priceAtAddition(item.getPriceAtAddition())
-                        .priceDifferent(Math.abs(item.getPriceAtAddition() - item.getProduct().getPriceNew()))
-                        .priceChangeType(NumberUtils.toPriceChangeType(item.getProduct().getPriceNew() - item.getPriceAtAddition()))
-                        .isOutOfStock(item.isOutOfStock())
-                        .selected(item.getSelected())
-                        .build())
+                .map(cartItem -> {
+                    CartItemResponse cartItemResponse = CartItemResponse.builder()
+                            .id(cartItem.getId())
+                            .quantity(cartItem.getQuantity())
+                            .priceAtAddition(cartItem.getPriceAtAddition())
+                            .priceDifferent(Math.abs(cartItem.getPriceAtAddition() - cartItem.getProduct().getPriceNew()))
+                            .priceChangeType(NumberUtils.toPriceChangeType(cartItem.getProduct().getPriceNew() - cartItem.getPriceAtAddition()))
+                            .isOutOfStock(cartItem.isOutOfStock())
+                            .selected(cartItem.getSelected())
+                            .build();
+                    ProductResponse productResponse = productMapper.toProductResponse(cartItem.getProduct());
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(
+                                    cartItem.getProduct().getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                                    "Ảnh sản phẩm không tồn tại", "Product image not found"));
+                    productResponse.setThumbnailUrl(fileMetadata.getUrl());
+                    cartItemResponse.setProduct(productResponse);
+                    return cartItemResponse;
+                })
                 .toList();
 
         CartResponse response = new CartResponse(cart.getId(), cart.getTotalPrice(), itemResponses);

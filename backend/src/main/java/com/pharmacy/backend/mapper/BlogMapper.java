@@ -1,12 +1,10 @@
 package com.pharmacy.backend.mapper;
 
-import com.pharmacy.backend.config.AppConfig;
 import com.pharmacy.backend.dto.request.BlogRequest;
 import com.pharmacy.backend.dto.response.BlogResponse;
 import com.pharmacy.backend.dto.response.CategoryResponse;
 import com.pharmacy.backend.entity.Blog;
 import com.pharmacy.backend.entity.Category;
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -38,13 +36,4 @@ public interface BlogMapper {
     @Mapping(target = "parentId", ignore = true)
     CategoryResponse toCategoryResponse(Category category);
 
-    @AfterMapping
-    default void setThumbnail(@MappingTarget BlogResponse blogResponse, Blog blog) {
-        if (blog.getThumbnail() != null) {
-            String thumbnailUrl = AppConfig.getFileDownloadUrl(blog.getThumbnail());
-            blogResponse.setThumbnail(thumbnailUrl);
-        } else {
-            blogResponse.setThumbnail(null);
-        }
-    }
 }

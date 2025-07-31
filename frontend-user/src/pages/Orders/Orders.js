@@ -86,7 +86,6 @@ const Orders = () => {
       if (filter !== 'all') {
         switch (filter) {
           case 'pending': statusParam = 'PENDING'; break;
-          case 'confirmed': statusParam = 'CONFIRMED'; break;
           case 'shipping': statusParam = 'SHIPPING'; break;
           case 'delivered': statusParam = 'DELIVERED'; break;
           case 'cancelled': statusParam = 'CANCELLED'; break;
@@ -170,12 +169,6 @@ const Orders = () => {
             Chờ xử lý
           </button>
           <button
-            className={`filter-btn ${filter === 'confirmed' ? 'active' : ''}`}
-            onClick={() => handleFilterChange('confirmed')}
-          >
-            Đã xác nhận
-          </button>
-          <button
             className={`filter-btn ${filter === 'shipping' ? 'active' : ''}`}
             onClick={() => handleFilterChange('shipping')}
           >
@@ -197,7 +190,7 @@ const Orders = () => {
             className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
             onClick={() => handleFilterChange('completed')}
           >
-            Đã hoàn thành
+            Hoàn thành
           </button>
         </div>
 

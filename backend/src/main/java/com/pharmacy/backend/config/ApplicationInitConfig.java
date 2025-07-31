@@ -4,6 +4,7 @@ import com.pharmacy.backend.dto.request.UserRequest;
 import com.pharmacy.backend.entity.FileMetadata;
 import com.pharmacy.backend.entity.Role;
 import com.pharmacy.backend.entity.User;
+import com.pharmacy.backend.enums.FileCategoryEnum;
 import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.UserMapper;
@@ -53,11 +54,23 @@ public class ApplicationInitConfig {
 
             if(!repository.existsByEmail(email)) {
                 User user = new User();
+                user.setUsername("Admin");
                 user.setEmail(email);
                 user.setPassword(passwordEncoder.encode(password));
                 Role role = roleRepository.findByCode(RoleCodeEnum.ADMIN)
                         .orElseThrow(() -> new RuntimeException("Admin role not found"));
                 user.getRoles().add(role);
+                FileMetadata fileMetadata = FileMetadata.builder()
+                        .originalFileName("default-avatar.jpg")
+                        .storedFileName("default-avatar.jpg")
+                        .fileExtension("jpg")
+                        .fileSize(0L)
+                        .contentType("image/jpeg")
+                        .fileType(FileCategoryEnum.AVATAR.name())
+                        .build();
+
+                fileMetadata = fileMetadataRepository.save(fileMetadata);
+                user.setProfilePic(fileMetadata.getUuid().toString());
                 repository.save(user);
             }
 

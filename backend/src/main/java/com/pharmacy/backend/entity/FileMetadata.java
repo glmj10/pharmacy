@@ -27,6 +27,8 @@ public class FileMetadata {
     @Column(name = "stored_file_name", nullable = false)
     String storedFileName;
 
+    String url;
+
     @Column(name = "file_extension", nullable = false)
     String fileExtension;
 

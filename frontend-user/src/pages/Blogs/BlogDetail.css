@@ -1,3 +1,103 @@
+/* BlogDetail rich content styles for text-editor output */
+.blog-detail-content {
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  font-size: 1.08rem;
+  color: #222;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.blog-detail-content h1,
+.blog-detail-content h2,
+.blog-detail-content h3,
+.blog-detail-content h4,
+.blog-detail-content h5,
+.blog-detail-content h6 {
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.7em;
+  color: #1976d2;
+}
+
+.blog-detail-content p {
+  margin: 1em 0;
+}
+
+.blog-detail-content ul,
+.blog-detail-content ol {
+  margin: 1em 0 1em 2em;
+  padding-left: 1.5em;
+}
+.blog-detail-content ul {
+  list-style-type: disc;
+}
+.blog-detail-content ol {
+  list-style-type: decimal;
+}
+.blog-detail-content li {
+  margin-bottom: 0.5em;
+}
+
+.blog-detail-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5em 0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.blog-detail-content th,
+.blog-detail-content td {
+  border: 1px solid #e0e0e0;
+  padding: 0.7em 1em;
+  text-align: left;
+}
+.blog-detail-content th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.blog-detail-content blockquote {
+  border-left: 4px solid #1976d2;
+  background: #f5f8fd;
+  color: #333;
+  margin: 1.2em 0;
+  padding: 0.8em 1.2em;
+  font-style: italic;
+}
+
+.blog-detail-content pre,
+.blog-detail-content code {
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  background: #f8f8f8;
+  color: #1976d2;
+  border-radius: 4px;
+}
+.blog-detail-content pre {
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+.blog-detail-content code {
+  padding: 0.2em 0.4em;
+  font-size: 0.98em;
+}
+
+.blog-detail-content a {
+  color: #1976d2;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.blog-detail-content a:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
+.blog-detail-content img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 1em 0;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+}
 /* src/pages/BlogDetail/BlogDetail.css */
 
 /* Nền và padding chung cho trang */

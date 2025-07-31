@@ -33,10 +33,14 @@ const ProductCard = ({ product, formatPrice, onAddToCart, onWishlistToggle, onPr
     <div className="product-card">
       <div className="product-image" onClick={() => onProductClick(product.slug)}>
         <img
-          src={product.thumbnailUrl || '/api/placeholder/300/300'}
+          src={product.thumbnailUrl && typeof product.thumbnailUrl === 'string' && product.thumbnailUrl.trim() !== ''
+            ? product.thumbnailUrl
+            : '/default-product.jpg'}
           alt={product.title}
           onError={(e) => {
-            e.target.src = '/api/placeholder/300/300';
+            if (e.target.src !== window.location.origin + '/default-product.jpg') {
+              e.target.src = '/default-product.jpg';
+            }
           }}
         />
         <div className="product-badges">

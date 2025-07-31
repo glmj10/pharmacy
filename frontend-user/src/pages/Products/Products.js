@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams, Link } from 'react-router-dom'; 
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'; 
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import brandService from '../../services/brandService';
@@ -11,6 +11,7 @@ import useProductInteractions from '../../hooks/useProductInteractions';
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate(); 
   const [filters, setFilters] = useState({
     title: searchParams.get('title') || '',
     priceFrom: searchParams.get('priceFrom') || '',
@@ -44,7 +45,6 @@ const Products = () => {
 
   const {
     wishlistItems,
-    handleProductClick,
     handleAddToCart,
     handleWishlistToggle,
     fetchWishlist 
@@ -342,7 +342,7 @@ const Products = () => {
 
   const breadcrumbItems = useMemo(() => {
     const items = [
-      { label: 'Trang chủ', path: '/', icon: <FaHome /> },
+      { label: 'Trang chủ', path: '/', icon: 'home' },
       { label: 'Sản phẩm', path: '/products' },
     ];
 
@@ -370,15 +370,24 @@ const Products = () => {
           items.push({ label: parentCategory.name, path: `/products?category=${parentCategory.slug}` });
         }
         items.push({ label: foundCategory.name, path: `/products?category=${foundCategory.slug}` });
+      } else {
+        items.push({ label: currentCategorySlugInMemo, path: `/products?category=${currentCategorySlugInMemo}` });
       }
     }
     return items;
   }, [filters.category, categories]);
 
+  const displayBreadcrumbItems = useMemo(() => {
+    return breadcrumbItems.map(item => ({
+      ...item,
+      icon: item.icon === 'home' ? <FaHome /> : item.icon
+    }));
+  }, [breadcrumbItems]);
+
   return (
     <div className="products-page">
       <div className="container">
-        <Breadcrumb items={breadcrumbItems} />
+        <Breadcrumb items={displayBreadcrumbItems} />
 
         {categoriesToDisplayInGrid.length > 0 && (
           <div className="categories-section">
@@ -578,8 +587,8 @@ const Products = () => {
                       product={product}
                       formatPrice={formatPrice}
                       onAddToCart={handleAddToCart}
-                      onWishlistToggle={handleWishlistToggle}
-                      onProductClick={handleProductClick}
+                      onWishlistToggle={() => handleWishlistToggle(product.id)}
+                      onProductClick={() => navigate(`/products/${product.slug}`, { state: { previousBreadcrumb: breadcrumbItems } })}
                       isWishlisted={wishlistItems.includes(product.id)}
                     />
                   ))}

@@ -15,7 +15,6 @@ public interface OrderService {
     ApiResponse<PageResponse<List<OrderResponse>>> getAllOrders(int pageIndex, int pageSize, OrderFilterRequest request);
     ApiResponse<PageResponse<List<OrderResponse>>> getMyOrders(int pageIndex, int pageSize, String status);
     ApiResponse<List<OrderDetailResponse>> getOrderDetail(Long orderId);
-    ApiResponse<OrderResponse> getOrderById(Long id);
     ApiResponse<?> createOrder(OrderRequest request);
     ApiResponse<OrderResponse> changeOrderStatus(Long id, String status);
     ApiResponse<OrderResponse> changePaymentStatus(Long id, String paymentStatus);

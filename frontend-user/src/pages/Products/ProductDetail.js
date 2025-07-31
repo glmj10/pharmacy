@@ -1,18 +1,30 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'; 
 import { productService } from '../../services/productService';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAuthAction } from '../../hooks/useAuthAction';
 import { wishlistService } from '../../services/wishlistService';
-import { FaChevronRight, FaHome } from 'react-icons/fa';
+import { FaChevronRight, FaHome } from 'react-icons/fa'; // Vẫn cần import FaHome ở đây
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 import './ProductDetail.css';
 import './ProductDetailDescription.css'
+import ProductCard from '../../components/ProductCard/ProductCard';
 
 const ProductDetail = () => {
+  // Slider state for related products
+  const [relatedIndex, setRelatedIndex] = useState(0);
+  const relatedVisible = 3; // Number of cards visible at once
+
+  const handleRelatedPrev = () => {
+    setRelatedIndex(prev => Math.max(prev - 1, 0));
+  };
+  const handleRelatedNext = () => {
+    setRelatedIndex(prev => Math.min(prev + 1, Math.max(relatedProducts.length - relatedVisible, 0)));
+  };
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation(); 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +43,6 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { executeWithAuth } = useAuthAction();
 
-  // Use useMemo to safely compute productImages
   const productImages = useMemo(() => {
     return product?.images && product.images.length > 0
       ? product.images.map(img => img.imageUrl)
@@ -44,42 +55,31 @@ const ProductDetail = () => {
       const response = await productService.getProductBySlug(slug);
       let productData;
       if (response?.data) {
-        // Case: ApiResponse { data: ProductResponse }
         productData = response.data;
       } else if (response) {
-        // Case: Direct ProductResponse
         productData = response;
       } else {
         throw new Error('Invalid product response');
       }
 
-
       setProduct(productData);
-
-      // Set wishlist status from product response
       setIsInWishlist(productData.inWishlist || false);
+      
+      const brandId = productData.brandId || productData.brand?.id;
 
-      // Fetch related products by type (since categorySlug is not available in ProductResponse)
-      if (productData?.type) {
-        const relatedResponse = await productService.getAllProducts({
-          title: productData.type, // Use type as search term
-          pageSize: 4
-        });
-
-        // Handle related products response
+      if (brandId) { 
+        const relatedResponse = await productService.get15ProductByBrandId(brandId);
         let relatedData = [];
-        if (relatedResponse?.data?.content) {
-          relatedData = relatedResponse.data.content;
-        } else if (relatedResponse?.content) {
-          relatedData = relatedResponse.content;
-          console.log(relatedProducts)
-        } else if (Array.isArray(relatedResponse)) {
+        if (relatedResponse?.data && Array.isArray(relatedResponse.data)) {
+          relatedData = relatedResponse.data;
+        } else if (Array.isArray(relatedResponse)) { 
           relatedData = relatedResponse;
         }
+        console.log('Related products:', relatedData);
 
-        // Filter out current product
         setRelatedProducts(relatedData.filter(p => p.slug !== slug));
       }
+
     } catch (err) {
       setError('Không thể tải thông tin sản phẩm');
       console.error('Error fetching product:', err);
@@ -88,52 +88,48 @@ const ProductDetail = () => {
     }
   }, [slug]);
 
-
-
   useEffect(() => {
     fetchProduct();
   }, [fetchProduct]);
 
   useEffect(() => {
-    // Luôn kiểm tra lại sau khi component đã render hoàn chỉnh
     setTimeout(() => {
       if (descriptionRef.current && product?.description) {
-        // Phát hiện tràn bằng cách kiểm tra chiều cao scroll > chiều cao hiển thị
         const isOverflow = descriptionRef.current.scrollHeight > descriptionRef.current.clientHeight + 5;
 
-        // LUÔN hiển thị nút "Xem thêm" nếu mô tả dài (> 100 ký tự)
         const isLongDescription = product.description.length > 100;
 
-        // Kiểm tra có nhiều dòng
         const hasMultipleLines = product.description.split('\n').length > 1;
 
-        // Hiển thị nút "Xem thêm" nếu có tràn HOẶC mô tả dài HOẶC có nhiều dòng
-        // Ở đây chúng ta ưu tiên isLongDescription để đảm bảo luôn hiển thị khi có nhiều nội dung
         const shouldShowToggle = isLongDescription || isOverflow || hasMultipleLines;
 
         setShowToggleDescription(shouldShowToggle);
-        setNoFade(!isOverflow); // Chỉ ẩn hiệu ứng mờ khi không bị tràn
+        setNoFade(!isOverflow); 
       }
-    }, 100); // Đợi 100ms để DOM render xong
+    }, 100); 
   }, [product?.description, showFullDescription]);
 
-  const handleAddToCart = executeWithAuth(async () => {
+  const handleAddToCart = executeWithAuth(async (id = product?.id) => {
     try {
-      await addToCart(product.id, quantity);
+      await addToCart(id, quantity);
       setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);
     }
   });
 
-  const handleWishlistToggle = executeWithAuth(async () => {
+  const handleWishlistToggle = executeWithAuth(async (id = product?.id) => {
     try {
-      if (isInWishlist) {
-        await wishlistService.removeFromWishlist(product.id);
-        setIsInWishlist(false);
+      if (id === product?.id) {
+        if (isInWishlist) {
+          await wishlistService.removeFromWishlist(id);
+          setIsInWishlist(false);
+        } else {
+          await wishlistService.addToWishlist(id);
+          setIsInWishlist(true);
+        }
       } else {
-        await wishlistService.addToWishlist(product.id);
-        setIsInWishlist(true);
+        await wishlistService.addToWishlist(id);
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
@@ -154,35 +150,36 @@ const ProductDetail = () => {
     }).format(price);
   };
 
-  const renderBreadcrumb = () => {
-    return (
-      <nav className="breadcrumb">
-        <Link to="/" className="breadcrumb-item">
-          <FaHome />
-          Trang chủ
-        </Link>
-        <FaChevronRight className="breadcrumb-separator" />
-        <Link to="/products" className="breadcrumb-item">
-          Sản phẩm
-        </Link>
-        <FaChevronRight className="breadcrumb-separator" />
-        <span className="breadcrumb-item active">{product?.title || 'Chi tiết sản phẩm'}</span>
-      </nav>
-    );
-  };
-  
-  const breadcrumbItems = [
-    { label: 'Trang chủ', path: '/', icon: <FaHome /> },
-    { label: 'Sản phẩm', path: '/products' },
-    { label: product?.title || 'Chi tiết sản phẩm' }
-  ];
+  const breadcrumbItems = useMemo(() => {
+    if (location.state?.previousBreadcrumb && Array.isArray(location.state.previousBreadcrumb)) {
+      const prevItems = location.state.previousBreadcrumb.map(item => {
+        if (item.icon === 'home') {
+          return { ...item, icon: <FaHome /> };
+        }
+        return item;
+      });
+
+      const productTitle = product?.title || 'Chi tiết sản phẩm';
+      if (prevItems.length === 0 || prevItems[prevItems.length - 1].label !== productTitle) {
+        prevItems.push({ label: productTitle });
+      }
+      console.log('DEBUG: breadcrumbItems after transformation in ProductDetail:', prevItems);
+      return prevItems;
+    }
+
+    return [
+      { label: 'Trang chủ', path: '/', icon: <FaHome /> }, 
+      { label: 'Sản phẩm', path: '/products' },
+      { label: product?.title || 'Chi tiết sản phẩm' }
+    ];
+  }, [product?.title, location.state]); 
 
   // Auto slideshow effect
   useEffect(() => {
     if (autoSlide && product && productImages.length > 1) {
       autoSlideRef.current = setInterval(() => {
         setSelectedImage(prev => prev === productImages.length - 1 ? 0 : prev + 1);
-      }, 3000); // Change image every 3 seconds
+      }, 3000); 
     } else {
       if (autoSlideRef.current) {
         clearInterval(autoSlideRef.current);
@@ -196,13 +193,11 @@ const ProductDetail = () => {
     };
   }, [autoSlide, product, productImages.length]);
 
-  // Stop auto slide on manual interaction
   const handleManualImageChange = (index) => {
     setSelectedImage(index);
-    setAutoSlide(false); // Stop auto slide when user manually changes image
+    setAutoSlide(false); 
   };
 
-  // Keyboard navigation for images
   useEffect(() => {
     if (!product || productImages.length <= 1) return;
     
@@ -221,7 +216,6 @@ const ProductDetail = () => {
       }
     };
 
-    // Only add listener when component is focused or images are in view
     window.addEventListener('keydown', handleKeyDown);
     
     return () => {
@@ -438,7 +432,6 @@ const ProductDetail = () => {
 
           </div>
 
-          {/* Product Description - Spans full width below images and info */}
         </div>
         
         {/* Product Description - Separate section */}
@@ -465,30 +458,50 @@ const ProductDetail = () => {
 
 
         {relatedProducts.length > 0 && (
-          <div className="related-products">
-            <h2>Sản phẩm liên quan</h2>
-            <div className="related-products-grid">
-              {relatedProducts.map(relatedProduct => (
-                <div key={relatedProduct.id} className="related-product-card">
-                  <div className="related-product-image" onClick={() => navigate(`/products/${relatedProduct.slug}`)}>
-                    <img
-                      src={relatedProduct.thumbnailUrl || '/api/placeholder/200/200'}
-                      alt={relatedProduct.title}
-                      onError={(e) => {
-                        e.target.src = '/api/placeholder/200/200';
-                      }}
-                    />
-                  </div>
-                  <div className="related-product-info">
-                    <h4 onClick={() => navigate(`/products/${relatedProduct.slug}`)}>
-                      {relatedProduct.title}
-                    </h4>
-                    <p className="related-product-price">
-                      {formatPrice(relatedProduct.priceNew || relatedProduct.priceOld)}
-                    </p>
-                  </div>
+          <div className="related-products-slider">
+            <h2 style={{ marginBottom: 16 }}>Sản phẩm có cùng thương hiệu</h2>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <button
+                className="slider-arrow left"
+                onClick={handleRelatedPrev}
+                disabled={relatedIndex === 0}
+                style={{ position: 'absolute', left: 0, zIndex: 2, background: 'none', border: 'none', fontSize: 28, cursor: 'pointer', color: '#1976d2', padding: 8 }}
+                aria-label="Previous related products"
+              >
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              <div className="related-products-track" style={{ overflow: 'hidden', width: '100%' }}>
+                <div
+                  className="related-products-grid"
+                  style={{
+                    display: 'flex',
+                    gap: 16,
+                    transition: 'transform 0.4s cubic-bezier(.4,0,.2,1)',
+                    transform: `translateX(-${relatedIndex * (100 / relatedVisible)}%)`
+                  }}
+                >
+                  {relatedProducts.slice(relatedIndex, relatedIndex + relatedVisible).map(relatedProduct => (
+                    <div key={relatedProduct.id} style={{ minWidth: 220, maxWidth: 220, flex: '0 0 220px' }}>
+                      <ProductCard
+                        product={relatedProduct}
+                        formatPrice={formatPrice}
+                        onProductClick={() => navigate(`/products/${relatedProduct.slug}`)}
+                        onWishlistToggle={() => handleWishlistToggle(relatedProduct.id)}
+                        onAddToCart={() => handleAddToCart(relatedProduct.id)}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <button
+                className="slider-arrow right"
+                onClick={handleRelatedNext}
+                disabled={relatedIndex >= Math.max(relatedProducts.length - relatedVisible, 0)}
+                style={{ position: 'absolute', right: 0, zIndex: 2, background: 'none', border: 'none', fontSize: 28, cursor: 'pointer', color: '#1976d2', padding: 8 }}
+                aria-label="Next related products"
+              >
+                <i className="fas fa-chevron-right"></i>
+              </button>
             </div>
           </div>
         )}

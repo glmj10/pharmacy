@@ -1,20 +1,18 @@
-// src/pages/Blog/BlogDetail.js
-import React, { useState, useEffect, useCallback, useMemo } from 'react'; // <-- Thêm useMemo
+import React, { useState, useEffect, useCallback, useMemo } from 'react'; 
 import { useParams, Link } from 'react-router-dom';
 import { blogService } from '../../services/blogService';
-import { categoryService } from '../../services/categoryService'; // <-- Import categoryService để lấy danh mục
-import { FaCalendarAlt, FaTag, FaHome } from 'react-icons/fa'; // <-- Thêm FaHome
+import { categoryService } from '../../services/categoryService'; 
+import { FaCalendarAlt, FaTag, FaHome } from 'react-icons/fa'; 
 import './BlogDetail.css';
-import Breadcrumb from '../../components/Breadcrumb/Breadcrumb'; // <-- Import Breadcrumb component
+import Breadcrumb from '../../components/Breadcrumb/Breadcrumb'; 
 
 const BlogDetail = () => {
   const { slug } = useParams();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [categories, setCategories] = useState([]); // <-- State để lưu danh mục
+  const [categories, setCategories] = useState([]); 
 
-  // Hàm để gọi API lấy chi tiết bài viết theo slug
   const fetchBlog = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -41,12 +39,10 @@ const BlogDetail = () => {
     }
   }, [slug]);
 
-  // Effect để fetch chi tiết blog khi slug thay đổi
   useEffect(() => {
     fetchBlog();
   }, [fetchBlog]);
 
-  // <-- MỚI: Effect để fetch danh mục (cần cho Breadcrumb)
   useEffect(() => {
     const getCategories = async () => {
       try {
@@ -64,9 +60,8 @@ const BlogDetail = () => {
       }
     };
     getCategories();
-  }, []); // Chỉ chạy một lần khi component mount
+  }, []); 
 
-  // Hàm định dạng ngày tháng
   const formatDate = (isoString) => {
     if (!isoString) return 'N/A';
     const date = new Date(isoString);
@@ -79,42 +74,37 @@ const BlogDetail = () => {
     });
   };
 
-  // <-- MỚI: Logic tính toán breadcrumbItems
   const breadcrumbItems = useMemo(() => {
     const items = [
       { label: 'Trang chủ', path: '/', icon: <FaHome /> },
       { label: 'Blog', path: '/blog' },
     ];
 
-    // Thêm danh mục nếu có và đã load blog
     if (blog && blog.category?.slug) {
       const categoryName = categories.find(cat => cat.slug === blog.category.slug)?.name || blog.category.name;
       items.push({ label: categoryName, path: `/blog?category=${blog.category.slug}` });
     }
 
-    // Thêm tiêu đề bài viết hiện tại
     if (blog) {
-      items.push({ label: blog.title }); // Mục cuối cùng không có path
+      items.push({ label: blog.title }); 
     }
 
     return items;
-  }, [blog, categories]); // Dependencies: blog và categories thay đổi
+  }, [blog, categories]); 
 
-  // Hiển thị trạng thái tải
   if (loading) {
     return (
       <div className="blog-detail-page container">
-        <Breadcrumb items={breadcrumbItems} /> {/* Vẫn hiển thị breadcrumb khi đang tải */}
+        <Breadcrumb items={breadcrumbItems} />
         <div className="loading-indicator">Đang tải chi tiết bài viết...</div>
       </div>
     );
   }
 
-  // Hiển thị trạng thái lỗi
   if (error) {
     return (
       <div className="blog-detail-page container">
-        <Breadcrumb items={breadcrumbItems} /> {/* Vẫn hiển thị breadcrumb khi có lỗi */}
+        <Breadcrumb items={breadcrumbItems} /> 
         <div className="error-message">{error}</div>
         <div style={{textAlign: 'center', marginTop: 'var(--spacing-md)'}}>
           <Link to="/blog" className="back-to-blog-list">Quay lại danh sách blog</Link>
@@ -123,11 +113,10 @@ const BlogDetail = () => {
     );
   }
 
-  // Hiển thị khi không tìm thấy blog (sau khi tải xong và không có lỗi nhưng blog là null)
   if (!blog) {
     return (
       <div className="blog-detail-page container">
-        <Breadcrumb items={breadcrumbItems} /> {/* Vẫn hiển thị breadcrumb khi không tìm thấy */}
+        <Breadcrumb items={breadcrumbItems} /> 
         <div className="no-blog-found">Bài viết không tồn tại hoặc đã bị xóa.</div>
         <div style={{textAlign: 'center', marginTop: 'var(--spacing-md)'}}>
           <Link to="/blog" className="back-to-blog-list">Quay lại danh sách blog</Link>
@@ -136,11 +125,9 @@ const BlogDetail = () => {
     );
   }
 
-  // Giao diện chính của trang chi tiết blog
   return (
     <div className="blog-detail-page">
       <div className="container">
-        {/* <-- Đặt Breadcrumb ở đây --> */}
         <Breadcrumb items={breadcrumbItems} />
 
         <div className="blog-detail-header">

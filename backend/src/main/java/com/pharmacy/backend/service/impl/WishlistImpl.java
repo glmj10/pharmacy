@@ -2,11 +2,13 @@ package com.pharmacy.backend.service.impl;
 
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.ProductResponse;
+import com.pharmacy.backend.entity.FileMetadata;
 import com.pharmacy.backend.entity.Product;
 import com.pharmacy.backend.entity.User;
 import com.pharmacy.backend.entity.Wishlist;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.ProductMapper;
+import com.pharmacy.backend.repository.FileMetadataRepository;
 import com.pharmacy.backend.repository.ProductRepository;
 import com.pharmacy.backend.repository.UserRepository;
 import com.pharmacy.backend.repository.WishlistRepository;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class WishlistImpl implements WishlistService {
     private final ProductMapper productMapper;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final FileMetadataRepository fileMetadataRepository;
 
     @Transactional
     @Override
@@ -40,6 +44,10 @@ public class WishlistImpl implements WishlistService {
                     ProductResponse response = productMapper.toProductResponse(product);
                     Boolean isInWishList = wishlistRepository.existsByProductAndUser(product, user);
                     response.setInWishlist(isInWishList);
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(product.getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                                    "Ảnh đại diện không tồn tại", product.getThumbnail()));
+                    response.setThumbnailUrl(fileMetadata.getUrl());
                     return response;
                 }
         ).toList();

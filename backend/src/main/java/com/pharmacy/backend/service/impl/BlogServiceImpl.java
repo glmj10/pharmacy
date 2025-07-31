@@ -6,11 +6,13 @@ import com.pharmacy.backend.dto.response.BlogResponse;
 import com.pharmacy.backend.dto.response.PageResponse;
 import com.pharmacy.backend.entity.Blog;
 import com.pharmacy.backend.entity.Category;
+import com.pharmacy.backend.entity.FileMetadata;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.mapper.BlogMapper;
 import com.pharmacy.backend.mapper.CategoryMapper;
 import com.pharmacy.backend.repository.BlogRepository;
 import com.pharmacy.backend.repository.CategoryRepository;
+import com.pharmacy.backend.repository.FileMetadataRepository;
 import com.pharmacy.backend.service.BlogService;
 import com.pharmacy.backend.service.FileMetadataService;
 import com.pharmacy.backend.specification.BlogSpecification;
@@ -28,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +40,7 @@ public class BlogServiceImpl implements BlogService {
     private final FileMetadataService fileMetadataService;
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+    private final FileMetadataRepository fileMetadataRepository;
 
     @Override
     public ApiResponse<PageResponse<List<BlogResponse>>> getAllBlogs(int pageIndex, int pageSize, String title, String category) {
@@ -58,7 +62,15 @@ public class BlogServiceImpl implements BlogService {
         blogPage = blogRepository.findAll(blogSpecification, pageable);
 
         List<BlogResponse> blogResponses = blogPage.getContent().stream().map(
-                blogMapper::toBlogResponse
+                blog -> {
+                    BlogResponse response = blogMapper.toBlogResponse(blog);
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(blog.getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                                    "Không tìm thấy hình ảnh với ID: " + blog.getThumbnail(), "File not found"));
+
+                    response.setThumbnail(fileMetadata.getUrl());
+                    return response;
+                }
         ).toList();
         PageResponse<List<BlogResponse>> pageResponse = PageResponse.<List<BlogResponse>>builder()
                 .content(blogResponses)
@@ -84,6 +96,10 @@ public class BlogServiceImpl implements BlogService {
                         "Không tìm thấy bài viết với slug: " + slug, "Blog not found"));
         BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
         blogResponse.setCategory(categoryMapper.toCategoryResponse(blog.getCategory()));
+        FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(blog.getThumbnail()))
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy hình ảnh với ID: " + blog.getThumbnail(), "File not found"));
+        blogResponse.setThumbnail(fileMetadata.getUrl());
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
                 "Lấy bài viết thành công",
@@ -99,6 +115,10 @@ public class BlogServiceImpl implements BlogService {
                         "Không tìm thấy bài viết với ID: " + id, "Blog not found"));
         BlogResponse blogResponse = blogMapper.toBlogResponse(blog);
         blogResponse.setCategory(categoryMapper.toCategoryResponse(blog.getCategory()));
+        FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(blog.getThumbnail()))
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy hình ảnh với ID: " + blog.getThumbnail(), "File not found"));
+        blogResponse.setThumbnail(fileMetadata.getUrl());
         return ApiResponse.buildResponse(
                 HttpStatus.OK.value(),
                 "Lấy bài viết thành công",

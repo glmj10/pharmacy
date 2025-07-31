@@ -9,7 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "blogs")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)

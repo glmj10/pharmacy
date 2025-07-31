@@ -6,11 +6,13 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.pharmacy.backend.entity.InvalidatedToken;
+import com.pharmacy.backend.entity.PasswordResetToken;
 import com.pharmacy.backend.entity.Role;
 import com.pharmacy.backend.entity.User;
 import com.pharmacy.backend.enums.RoleCodeEnum;
 import com.pharmacy.backend.exception.AppException;
 import com.pharmacy.backend.repository.InvalidatedTokenRepository;
+import com.pharmacy.backend.repository.PasswordResetTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,7 @@ public class JwtUtils{
 
     static final String ISUER = "Pharmacy";
     final InvalidatedTokenRepository invalidatedTokenRepository;
+    final PasswordResetTokenRepository passwordResetTokenRepository;
 
     public String generateToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
@@ -107,12 +110,23 @@ public class JwtUtils{
     @Scheduled(cron = "0 0 * * * *")
     public void cleanUpExpiredTokens() {
         Date now = new Date();
-        List<InvalidatedToken> expiredTokens = invalidatedTokenRepository.findAllByExpirationTimeBefore(now);
+        List<InvalidatedToken> expiredTokens = invalidatedTokenRepository.findTop10ByExpirationTimeBefore(now);
         if (!expiredTokens.isEmpty()) {
             invalidatedTokenRepository.deleteAll(expiredTokens);
         }
         log.info("Cleaned up {} expired tokens", expiredTokens.size());
     }
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void cleanUpPasswordResetTokens() {
+        LocalDateTime now = LocalDateTime.now();
+        List<PasswordResetToken> expiredTokens = passwordResetTokenRepository.findTop10ByExpiresAtBefore(now);
+        if (!expiredTokens.isEmpty()) {
+            passwordResetTokenRepository.deleteAll(expiredTokens);
+        }
+        log.info("Cleaned up {} expired password reset tokens", expiredTokens.size());
+    }
+
 
     public LocalDateTime getExpirationTime(String token, boolean isRefreshToken) throws ParseException {
         SignedJWT signedJWT = SignedJWT.parse(token);

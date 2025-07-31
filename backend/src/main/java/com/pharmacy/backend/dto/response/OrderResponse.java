@@ -14,7 +14,6 @@ public class OrderResponse {
     Long id;
     Long totalPrice;
     String note;
-//    ProfileResponse profile;
     String customerName;
     String customerPhoneNumber;
     String customerAddress;

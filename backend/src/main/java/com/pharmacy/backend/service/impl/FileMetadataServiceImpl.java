@@ -1,5 +1,7 @@
 package com.pharmacy.backend.service.impl;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.pharmacy.backend.config.FileStorageProperties;
 import com.pharmacy.backend.dto.response.ApiResponse;
 import com.pharmacy.backend.dto.response.FileMetadataResponse;
@@ -18,25 +20,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class FileMetadataServiceImpl implements FileMetadataService {
+
     private final FileMetadataRepository fileMetadataRepository;
-    private final FileStorageProperties properties;
     private final UserRepository userRepository;
+    private final Cloudinary cloudinary;
 
     @Transactional
     @Override
-    public ApiResponse<FileMetadataResponse> storeFile(MultipartFile file, String category){
+    public ApiResponse<FileMetadataResponse> storeFile(MultipartFile file, String category) {
         FileCategoryEnum fileCategoryEnum = FileCategoryEnum.valueOf(category.toUpperCase());
         String originalFileName = file.getOriginalFilename();
         String extension = Optional.ofNullable(originalFileName)
@@ -44,118 +44,84 @@ public class FileMetadataServiceImpl implements FileMetadataService {
                 .map(f -> f.substring(originalFileName.lastIndexOf('.') + 1))
                 .orElse("Unknown");
 
-        String storedName = UUID.randomUUID() + "_" + originalFileName;
-        Path baseDir = Paths.get(properties.getUploadDir()).toAbsolutePath().normalize();
-        Path targetDir = baseDir.resolve(fileCategoryEnum.getSubDirectory());
+        String publicId = UUID.randomUUID().toString();
 
         try {
-            Files.createDirectories(targetDir);
-            Path targetFile = targetDir.resolve(storedName);
-            Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception e) {
-            deleteFile(storedName);
-            log.error(e.getMessage());
-            throw new AppException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Không thể lưu tệp tin",
-                    "Failed to store file: " + e.getMessage(
-            ));
+            Map<String, Object> options = ObjectUtils.asMap(
+                    "folder", fileCategoryEnum.getSubDirectory(),
+                    "public_id", publicId,
+                    "overwrite", true,
+                    "resource_type", "auto"
+            );
+
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
+            String url = (String) uploadResult.get("secure_url");
+
+            FileMetadata fileMetadata = FileMetadata.builder()
+                    .originalFileName(originalFileName)
+                    .storedFileName(publicId)
+                    .fileExtension(extension)
+                    .fileSize(file.getSize())
+                    .contentType(file.getContentType())
+                    .fileType(fileCategoryEnum.getSubDirectory())
+                    .url(url)
+                    .build();
+
+            fileMetadata = fileMetadataRepository.save(fileMetadata);
+
+            FileMetadataResponse response = FileMetadataResponse.builder()
+                    .id(fileMetadata.getUuid())
+                    .storedFileName(publicId)
+                    .fileUrl(url)
+                    .build();
+
+            return ApiResponse.<FileMetadataResponse>builder()
+                    .status(HttpStatus.CREATED.value())
+                    .message("Upload file thành công")
+                    .data(response)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+        } catch (IOException e) {
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể upload file", e.getMessage());
         }
-
-        FileMetadata fileMetadata = FileMetadata.builder()
-                .originalFileName(originalFileName)
-                .storedFileName(storedName)
-                .fileExtension(extension)
-                .fileSize(file.getSize())
-                .contentType(file.getContentType())
-                .fileType(fileCategoryEnum.getSubDirectory())
-                .build();
-        fileMetadata = fileMetadataRepository.save(fileMetadata);
-
-        FileMetadataResponse response = FileMetadataResponse.builder()
-                .id(fileMetadata.getUuid())
-                .storedFileName(fileMetadata.getStoredFileName())
-                .build();
-
-        return ApiResponse.<FileMetadataResponse>builder()
-                .status(HttpStatus.CREATED.value())
-                .message("Upload file thành công")
-                .data(response)
-                .timestamp(LocalDateTime.now())
-                .build();
     }
 
     @Override
     public FileSystemResource downloadFile(String uuidStr) {
-        FileMetadata metadata = fileMetadataRepository.findByUuid(UUID.fromString(uuidStr))
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy tệp tin", "File not found"));
+        throw new UnsupportedOperationException("Download vật lý không hỗ trợ trong Cloudinary. Sử dụng URL.");
+    }
 
-        Path filePath = Paths.get(properties.getUploadDir() + "/" + metadata.getFileType())
-                .resolve(metadata.getStoredFileName())
-                .normalize();
-
-        if(!Files.exists(filePath)) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Tệp tin không tồn tại", "File does not exist");
-        }
-
-        FileSystemResource resource = new FileSystemResource(filePath);
-        if (!resource.exists() || !resource.isReadable()) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể đọc tệp tin", "File cannot be read");
-        }
-
-        return resource;
+    @Override
+    public FileSystemResource loadFile(String uuidStr) {
+        throw new UnsupportedOperationException("Không hỗ trợ đọc file vật lý từ Cloudinary.");
     }
 
     @Transactional
     @Override
     public void deleteFile(String uuidStr) {
-        if (uuidStr == null || uuidStr.isEmpty()) {
-            return;
-        }
+        if (uuidStr == null || uuidStr.isEmpty()) return;
+
         FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(uuidStr))
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy tệp tin", "File not found"));
 
-        String storedFileName = fileMetadata.getStoredFileName();
-        if(fileMetadata.getOriginalFileName().equals("default-avatar.jpg")) {
-            return;
-        }
+        String publicIdWithFolder = fileMetadata.getFileType() + "/" + fileMetadata.getStoredFileName();
 
-        Path filePath = Paths.get(properties.getUploadDir())
-                .resolve(fileMetadata.getFileType())
-                .resolve(storedFileName)
-                .normalize();
         try {
-            Files.deleteIfExists(filePath);
+            Map<String, Object> result = cloudinary.uploader().destroy(publicIdWithFolder, ObjectUtils.asMap(
+                    "resource_type", "image"
+            ));
+
+            String destroyResult = (String) result.get("result");
+
+            if (!"ok".equals(destroyResult) && !"not found".equals(destroyResult)) {
+                throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Xóa thất bại", "Cloudinary trả về: " + destroyResult);
+            }
+
             fileMetadataRepository.delete(fileMetadata);
-            ApiResponse.<Void>builder()
-                    .status(HttpStatus.OK.value())
-                    .message("Xóa tệp tin thành công")
-                    .timestamp(LocalDateTime.now())
-                    .build();
         } catch (IOException e) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xóa tệp tin", "Failed to delete file");
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xóa file", e.getMessage());
         }
-    }
-
-    @Override
-    public FileSystemResource loadFile(String uuidStr) {
-        FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(uuidStr))
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy tệp tin", "File not found"));
-
-        Path filePath = Paths.get(properties.getUploadDir() + "/" + fileMetadata.getFileType())
-                .resolve(fileMetadata.getStoredFileName())
-                .normalize();
-
-        if (!Files.exists(filePath)) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Tệp tin không tồn tại", "File does not exist");
-        }
-
-        FileSystemResource resource = new FileSystemResource(filePath);
-
-        if (!resource.exists() || !resource.isReadable()) {
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể đọc tệp tin", "File cannot be read");
-        }
-
-        return resource;
     }
 }
+

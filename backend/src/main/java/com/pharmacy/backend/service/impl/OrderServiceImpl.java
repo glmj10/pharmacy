@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
     final ProductMapper productMapper;
     final EmailService emailService;
     final VnPayService vnPayService;
+    final FileMetadataRepository fileMetadataRepository;
 
     @Transactional
     @Override
@@ -158,7 +160,12 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetailResponse> orderDetailResponses = orderDetails.stream()
                 .map(orderDetail -> {
                     OrderDetailResponse response = orderMapper.toOrderDetailResponse(orderDetail);
-                    response.setProduct(productMapper.toProductResponse(orderDetail.getProduct()));
+                    ProductResponse productResponse = productMapper.toProductResponse(orderDetail.getProduct());
+                    FileMetadata fileMetadata = fileMetadataRepository.findByUuid(
+                            UUID.fromString(orderDetail.getProduct().getThumbnail()))
+                            .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy hình ảnh sản phẩm với ID: " + orderDetail.getProduct().getThumbnail(), "File not found"));
+                    productResponse.setThumbnailUrl(fileMetadata.getUrl());
+                    response.setProduct(productResponse);
                     return response;
                 })
                 .toList();
@@ -167,19 +174,6 @@ public class OrderServiceImpl implements OrderService {
                 HttpStatus.OK.value(),
                 "Lấy chi tiết đơn hàng thành công",
                 orderDetailResponses
-        );
-    }
-
-    @Override
-    public ApiResponse<OrderResponse> getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng với ID: " + id, "Order not found"));
-
-        OrderResponse orderResponse = orderMapper.toOrderResponse(order);
-        return ApiResponse.buildResponse(
-                HttpStatus.OK.value(),
-                "Lấy thông tin đơn hàng thành công",
-                orderResponse
         );
     }
 
