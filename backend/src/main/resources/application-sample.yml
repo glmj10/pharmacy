@@ -49,8 +49,10 @@ file:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:3600}
-  reset-password-expiration: ${JWT_RESET_PASSWORD_EXPIRATION:600}
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400}
+  reset-password:
+    expiration: ${JWT_RESET_PASSWORD_EXPIRATION:600}
+  refresh:
+    expiration: ${JWT_REFRESH_EXPIRATION:86400}
 
 default-admin:
   email: ${DEFAULT_ADMIN_EMAIL}
@@ -59,11 +61,11 @@ default-admin:
 vnpay:
   tmn-code: ${VNPAY_TMN_CODE}
   hash-secret: ${VNPAY_HASH_SECRET}
-  url: ${VNPAY_URL}
+  vnp-url: ${VNPAY_URL}
   return-url: ${VNPAY_RETURN_URL}
 
 frontend:
-  payment-return-url: ${FRONTEND_PAYMENT_RETURN_URL}
+  vnp-return: ${FRONTEND_PAYMENT_RETURN_URL}
   cms-url: ${FRONTEND_CMS_URL}
   user-url: ${FRONTEND_USER_URL}
 
@@ -74,3 +76,4 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
+
