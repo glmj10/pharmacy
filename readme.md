@@ -26,13 +26,13 @@ A comprehensive pharmacy management system with user and admin interfaces, built
 ### 🌟 Live Application Preview
 
 #### 🛒 Customer E-commerce Interface
-![Homepage](./screenshots/user-homepage.png)
-![Product Details](./screenshots/user-product-details.png)
+![Homepage](./frontend-user/screenshots/home-page.png)
+![Product Details](./frontend-user/screenshots/product-detail.png)
 *Modern e-commerce platform with intuitive product browsing and seamless shopping experience*
 
 #### 👨‍💼 Admin Management Dashboard  
-![Admin Dashboard](./screenshots/admin-dashboard.png)
-![Product Management](./screenshots/admin-products.png)
+![Admin Dashboard](./frontend-admin/screenshots/dashboard.png)
+![Product Management](./frontend-admin/screenshots/product-management.png)
 *Comprehensive admin panel with real-time analytics and complete inventory management*
 
 ---
@@ -139,7 +139,7 @@ Pharmacy Management System is a full-stack web application designed to efficient
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/lmao1166/pharmacy.git
+git clone https://github.com/glmj10/pharmacy.git
 cd pharmacy
 ```
 
@@ -250,7 +250,7 @@ npm start &
 #### Access Applications
 - **Backend API**: http://localhost:8080
 - **Frontend User**: http://localhost:3001
-- **Frontend Admin**: http://localhost:3000
+- **Frontend Admin**: http://localhost:3000/admin
 
 ## 📚 API Documentation
 
@@ -300,33 +300,33 @@ DELETE /api/v1/wishlist/{id}      - Remove from wishlist
 ### 🛒 Customer Interface (Frontend User)
 
 #### Homepage & Product Catalog
-![Homepage](./screenshots/user-homepage.png)
+![Homepage](./frontend-user/screenshots/home-page.png)
 *Modern and intuitive homepage with featured products, categories, and search functionality*
 
 #### Product Details & Shopping Cart
-![Product Details](./screenshots/user-product-details.png)
-![Shopping Cart](./screenshots/user-cart.png)
+![Product Details](./frontend-user/screenshots/product-detail.png)
+![Shopping Cart](./frontend-user/screenshots/cart.png)
 *Detailed product information with images, specifications, and seamless cart management*
 
 #### User Dashboard & Order Tracking
-![User Dashboard](./screenshots/user-dashboard.png)
-![Order Tracking](./screenshots/user-orders.png)
+![User Dashboard](./frontend-user/screenshots/user-dashboard.png)
+![Order Tracking](./frontend-user/screenshots/customer-order-tracking.png)
 *Personal dashboard with order history, profile management, and delivery tracking*
 
 ### 👨‍💼 Admin Interface (Frontend Admin)
 
 #### Admin Dashboard & Analytics
-![Admin Dashboard](./screenshots/admin-dashboard.png)
+![Admin Dashboard](./frontend-admin/screenshots/dashboard.png)
 *Comprehensive dashboard with sales analytics, revenue charts, and key performance indicators*
 
 #### Product Management System
-![Product Management](./screenshots/admin-products.png)
-![Product Form](./screenshots/admin-product-form.png)
+![Product Management](./frontend-admin/screenshots/product-management.png)
+![Product Form](./frontend-admin/screenshots/product-form.png)
 *Advanced product management with bulk operations, image upload, and inventory tracking*
 
 #### Order Management & Customer Service
-![Order Management](./screenshots/admin-orders.png)
-![User Management](./screenshots/admin-users.png)
+![Order Management](./frontend-admin/screenshots/order-management.png)
+![User Management](./frontend-admin/screenshots/user-managerment.png)
 *Complete order processing system with status updates and customer management tools*
 
 ---
@@ -371,23 +371,6 @@ pharmacy-management-system/
 │   └── package.json          # Dependencies
 │
 └── README.md                 # Project Documentation
-```
-
-## 🧪 Testing
-
-### Backend Tests
-```bash
-cd backend
-./mvnw test
-```
-
-### Frontend Tests
-```bash
-cd frontend-user
-npm test
-
-cd frontend-admin  
-npm test
 ```
 
 ## 🐳 Backend Docker Deployment
@@ -444,16 +427,12 @@ We welcome all contributions! To contribute:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
-
-This project is distributed under the MIT License. See `LICENSE` for more information.
-
 ## 📧 Contact
 
-**Author**: [Your Name]
-- Email: your.email@example.com
-- LinkedIn: [Your LinkedIn Profile]
-- GitHub: [Your GitHub Profile]
+**Author**: tuannguyen30
+- Email: tuantt3010@gmail.com
+- LinkedIn: [\[Your LinkedIn Profile\]](https://www.linkedin.com/in/tu%E1%BA%A5n-nguy%E1%BB%85n-h%E1%BB%AFu-0b742132b/)
+- GitHub: [\[Your GitHub Profile\]](https://github.com/glmj10)
 
 **Project Link**: [https://github.com/yourusername/pharmacy-management-system](https://github.com/yourusername/pharmacy-management-system)
 
