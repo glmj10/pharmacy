@@ -69,7 +69,7 @@ Pharmacy Management System is a full-stack web application designed to efficient
 - **RESTful API**: REST-compliant design
 - **JWT Authentication**: Secure token-based authentication
 - **Role-based Authorization**: Permission control by user roles
-- **File Upload**: Image upload and management
+- **File Upload**: Image upload and management with Cloudinary
 - **Email Service**: Authentication and notification emails
 - **Payment Integration**: VNPay payment gateway integration
 
