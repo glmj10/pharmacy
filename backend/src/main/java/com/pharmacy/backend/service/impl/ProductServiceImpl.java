@@ -162,6 +162,9 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm với ID: " + id, "PRODUCT_NOT_FOUND"));
         ProductResponse productResponse = productMapper.toProductResponse(product);
+        FileMetadata fileMetadata = fileMetadataRepository.findByUuid(UUID.fromString(product.getThumbnail()))
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy hình ảnh đại diện cho sản phẩm", "THUMBNAIL_NOT_FOUND"));
+        productResponse.setThumbnailUrl(fileMetadata.getUrl());
         productResponse.setImages(productImageService.getProductImagesByProduct(product));
         productResponse.setBrand(brandMapper.toBrandResponse(product.getBrand()));
         List<Category> categories = categoryRepository.findAllByProductsContains(product);
