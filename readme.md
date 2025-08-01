@@ -431,10 +431,10 @@ We welcome all contributions! To contribute:
 
 **Author**: tuannguyen30
 - Email: tuantt3010@gmail.com
-- LinkedIn: [\[Your LinkedIn Profile\]](https://www.linkedin.com/in/tu%E1%BA%A5n-nguy%E1%BB%85n-h%E1%BB%AFu-0b742132b/)
-- GitHub: [\[Your GitHub Profile\]](https://github.com/glmj10)
+-LinkedIn: https://www.linkedin.com/in/tu%E1%BA%A5n-nguy%E1%BB%85n-h%E1%BB%AFu-0b742132b
+- GitHub: https://github.com/glmj10
 
-**Project Link**: [https://github.com/yourusername/pharmacy-management-system](https://github.com/yourusername/pharmacy-management-system)
+**Project Link**: https://github.com/glmj10/pharmacy-management-system
 
 ---
 
