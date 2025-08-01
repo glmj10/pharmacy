@@ -35,10 +35,6 @@ A comprehensive pharmacy management system with user and admin interfaces, built
 ![Product Management](./frontend-admin/screenshots/product-management.png)
 *Comprehensive admin panel with real-time analytics and complete inventory management*
 
----
-
-> **✨ The application features a modern, professional design with intuitive navigation and responsive layout**
-
 ## 🎯 Overview
 
 Pharmacy Management System is a full-stack web application designed to efficiently manage pharmacy operations. The system provides three main components:
