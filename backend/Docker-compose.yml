@@ -5,55 +5,67 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pharmacy-backend:latest
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT}:${SERVER_PORT}"
     environment:
-      SPRING_PROFILES_ACTIVE: uat
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SERVER_PORT: ${SERVER_PORT}
 
-      SERVER_PORT: 8080
+      DATASOURCE_URL: ${DOCKER_DATASOURCE_URL}
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
 
-      DATASOURCE_URL: jdbc:mysql://db:3306/pharmacy
-      DATASOURCE_USERNAME: root
-      DATASOURCE_PASSWORD: 1234
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
 
-      SPRING_MAIL_USERNAME: tuantt3010@gmail.com
-      SPRING_MAIL_PASSWORD: cmsh xcjm zpnm jnst
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_RESET_PASSWORD_EXPIRATION: ${JWT_RESET_PASSWORD_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
 
-      JWT_SECRET: Jm/t4iRHPEvp1fFxY3ft0yRytsrRJrjctdLbRlRD+JjF9MBPcyEFOYZ0tqsLKOJe
-      JWT_EXPIRATION: 3600
-      JWT_RESET_PASSWORD_EXPIRATION: 600
-      JWT_REFRESH_EXPIRATION: 86400
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
 
-      DEFAULT_ADMIN_EMAIL: admin@gmail.com
-      DEFAULT_ADMIN_PASSWORD: admin123
+      FILE_UPLOAD_DIR: ${FILE_UPLOAD_DIR}
 
-      FILE_UPLOAD_DIR: /app/uploads
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET}
+      VNPAY_URL: ${VNPAY_URL}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL}
 
-      VNPAY_TMN_CODE: 6KSI353Z
-      VNPAY_HASH_SECRET: 4SLLZP5HVM6ZS2VPQBSLJKM613W1I4CG
-      VNPAY_URL: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-      VNPAY_RETURN_URL: http://localhost:8080/api/v1/vnpay/return
+      FRONTEND_PAYMENT_RETURN_URL: ${FRONTEND_PAYMENT_RETURN_URL}
+      FRONTEND_CMS_URL: ${FRONTEND_CMS_URL}
+      FRONTEND_USER_URL: ${FRONTEND_USER_URL}
+      APP_BASE_URL: ${APP_BASE_URL}
 
-      FRONTEND_PAYMENT_RETURN_URL: http://localhost:3001/payment
-      FRONTEND_CMS_URL: http://localhost:3000/admin
-      FRONTEND_USER_URL: http://localhost:3001
-      BASE_URL: http://localhost:8080
+      CLOUDINARY_URL: ${CLOUDINARY_URL}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+
     volumes:
       - app_uploads:/app/uploads
-
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: pharmacy
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
-      - "3307:3307"
+      - "3307:3306"
     volumes:
+      - ./db/pharmacy.sql:/docker-entrypoint-initdb.d/pharmacy.sql
       - db_data:/var/lib/mysql
-
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 volumes:
   app_uploads:
   db_data:
