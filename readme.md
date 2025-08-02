@@ -1,4 +1,4 @@
-# 🏥 Pharmacy Ecommerce System
+# 🏥 Pharmacy E-commerce System
 
 A comprehensive pharmacy management system with user and admin interfaces, built with Spring Boot, React, and MySQL.
 
