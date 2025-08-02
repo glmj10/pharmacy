@@ -434,7 +434,7 @@ We welcome all contributions! To contribute:
 - LinkedIn: https://www.linkedin.com/in/tu%E1%BA%A5n-nguy%E1%BB%85n-h%E1%BB%AFu-0b742132b
 - GitHub: https://github.com/glmj10
 
-**Project Link**: https://github.com/glmj10/pharmacy-management-system
+**Project Link**: https://github.com/glmj10/pharmacy-ecommerce
 
 ---
 
